@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>桌游卡片</title>
+    <style>
+      #card-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 10px;
+      }
+      .card {
+        border: 1px solid black;
+        border-radius: 10px;
+        width: 190px; /* 根据计算调整 */
+        height: 257px; /* 根据计算调整 */
+        box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+      }
+      .card-title {
+        font-weight: bold;
+        margin-bottom: 15px;
+      }
+      .card-description {
+        text-align: justify;
+        font-size: 14px;
+      }
+
+      .card.简单 {
+        /* Specific styles for 'simple' cards */
+        background-color: #ffffff; /* Light grey background */
+        color: rgb(0, 0, 0); /* Dark text for contrast */
+      }
+
+      .card.属性 {
+        /* Specific styles for 'simple' cards */
+        background-color: #ffffff; /* Light grey background */
+        color: rgb(107, 90, 90); /* Dark text for contrast */
+      }
+
+      .card.默认 {
+        /* Specific styles for 'default' cards */
+        background-color: #ffffff; /* White background */
+        color: rgb(0, 0, 0); /* Dark text for contrast */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="card-container">
+      <!-- Cards will be generated here -->
+    </div>
+    <script>
+      // JavaScript for parsing CSV and creating cards
+      fetch("cards.csv")
+        .then((response) => response.text())
+        .then((data) => {
+          const rows = data.split("\n").slice(2);
+          rows.forEach((row) => {
+            const [type, title, description, icon] = row.split("|");
+            const card = document.createElement("div");
+            card.className = `card ${type}`;
+            if (type === "简单") {
+              card.innerHTML = `
+                            <div class="card-title">${title}</div>
+                            <img src="${icon}" class="card-icon" alt="Icon">
+                        `;
+            } else if (type === "默认") {
+              card.innerHTML = `
+                            <div class="card-title">${title}</div>
+                            <div class="card-description">${description}</div>
+                        `;
+            } else if (type === "属性") {
+              card.innerHTML = `
+              <div class="card-title">${title}</div>
+                            <img src="${icon}" class="card-icon" alt="Icon">
+                        `;
+            }
+            document.getElementById("card-container").appendChild(card);
+          });
+        });
+    </script>
+  </body>
+</html>

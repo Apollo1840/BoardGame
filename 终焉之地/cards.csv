@@ -1,0 +1,37 @@
+sep=|
+类型|名称|描述|图像
+简单|普通攻击||pictures/attack.png
+简单|普通攻击||pictures/attack.png
+简单|普通攻击||pictures/attack.png
+简单|普通攻击||pictures/attack.png
+简单|魔法攻击||pictures/attack.png
+简单|魔法攻击||pictures/attack.png
+简单|魔法攻击||pictures/attack.png
+简单|魔法攻击||pictures/attack.png
+简单|绝招攻击||pictures/attack.png
+简单|绝招攻击||pictures/attack.png
+简单|圣女加护||pictures/shield.png
+简单|圣女加护||pictures/shield.png
+简单|圣女加护||pictures/shield.png
+简单|圣女加护||pictures/shield.png
+简单|圣女加护||pictures/shield.png
+属性|灾祸的炼狱||pictures/fire.png
+属性|灾祸的炼狱||pictures/fire.png
+属性|灾祸的炼狱||pictures/fire.png
+属性|魔渊的诅咒||pictures/water.png
+属性|魔渊的诅咒||pictures/water.png
+属性|魔渊的诅咒||pictures/water.png
+属性|毒蔓的腐蚀||pictures/wood.png
+属性|毒蔓的腐蚀||pictures/wood.png
+属性|毒蔓的腐蚀||pictures/wood.png
+默认|识破|自己单独查看一名玩家属性。|
+默认|探查|自己单独查看一名玩家所有手牌。|
+默认|修炼|获得 2 点 **经验**。|
+默认|反省|丢弃一张手牌, 抽三张牌。|
+默认|反击|与一名玩家交换属性。|
+默认|暗器|指定一名玩家，使其扣 1 滴血。|
+默认|识破|自己单独查看一名玩家属性。|
+默认|强夺|丢弃一张手牌，获得对方一张装备牌或手牌。|
+默认|挑衅|指定一名对象对自己打出任意一张攻击牌。如果造成伤害则我抽一张牌。注意：这张攻击牌满足攻击条件才会生效。|
+默认|纳魂|从废牌堆里挑选一张属性牌亮出并使用。|
+
