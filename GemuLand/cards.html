@@ -10,7 +10,21 @@
     #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:center; }
 
     /* 卡牌基座 */
-    .card { position:relative; width:63mm; height:88mm; border:1px solid #333; border-radius:8px; background:#fff; overflow:hidden; page-break-inside:avoid; }
+    .card {
+      position: relative;
+      width: 63mm;
+      height: 88mm;
+      border: 1px solid #000;   
+      border-radius: 8px;
+      overflow: hidden;
+      page-break-inside: avoid;
+      -webkit-print-color-adjust: exact;   /* 旧版 Chromium、Safari */
+      print-color-adjust: exact;           /* 新标准写法 */
+    }
+
+    /* 分类底色 */
+    .card.monster  { background:#e6f3e6; }   /* 低饱和浅绿 */
+    .card.prophecy { background:#e9f1fb; }   /* 低饱和浅蓝 */
 
     /* 标题栏 */
     .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
@@ -30,9 +44,16 @@
                     gap:2px; overflow:hidden; z-index:2; font-size:10px; }
 
     /* 文本框 */
-    .content-box { background:rgba(255,255,255,0.9); border:1px solid rgba(0,0,0,0.2);
-                   border-radius:4px; padding:3px; display:grid; grid-template-columns:auto 1fr;
-                   align-items:start; overflow:hidden; }
+    .content-box{
+      background: rgba(255,255,255,0.75);  /* 透明度 ↑ （原 0.90）*/
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 4px;
+      padding: 3px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      overflow: hidden;
+    }
     .content-box.attribute-box { border:none; }
     .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
     .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
@@ -44,17 +65,20 @@
     .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
     .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
 
-    /* 边框色 */
-    .card.prophecy { border-color:#4a6cf7; }
-    .card.monster  { border-color:#f74a4a; }
-
     /* 底部数值 */
     .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
                       font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
     .stats .atk::before { content:'▲'; margin-right:2px; }
     .stats .def::before { content:'◇'; margin-right:2px; }
 
-    @media print { body{background:none;padding:0;} #card-container{gap:5px;} .card{box-shadow:none;} }
+    @media print { 
+      body{background:none;padding:0;}
+      #card-container{gap:5px;} 
+      .card{box-shadow:none;} 
+      .card.monster  { background:#e6f3e6 !important; }
+      .card.prophecy { background:#e9f1fb !important; }
+    }
+    
   </style>
 </head>
 <body>
