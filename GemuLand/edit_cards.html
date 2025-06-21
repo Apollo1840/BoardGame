@@ -124,7 +124,6 @@
       URL.revokeObjectURL(link.href);
     };
 
-    /* 以下为更新与编辑逻辑，保持不变 */
     function updateProphecyList() {
       const c = document.getElementById('prophecy-list');
       let html = '<table><thead><tr>' +
@@ -155,13 +154,7 @@
       form.style.display='block';
       document.getElementById('p-cancel').onclick = () => form.style.display='none';
       document.getElementById('p-save').onclick = () => {
-        const ud = {
-          title: document.getElementById('p-title').value,
-          ename: document.getElementById('p-ename').value,
-          intro: document.getElementById('p-intro').value,
-          effect: document.getElementById('p-effect').value,
-          image: ''
-        };
+        const ud = { title: document.getElementById('p-title').value, ename: document.getElementById('p-ename').value, intro: document.getElementById('p-intro').value, effect: document.getElementById('p-effect').value, image: '' };
         ud.image = `pictures/${ud.ename}.png`;
         if (idx !== null) prophecyCards[idx] = ud; else prophecyCards.push(ud);
         form.style.display='none'; updateProphecyList();
@@ -184,7 +177,73 @@
     function deleteMonster(idx) { monsterCards.splice(idx,1); updateMonsterList(); }
 
     function openMonsterForm(idx = null) {
-      // 保留属性、技能编辑逻辑，不变
+      const form = document.getElementById('monster-form'); form.innerHTML = '';
+      const rand4 = '' + Math.floor(1000 + Math.random()*9000);
+      const card = idx !== null ? JSON.parse(JSON.stringify(monsterCards[idx]))
+                                : { title:'新卡', ename:'new_card_'+rand4, level:'0', type:'火', desc:'', atk:'0', def:'0', attributes:[], skills:[] };
+      form.innerHTML = `
+        <div class="form-row"><label>卡名</label><input id="m-title" placeholder="卡名" value="${card.title}"/></div>
+        <div class="form-row"><label>英文名</label><input id="m-ename" placeholder="英文名" value="${card.ename}"/></div>
+        <div class="form-row"><label>等级</label><input id="m-level" type="number" min="0" placeholder="0" value="${card.level}"/></div>
+        <div class="form-row"><label>类型</label><input id="m-type" placeholder="火" value="${card.type}"/></div>
+        <div class="form-row"><label>背景介绍</label><textarea id="m-desc" rows="3" placeholder="背景介绍">${card.desc}</textarea></div>
+        <div class="form-row"><label>攻击</label><input id="m-atk" type="number" placeholder="0" value="${card.atk}"/></div>
+        <div class="form-row"><label>防御</label><input id="m-def" type="number" placeholder="0" value="${card.def}"/></div>
+        <hr />
+        <div class="form-row"><label>属性</label><button class="btn add" id="add-attr">添加属性</button></div>
+        <div id="attr-list" class="sub-list"></div>
+        <hr />
+        <div class="form-row"><label>技能</label><button class="btn add" id="add-skill">添加技能</button></div>
+        <div id="skill-list" class="sub-list"></div>
+        <div class="form-row"><button class="btn add" id="m-save">保存</button><button class="btn" id="m-cancel">取消</button></div>
+      `;
+      form.style.display = 'block';
+      const attrList = document.getElementById('attr-list');
+      function renderAttrs() {
+        attrList.innerHTML = '';
+        card.attributes.forEach((at,i) => {
+          const div = document.createElement('div'); div.className = 'item';
+          div.innerHTML = `<select class="attr-type"><option${at.attr_type==='通常属性'?' selected':''}>通常属性</option><option${at.attr_type==='响应属性'?' selected':''}>响应属性</option></select><textarea class="attr-content" rows="2" placeholder="内容">${at.content}</textarea><button class="btn delete">删除</button>`;
+          div.querySelector('.delete').onclick = () => { card.attributes.splice(i,1); renderAttrs(); };
+          attrList.append(div);
+        });
+      }
+      renderAttrs();
+      document.getElementById('add-attr').onclick = () => { card.attributes.push({attr_type:'通常属性',content:''}); renderAttrs(); };
+      const skillList = document.getElementById('skill-list');
+      function renderSkills() {
+        skillList.innerHTML = '';
+        card.skills.forEach((sk,i) => {
+          const div = document.createElement('div'); div.className = 'item';
+          div.innerHTML = `<input class="skill-name" placeholder="名称" value="${sk.skill_name}"/><input type="number" class="skill-power" placeholder="灵力消耗" value="${sk.number_power}" min="0"/><textarea class="skill-text" rows="2" placeholder="内容">${sk.skill_text}</textarea><button class="btn delete">删除</button>`;
+          div.querySelector('.delete').onclick = () => { card.skills.splice(i,1); renderSkills(); };
+          skillList.append(div);
+        });
+      }
+      renderSkills();
+      document.getElementById('add-skill').onclick = () => { card.skills.push({skill_name:'',number_power:0,skill_text:''}); renderSkills(); };
+      document.getElementById('m-cancel').onclick = () => { form.style.display = 'none'; };
+      document.getElementById('m-save').onclick = () => {
+        const updated = {
+          title:document.getElementById('m-title').value,
+          ename:document.getElementById('m-ename').value,
+          level:document.getElementById('m-level').value,
+          type:document.getElementById('m-type').value,
+          desc:document.getElementById('m-desc').value,
+          atk:document.getElementById('m-atk').value,
+          def:document.getElementById('m-def').value,
+          attributes:[], skills:[]
+        };
+        attrList.querySelectorAll('.item').forEach(div => {
+          updated.attributes.push({attr_type:div.querySelector('.attr-type').value, content:div.querySelector('.attr-content').value});
+        });
+        skillList.querySelectorAll('.item').forEach(div => {
+          updated.skills.push({ skill_name:div.querySelector('.skill-name').value, number_power:+div.querySelector('.skill-power').value, skill_text:div.querySelector('.skill-text').value });
+        });
+        updated.image = `pictures/${updated.ename}.png`;
+        if (idx !== null) monsterCards[idx] = updated; else monsterCards.push(updated);
+        form.style.display = 'none'; updateMonsterList();
+      };
     }
 
     document.getElementById('tab-prophecy').onclick = () => { document.getElementById('prophecy-panel').style.display='block'; document.getElementById('monster-panel').style.display='none'; document.getElementById('tab-prophecy').classList.add('active'); document.getElementById('tab-monster').classList.remove('active'); };
