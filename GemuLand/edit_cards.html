@@ -2,256 +2,436 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>卡牌编辑器</title>
+  <title>卡牌编辑器 (Refactored 完整版)</title>
+
+  <!-- 样式 -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
   <style>
-    body { font-family: sans-serif; margin: 20px; background: #f9f9f9; }
-    h1 { text-align: center; }
-    #editor { max-width: 1200px; margin: auto; }
-    #tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    #tabs button { padding: 8px 16px; border: none; background: #ccc; cursor: pointer; border-radius: 4px; }
-    #tabs button.active { background: #4a6cf7; color: #fff; }
-    .panel { display: none; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-    table, th, td { border: 1px solid #ddd; }
-    th, td { padding: 8px; text-align: left; }
-    .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; margin-right: 8px; }
-    .btn.edit { background: #f7a400; color: #fff; }
-    .btn.delete { background: #f74a4a; color: #fff; }
-    .btn.add { background: #4caf50; color: #fff; }
-    .btn.save { background: #d32f2f; color: #fff; }
-    .btn.saveas { background: #388e3c; color: #fff; }
-    .form-container { background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px; }
-    .form-row { margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
-    .form-row label { width: 80px; }
-    .form-row input, .form-row textarea, .form-row select { flex: 1; padding: 6px; }
-    textarea { resize: vertical; }
-    .sub-list { margin-left: 80px; margin-bottom: 10px; }
-    .sub-list .item { display: flex; gap: 10px; align-items: start; margin-bottom: 5px; }
-    .sub-list .item select, .sub-list .item input, .sub-list .item textarea { flex: 1; }
-    #actions { text-align: center; margin-top: 20px; }
+    body{padding:20px;background:#f7f7f7;}
+    .card-table{max-height:450px;overflow:auto;}
   </style>
 </head>
+
 <body>
-  <h1>卡牌编辑器</h1>
-  <div id="editor">
-    <div id="tabs">
-      <button id="tab-prophecy" class="active">预言卡牌</button>
-      <button id="tab-monster">怪兽卡牌</button>
-    </div>
-    <div id="prophecy-panel" class="panel" style="display:block;">
-      <button id="add-prophecy" class="btn add">添加新的预言卡</button>
-      <div id="prophecy-list"></div>
-      <div id="prophecy-form" class="form-container" style="display:none;"></div>
-    </div>
-    <div id="monster-panel" class="panel">
-      <button id="add-monster" class="btn add">添加新的怪兽卡</button>
-      <div id="monster-list"></div>
-      <div id="monster-form" class="form-container" style="display:none;"></div>
-    </div>
-  </div>
-  <div id="actions">
-    <button id="save" class="btn save">保存（覆盖当前 CSV）</button>
-    <button id="saveas" class="btn saveas">另存为（下载 CSV）</button>
-  </div>
+  <div class="container" id="app"></div>
+
+  <!-- PapaParse；网络失败时依然可运行 -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js"></script>
+
   <script>
-    async function loadCSV(path) {
-      const text = await (await fetch(path)).text();
-      return text.split("\n").slice(1).filter(r=>r.trim());
-    }
-    function safeParse(str){ try{return JSON.parse(str);}catch{return [];} }
-
-    let prophecyCards = [], monsterCards = [];
-    const prophecyPath = 'prophecy_cards.csv';
-    const monsterPath = 'monster_cards.csv';
-
-    async function init() {
-      const p = await loadCSV(prophecyPath);
-      prophecyCards = p.map(line => {
-        const [title,intro,effect,image] = line.split('|');
-        const ename = image.replace(/^pictures\//, '').replace(/\.png$/, '');
-        return { title, ename, intro, effect, image };
-      });
-      updateProphecyList();
-
-      const m = await loadCSV(monsterPath);
-      monsterCards = m.map(line => {
-        const [title,level,type,desc,atk,def,charStr,skillStr,image] = line.split('|');
-        const ename = image.replace(/^pictures\//, '').replace(/\.png$/, '');
-        return { title, ename, level, type, desc, atk, def,
-                 attributes: safeParse(charStr), skills: safeParse(skillStr), image };
-      });
-      updateMonsterList();
+    /************* 无 Papa 时的简易 CSV 解析 *************/
+    function fallbackCsvParse(raw, delim='|'){
+      return raw.trim().split(/\r?\n/).map(r=>r.split(delim));
     }
 
-    function generateCSV(cards, type) {
-      if (type === 'prophecy') {
-        let text = 'card_title|introduction|effect|image\n';
-        cards.forEach(c => text += [c.title, c.intro, c.effect, c.image].join('|') + '\n');
-        return text;
-      } else {
-        let text = 'card_title|level|monster_type|description|attack|defence|characters|skills|image\n';
-        cards.forEach(c => {
-          const chars = JSON.stringify(c.attributes);
-          const skills = JSON.stringify(c.skills);
-          text += [c.title, c.level, c.type, c.desc, c.atk, c.def, chars, skills, c.image].join('|') + '\n';
-        });
-        return text;
-      }
-    }
-
-    document.getElementById('save').onclick = async () => {
-      const isProphecy = document.getElementById('prophecy-panel').style.display === 'block';
-      const csv = generateCSV(isProphecy ? prophecyCards : monsterCards, isProphecy ? 'prophecy' : 'monster');
-      const path = isProphecy ? prophecyPath : monsterPath;
-      try {
-        await fetch(path, { method: 'PUT', headers: {'Content-Type':'text/plain'}, body: csv });
-        alert('已保存并覆盖：' + path);
-      } catch (e) {
-        alert('保存失败：' + e.message);
-      }
+    /******************** 配置 & 状态 ********************/
+    const CONFIG = {
+      prophecy:{path:'prophecy_cards.csv',
+                header:['card_title','introduction','effect','image']},
+      monster :{path:'monster_cards.csv',
+                header:['card_title','level','monster_type','description',
+                        'attack','defence','characters','skills','image']}
     };
-
-    document.getElementById('saveas').onclick = () => {
-      const isProphecy = document.getElementById('prophecy-panel').style.display === 'block';
-      const csv = generateCSV(isProphecy ? prophecyCards : monsterCards, isProphecy ? 'prophecy' : 'monster');
-      const rand4 = '' + Math.floor(1000 + Math.random()*9000);
-      const filename = (isProphecy ? 'prophecy_cards' : 'monster_cards') + '_' + rand4 + '.csv';
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(link.href);
+    const DISPLAY = {
+      prophecy:['title','ename','intro','effect'],
+      monster :['title','ename','level','monster_type','description','attack','defence']
     };
+    const LABELS = {title:'卡名',ename:'英文名',intro:'背景介绍',
+                    effect:'效果',level:'等级',monster_type:'类型',
+                    description:'背景介绍',attack:'ATK',defence:'DEF'};
+    const state = {current:'prophecy',cards:{prophecy:[],monster:[]}};
 
-    function updateProphecyList() {
-      const c = document.getElementById('prophecy-list');
-      let html = '<table><thead><tr>' +
-                 '<th>卡名</th><th>英文名</th><th>背景介绍</th><th>效果</th><th>操作</th>' +
-                 '</tr></thead><tbody>';
-      prophecyCards.forEach((cdi,i) => {
-        html += `<tr><td>${cdi.title}</td><td>${cdi.ename}</td><td>${cdi.intro}</td><td>${cdi.effect}</td>` +
-                `<td><button class="btn edit" onclick="openProphecyForm(${i})">编辑</button>` +
-                `<button class="btn delete" onclick="deleteProphecy(${i})">删除</button></td></tr>`;
-      });
-      html += '</tbody></table>';
-      c.innerHTML = html;
+    /******************** 工具函数 ********************/
+    const $ = sel=>document.querySelector(sel);
+    function safeParse(str,def){try{return JSON.parse(str);}catch{return def;}}
+    function file2ename(p){return p.replace(/^pictures\//,'').replace(/\.png$/,'');}
+    function escapeHtml(s){
+      return String(s??'').replace(/[&<>"']/g,
+        m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
     }
-    function deleteProphecy(idx) { prophecyCards.splice(idx,1); updateProphecyList(); }
 
-    function openProphecyForm(idx = null) {
-      const form = document.getElementById('prophecy-form'); form.innerHTML = '';
-      const rand4 = '' + Math.floor(1000 + Math.random()*9000);
-      const card = idx !== null ? JSON.parse(JSON.stringify(prophecyCards[idx]))
-                                : { title:'新卡', ename:'new_card_'+rand4, intro:'', effect:'', image:'' };
-      form.innerHTML = `
-        <div class="form-row"><label>卡名</label><input id="p-title" value="${card.title}" placeholder="卡名"/></div>
-        <div class="form-row"><label>英文名</label><input id="p-ename" value="${card.ename}" placeholder="英文名"/></div>
-        <div class="form-row"><label>背景介绍</label><textarea id="p-intro" rows="2" placeholder="背景介绍">${card.intro}</textarea></div>
-        <div class="form-row"><label>效果</label><textarea id="p-effect" rows="2" placeholder="效果">${card.effect}</textarea></div>
-        <div class="form-row"><button class="btn add" id="p-save">保存</button><button class="btn" id="p-cancel">取消</button></div>
-      `;
-      form.style.display='block';
-      document.getElementById('p-cancel').onclick = () => form.style.display='none';
-      document.getElementById('p-save').onclick = () => {
-        const ud = { title: document.getElementById('p-title').value, ename: document.getElementById('p-ename').value, intro: document.getElementById('p-intro').value, effect: document.getElementById('p-effect').value, image: '' };
-        ud.image = `pictures/${ud.ename}.png`;
-        if (idx !== null) prophecyCards[idx] = ud; else prophecyCards.push(ud);
-        form.style.display='none'; updateProphecyList();
+    /******** 行 ↔︎ 对象 ********/
+    function rowToCard(type,row){
+      if(type==='prophecy'){
+        const [t,intro,effect,image]=row;
+        return {title:t,ename:file2ename(image),intro,effect,image};
+      }
+      const [t,lvl,typ,desc,atk,def,charStr,skillStr,image]=row;
+      return {
+        title:t,ename:file2ename(image),
+        level:+lvl,monster_type:typ,description:desc,
+        attack:+atk,defence:+def,
+        characters:safeParse(charStr,{}),
+        skills:safeParse(skillStr,[]),
+        image
+      };
+    }
+    function cardToRow(type,c){
+      return type==='prophecy'
+        ? [c.title,c.intro,c.effect,c.image]
+        : [c.title,c.level,c.monster_type,c.description,
+           c.attack,c.defence,
+           JSON.stringify(c.characters),
+           JSON.stringify(c.skills),
+           c.image];
+    }
+
+    /************ 加载 CSV ************/
+    async function loadAll(){
+      for(const k of Object.keys(CONFIG)){
+        const raw = await fetch(CONFIG[k].path)
+                    .then(r=>r.ok?r.text():'').catch(()=>'');
+
+        if(!raw.trim()){ state.cards[k]=[]; continue; }
+
+        const rows = window.Papa
+          ? Papa.parse(raw,{delimiter:'|',skipEmptyLines:true}).data
+          : fallbackCsvParse(raw,'|');
+
+        rows.shift();                          // 去掉表头
+        state.cards[k] = rows.map(r=>rowToCard(k,r));
+      }
+      render();
+    }
+
+    /************ 渲染主界面 ************/
+    function render(){
+      $('#app').innerHTML = `
+        <ul class="nav nav-tabs mb-3">
+          <li class="nav-item">
+            <a class="nav-link ${state.current==='prophecy'?'active':''}"
+               data-tab="prophecy">预言卡牌</a></li>
+          <li class="nav-item">
+            <a class="nav-link ${state.current==='monster'?'active':''}"
+               data-tab="monster">怪兽卡牌</a></li>
+        </ul>
+
+        <div id="panel" class="bg-white p-3 rounded shadow-sm"></div>
+
+        <div class="text-center mt-3">
+          <button id="btn-save" class="btn btn-success me-2">
+            保存（覆盖 CSV）</button>
+          <button id="btn-saveas" class="btn btn-primary">
+            另存为</button>
+        </div>`;
+
+      document.querySelectorAll('[data-tab]').forEach(a=>{
+        a.onclick=()=>{state.current=a.dataset.tab;render();};
+      });
+      $('#btn-save').onclick   = ()=>downloadCsv(true);
+      $('#btn-saveas').onclick = ()=>downloadCsv(false);
+
+      renderTable();
+    }
+
+    /************ 表格列表 ************/
+    function renderTable(){
+      const type = state.current, list = state.cards[type];
+      const panel = $('#panel');
+      if(!list.length){
+        panel.innerHTML='<p class="text-muted">暂无数据</p>'; return;
+      }
+      const keys = DISPLAY[type];
+      let html = `
+        <div class="card-table">
+          <table class="table table-sm table-bordered align-middle">
+            <thead><tr>
+              ${keys.map(k=>`<th>${LABELS[k]}</th>`).join('')}
+              <th style="width:90px;">操作</th>
+            </tr></thead><tbody>`;
+
+      list.forEach((c,i)=>{
+        html +='<tr>';
+        keys.forEach(k=> html+=`<td>${escapeHtml(c[k])}</td>`);
+        html += `<td>
+          <button class="btn btn-warning btn-sm me-1" data-edit="${i}">编辑</button>
+          <button class="btn btn-danger  btn-sm" data-del="${i}">删</button>
+        </td></tr>`;
+      });
+      html += '</tbody></table></div>';
+      html += '<button id="btn-add" class="btn btn-outline-primary mt-2">+ 新增</button>';
+      panel.innerHTML = html;
+
+      panel.querySelectorAll('[data-edit]')
+           .forEach(b=>b.onclick=()=>openForm(+b.dataset.edit));
+      panel.querySelectorAll('[data-del]')
+           .forEach(b=>b.onclick=()=>{
+             if(confirm('确定删除？')){
+               list.splice(+b.dataset.del,1); renderTable();
+             }
+           });
+      $('#btn-add').onclick = ()=>openForm(null);
+    }
+
+    /************ 弹窗表单 ************/
+    function openForm(idx){
+      const type = state.current, list = state.cards[type];
+      const editing = idx!==null;
+      const card = editing
+        ? JSON.parse(JSON.stringify(list[idx]))   // 深拷贝
+        : createEmptyCard(type);
+
+      /* 模态层骨架 */
+      const modal = document.createElement('div');
+      modal.className='modal d-block';      // Bootstrap 简单用法
+      modal.style.background='rgba(0,0,0,.45)';
+      modal.innerHTML=`
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">${editing?'编辑':'新增'}${type==='prophecy'?'预言':'怪兽'}卡</h5>
+              <button class="btn-close" data-close></button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-close>取消</button>
+              <button class="btn btn-primary"   data-save>保存</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.append(modal);
+      modal.querySelectorAll('[data-close]')
+           .forEach(b=>b.onclick=()=>modal.remove());
+
+      /* 填充表单 HTML */
+      const body = modal.querySelector('.modal-body');
+      body.innerHTML = buildFormHtml(type,card);
+      if(type==='monster') bindAttrSkillHandlers(body,card);
+
+      /* 保存 */
+      modal.querySelector('[data-save]').onclick = () =>{
+        collectForm(body,card,type);
+
+        /* 自动补英文名 & image 路径 */
+        if(!card.ename){
+          card.ename = file2ename(card.title)
+                         .replace(/\s+/g,'_').toLowerCase();
+        }
+        card.image = `pictures/${card.ename}.png`;
+
+        editing ? list[idx]=card : list.push(card);
+        modal.remove(); renderTable();
       };
     }
 
-    function updateMonsterList() {
-      const c = document.getElementById('monster-list');
-      let html = '<table><thead><tr>' +
-                 '<th>卡名</th><th>英文名</th><th>等级</th><th>类型</th><th>背景介绍</th><th>ATK</th><th>DEF</th><th>操作</th>' +
-                 '</tr></thead><tbody>';
-      monsterCards.forEach((m,i) => {
-        html += `<tr><td>${m.title}</td><td>${m.ename}</td><td>${m.level}</td><td>${m.type}</td><td>${m.desc}</td><td>${m.atk}</td><td>${m.def}</td>` +
-                `<td><button class="btn edit" onclick="openMonsterForm(${i})">编辑</button>` +
-                `<button class="btn delete" onclick="deleteMonster(${i})">删除</button></td></tr>`;
-      });
-      html += '</tbody></table>';
-      c.innerHTML = html;
+    function createEmptyCard(t){
+      return t==='prophecy'
+        ? {title:'',ename:'',intro:'',effect:'',image:''}
+        : {title:'',ename:'',level:0,monster_type:'',
+           description:'',attack:0,defence:0,
+           characters:{},skills:[],image:''};
     }
-    function deleteMonster(idx) { monsterCards.splice(idx,1); updateMonsterList(); }
 
-    function openMonsterForm(idx = null) {
-      const form = document.getElementById('monster-form'); form.innerHTML = '';
-      const rand4 = '' + Math.floor(1000 + Math.random()*9000);
-      const card = idx !== null ? JSON.parse(JSON.stringify(monsterCards[idx]))
-                                : { title:'新卡', ename:'new_card_'+rand4, level:'0', type:'火', desc:'', atk:'0', def:'0', attributes:[], skills:[] };
-      form.innerHTML = `
-        <div class="form-row"><label>卡名</label><input id="m-title" placeholder="卡名" value="${card.title}"/></div>
-        <div class="form-row"><label>英文名</label><input id="m-ename" placeholder="英文名" value="${card.ename}"/></div>
-        <div class="form-row"><label>等级</label><input id="m-level" type="number" min="0" placeholder="0" value="${card.level}"/></div>
-        <div class="form-row"><label>类型</label><input id="m-type" placeholder="火" value="${card.type}"/></div>
-        <div class="form-row"><label>背景介绍</label><textarea id="m-desc" rows="3" placeholder="背景介绍">${card.desc}</textarea></div>
-        <div class="form-row"><label>攻击</label><input id="m-atk" type="number" placeholder="0" value="${card.atk}"/></div>
-        <div class="form-row"><label>防御</label><input id="m-def" type="number" placeholder="0" value="${card.def}"/></div>
-        <hr />
-        <div class="form-row"><label>属性</label><button class="btn add" id="add-attr">添加属性</button></div>
-        <div id="attr-list" class="sub-list"></div>
-        <hr />
-        <div class="form-row"><label>技能</label><button class="btn add" id="add-skill">添加技能</button></div>
-        <div id="skill-list" class="sub-list"></div>
-        <div class="form-row"><button class="btn add" id="m-save">保存</button><button class="btn" id="m-cancel">取消</button></div>
-      `;
-      form.style.display = 'block';
-      const attrList = document.getElementById('attr-list');
-      function renderAttrs() {
-        attrList.innerHTML = '';
-        card.attributes.forEach((at,i) => {
-          const div = document.createElement('div'); div.className = 'item';
-          div.innerHTML = `<select class="attr-type"><option${at.attr_type==='通常属性'?' selected':''}>通常属性</option><option${at.attr_type==='响应属性'?' selected':''}>响应属性</option></select><textarea class="attr-content" rows="2" placeholder="内容">${at.content}</textarea><button class="btn delete">删除</button>`;
-          div.querySelector('.delete').onclick = () => { card.attributes.splice(i,1); renderAttrs(); };
-          attrList.append(div);
-        });
+    /* 生成各类表单 HTML */
+    function buildFormHtml(type,c){
+      if(type==='prophecy'){
+        return `
+          <div class="mb-3">
+            <label class="form-label">卡名</label>
+            <input name="title" class="form-control" value="${c.title}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">英文名</label>
+            <input name="ename" class="form-control" value="${c.ename}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">背景介绍</label>
+            <textarea name="intro" rows="2" class="form-control">${c.intro}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">效果</label>
+            <textarea name="effect" rows="3" class="form-control">${c.effect}</textarea>
+          </div>`;
       }
-      renderAttrs();
-      document.getElementById('add-attr').onclick = () => { card.attributes.push({attr_type:'通常属性',content:''}); renderAttrs(); };
-      const skillList = document.getElementById('skill-list');
-      function renderSkills() {
-        skillList.innerHTML = '';
-        card.skills.forEach((sk,i) => {
-          const div = document.createElement('div'); div.className = 'item';
-          div.innerHTML = `<input class="skill-name" placeholder="名称" value="${sk.skill_name}"/><input type="number" class="skill-power" placeholder="灵力消耗" value="${sk.number_power}" min="0"/><textarea class="skill-text" rows="2" placeholder="内容">${sk.skill_text}</textarea><button class="btn delete">删除</button>`;
-          div.querySelector('.delete').onclick = () => { card.skills.splice(i,1); renderSkills(); };
-          skillList.append(div);
+      /* 怪兽卡 */
+      return `
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">卡名</label>
+            <input name="title" class="form-control" value="${c.title}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">英文名</label>
+            <input name="ename" class="form-control" value="${c.ename}">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">等级</label>
+            <input type="number" name="level" class="form-control" value="${c.level}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">类型</label>
+            <input name="monster_type" class="form-control" value="${c.monster_type}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">攻击</label>
+            <input type="number" name="attack" class="form-control" value="${c.attack}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">防御</label>
+            <input type="number" name="defence" class="form-control" value="${c.defence}">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">背景介绍</label>
+            <textarea name="description" rows="2" class="form-control">${c.description}</textarea>
+          </div>
+
+          <div class="col-12"><hr>
+            <h6>属性</h6>
+            <div id="attr-container"></div>
+            <button id="add-attr" class="btn btn-outline-secondary btn-sm mt-1">添加属性</button>
+          </div>
+
+          <div class="col-12"><hr>
+            <h6>技能</h6>
+            <div id="skill-container"></div>
+            <button id="add-skill" class="btn btn-outline-secondary btn-sm mt-1">添加技能</button>
+          </div>
+        </div>`;
+    }
+
+    /******** 属性 & 技能动态编辑 ********/
+    function bindAttrSkillHandlers(container,card){
+      const attrC  = container.querySelector('#attr-container');
+      const skillC = container.querySelector('#skill-container');
+
+      /* -------- 模板 -------- */
+      const attrHtml = (k,v)=>`
+        <div class="d-flex align-items-center mb-1">
+          <select class="form-select form-select-sm me-2 attr-key" style="max-width:140px;">
+            <option value="normal_characters" ${k==='normal_characters'?'selected':''}>通常属性</option>
+            <option value="react_characters"  ${k==='react_characters'?'selected':''}>响应属性</option>
+          </select>
+          <textarea class="form-control form-control-sm me-2 attr-val" rows="1">${v}</textarea>
+          <button class="btn btn-sm btn-outline-danger" data-rm-attr="${k}">×</button>
+        </div>`;
+
+      const skillHtml = (i,s)=>`
+        <div class="d-flex align-items-center mb-1 skill-row">
+          <input class="form-control form-control-sm me-2 skill-name"
+                 placeholder="名称" style="max-width:120px;"
+                 value="${s.skill_name}">
+          <input type="number" min="0" class="form-control form-control-sm me-2 skill-power"
+            placeholder="灵力消耗" style="max-width:90px;" value="${s.number_power}">
+          <textarea class="form-control form-control-sm me-2 skill-text" rows="1"
+                    placeholder="描述">${s.skill_text}</textarea>
+          <button class="btn btn-sm btn-outline-danger" data-rm-skill="${i}">×</button>
+        </div>`;
+
+      /* -------- 渲染函数 -------- */
+      const renderAttrs = ()=>{
+        attrC.innerHTML='';
+        Object.entries(card.characters).forEach(([k,v])=>{
+          attrC.insertAdjacentHTML('beforeend',attrHtml(k,v));
         });
-      }
-      renderSkills();
-      document.getElementById('add-skill').onclick = () => { card.skills.push({skill_name:'',number_power:0,skill_text:''}); renderSkills(); };
-      document.getElementById('m-cancel').onclick = () => { form.style.display = 'none'; };
-      document.getElementById('m-save').onclick = () => {
-        const updated = {
-          title:document.getElementById('m-title').value,
-          ename:document.getElementById('m-ename').value,
-          level:document.getElementById('m-level').value,
-          type:document.getElementById('m-type').value,
-          desc:document.getElementById('m-desc').value,
-          atk:document.getElementById('m-atk').value,
-          def:document.getElementById('m-def').value,
-          attributes:[], skills:[]
-        };
-        attrList.querySelectorAll('.item').forEach(div => {
-          updated.attributes.push({attr_type:div.querySelector('.attr-type').value, content:div.querySelector('.attr-content').value});
-        });
-        skillList.querySelectorAll('.item').forEach(div => {
-          updated.skills.push({ skill_name:div.querySelector('.skill-name').value, number_power:+div.querySelector('.skill-power').value, skill_text:div.querySelector('.skill-text').value });
-        });
-        updated.image = `pictures/${updated.ename}.png`;
-        if (idx !== null) monsterCards[idx] = updated; else monsterCards.push(updated);
-        form.style.display = 'none'; updateMonsterList();
       };
+      const renderSkills = ()=>{
+        skillC.innerHTML='';
+        card.skills.forEach((s,i)=>skillC.insertAdjacentHTML('beforeend',skillHtml(i,s)));
+      };
+
+      /* -------- 事件绑定 -------- */
+      attrC.addEventListener('click',e=>{
+        if(e.target.dataset.rmAttr){
+          delete card.characters[e.target.dataset.rmAttr];
+          renderAttrs();
+        }
+      });
+      skillC.addEventListener('click',e=>{
+        if(e.target.dataset.rmSkill){
+          card.skills.splice(+e.target.dataset.rmSkill,1);
+          renderSkills();
+        }
+      });
+
+      // ① 允许依次添加 normal → react 两种属性
+      const ATTR_TYPES = ['normal_characters', 'react_characters'];
+
+      container.querySelector('#add-attr').onclick = () => {
+        // 找到还没用过的属性类型
+        const next = ATTR_TYPES.find(t => !(t in card.characters));
+        if (next) {
+          card.characters[next] = '';         // 新建空值
+          renderAttrs();                      // 重新渲染
+        } else {
+          alert('已添加全部可用属性');        // 两种都存在时提示
+        }
+      };
+
+      container.querySelector('#add-skill').onclick=()=>{
+        card.skills.push({skill_name:'',number_power:0,skill_text:''});
+        renderSkills();
+      };
+
+      /* 首次渲染 */
+      renderAttrs(); renderSkills();
     }
 
-    document.getElementById('tab-prophecy').onclick = () => { document.getElementById('prophecy-panel').style.display='block'; document.getElementById('monster-panel').style.display='none'; document.getElementById('tab-prophecy').classList.add('active'); document.getElementById('tab-monster').classList.remove('active'); };
-    document.getElementById('tab-monster').onclick = () => { document.getElementById('monster-panel').style.display='block'; document.getElementById('prophecy-panel').style.display='none'; document.getElementById('tab-monster').classList.add('active'); document.getElementById('tab-prophecy').classList.remove('active'); };
-    document.getElementById('add-prophecy').onclick = () => openProphecyForm(null);
-    document.getElementById('add-monster').onclick = () => openMonsterForm(null);
+    /******** 表单 => 对象 ********/
+    function collectForm(body,card,type){
+      const q = name=>body.querySelector(`[name="${name}"]`);
+      if(type==='prophecy'){
+        card.title = q('title').value.trim();
+        card.ename = q('ename').value.trim();
+        card.intro = q('intro').value.trim();
+        card.effect= q('effect').value.trim();
+        return;
+      }
+      /* 怪兽卡 */
+      card.title        = q('title').value.trim();
+      card.ename        = q('ename').value.trim();
+      card.level        = +q('level').value;
+      card.monster_type = q('monster_type').value.trim();
+      card.description  = q('description').value.trim();
+      card.attack       = +q('attack').value;
+      card.defence      = +q('defence').value;
 
-    init();
+      /* 重新收集 characters */
+      card.characters = {};
+      body.querySelectorAll('#attr-container .attr-key')
+          .forEach((sel,i)=>{
+            const val = body.querySelectorAll('#attr-container .attr-val')[i].value.trim();
+            if(val) card.characters[sel.value] = val;
+          });
+
+      /* 重新收集 skills */
+      card.skills = [];
+      body.querySelectorAll('#skill-container .skill-row')
+          .forEach(row=>{
+            const name  = row.querySelector('.skill-name').value.trim();
+            const power = +row.querySelector('.skill-power').value;
+            const text  = row.querySelector('.skill-text').value.trim();
+            if(name || text){
+              card.skills.push({skill_name:name,number_power:power,skill_text:text});
+            }
+          });
+    }
+
+    /******** 下载 CSV ********/
+    function downloadCsv(cover){
+      const type = state.current;
+      const rows = state.cards[type].map(c=>cardToRow(type,c));
+      rows.unshift(CONFIG[type].header);
+      const csv = rows.map(r=>r.join('|')).join('\n');
+
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+
+      if(cover){
+        a.download = CONFIG[type].path;
+      }else{
+        const ts = new Date().toISOString().slice(0,19).replace(/[-T:]/g,'');
+        a.download = CONFIG[type].path.replace('.csv',`_${ts}.csv`);
+      }
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    /******** 启动 ********/
+    document.addEventListener('DOMContentLoaded', loadAll);
   </script>
 </body>
 </html>
