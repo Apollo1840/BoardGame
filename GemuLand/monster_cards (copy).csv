@@ -1,0 +1,7 @@
+card_title|level|monster_type|description|attack|defence|characters|skills|image
+斯巴达武士|0|土|【人族】在这个充满怪物的基姆世界，人类也是怪物的一种。|5|5|{}|[{"skill_name":"背水一击","number_power":1,"skill_text":"下次攻击攻击力+1"}]|pictures/knight.png
+烈焰凤凰|6|火|浴火重生之灵|5|3|{"normal_characters":"生命:5"}|[{"number_power":4,"skill_name":"烈焰冲击","skill_text":"对所有敌人造成3点火焰伤害, 对所有敌人造成3点火焰伤害, 对所有敌人造成3点火焰伤害, 对所有敌人造成3点火焰伤害,对所有敌人造成3点火焰伤害..."},{"number_power":2,"skill_name":"涅槃重生","skill_text":"本回合死亡后复活并恢复2点生命"}]|pictures/knight.png
+深渊吞噬者|4|水|潜伏在阴影中，寻找猎物|7|5|{"normal_characters":"攻击:7","react_characters":"隐匿:5"}|[{"skill_name":"吞噬","number_power":1,"skill_text":"吞噬一只非传奇怪兽并获得其力量, 吞噬一只非传奇怪兽并获得其力量, 吞噬一只非传奇怪兽并获得其力量,吞噬一只非传奇怪兽并获得其力量..."}]|pictures/knight.png
+森林守护者|3|木|守护古老林地的精灵|6|4|{"normal_characters":"生命:6","react_characters":"自然:4"}|[]|pictures/knight.png
+森林守护者2|0|木|守护古老林地的精灵|6|4|{"normal_characters":"生命:6","react_characters":"自然:4"}|[]|pictures/knight.png
+迪鲁克|0|火|somebody|0|0|{"normal_characters":"something"}|[{"skill_name":"fire","number_power":0,"skill_text":"fire"}]|pictures/diluc.png

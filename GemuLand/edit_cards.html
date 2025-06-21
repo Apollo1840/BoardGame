@@ -28,18 +28,22 @@
     /******************** 配置 & 状态 ********************/
     const CONFIG = {
       prophecy:{path:'prophecy_cards.csv',
-                header:['card_title','introduction','effect','image']},
+                header:['card_title','introduction',
+                        'effect','responsive_effect','image']},
       monster :{path:'monster_cards.csv',
                 header:['card_title','level','monster_type','description',
                         'attack','defence','characters','skills','image']}
     };
     const DISPLAY = {
-      prophecy:['title','ename','intro','effect'],
+      prophecy:['title','ename','intro','effect','responsive_effect'],
       monster :['title','ename','level','monster_type','description','attack','defence']
     };
-    const LABELS = {title:'卡名',ename:'英文名',intro:'背景介绍',
-                    effect:'效果',level:'等级',monster_type:'类型',
-                    description:'背景介绍',attack:'ATK',defence:'DEF'};
+    const LABELS = {
+      title:'卡名',ename:'英文名',intro:'背景介绍',
+      effect:'效果',responsive_effect:'响应效果',
+      level:'等级',monster_type:'类型',
+      description:'背景介绍',attack:'ATK',defence:'DEF'
+    };
     const state = {current:'prophecy',cards:{prophecy:[],monster:[]}};
 
     /******************** 工具函数 ********************/
@@ -54,8 +58,12 @@
     /******** 行 ↔︎ 对象 ********/
     function rowToCard(type,row){
       if(type==='prophecy'){
-        const [t,intro,effect,image]=row;
-        return {title:t,ename:file2ename(image),intro,effect,image};
+        // 兼容旧 CSV（无 responsive_effect 时 row 长度为 4）
+        const [t,intro,effect,responsive_effect='',image] =
+              row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row;
+
+        return {title:t,ename:file2ename(image),intro,
+                effect,responsive_effect,image};
       }
       const [t,lvl,typ,desc,atk,def,charStr,skillStr,image]=row;
       return {
@@ -69,7 +77,7 @@
     }
     function cardToRow(type,c){
       return type==='prophecy'
-        ? [c.title,c.intro,c.effect,c.image]
+        ? [c.title,c.intro,c.effect,c.responsive_effect,c.image]
         : [c.title,c.level,c.monster_type,c.description,
            c.attack,c.defence,
            JSON.stringify(c.characters),
@@ -174,7 +182,7 @@
 
       /* 模态层骨架 */
       const modal = document.createElement('div');
-      modal.className='modal d-block';      // Bootstrap 简单用法
+      modal.className='modal d-block';
       modal.style.background='rgba(0,0,0,.45)';
       modal.innerHTML=`
         <div class="modal-dialog modal-lg">
@@ -217,7 +225,8 @@
 
     function createEmptyCard(t){
       return t==='prophecy'
-        ? {title:'',ename:'',intro:'',effect:'',image:''}
+        ? {title:'',ename:'',intro:'',
+           effect:'',responsive_effect:'',image:''}
         : {title:'',ename:'',level:0,monster_type:'',
            description:'',attack:0,defence:0,
            characters:{},skills:[],image:''};
@@ -242,6 +251,11 @@
           <div class="mb-3">
             <label class="form-label">效果</label>
             <textarea name="effect" rows="3" class="form-control">${c.effect}</textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">响应效果（可选）</label>
+            <textarea name="responsive_effect" rows="3"
+                      class="form-control">${c.responsive_effect}</textarea>
           </div>`;
       }
       /* 怪兽卡 */
@@ -350,13 +364,12 @@
       const ATTR_TYPES = ['normal_characters', 'react_characters'];
 
       container.querySelector('#add-attr').onclick = () => {
-        // 找到还没用过的属性类型
         const next = ATTR_TYPES.find(t => !(t in card.characters));
         if (next) {
-          card.characters[next] = '';         // 新建空值
-          renderAttrs();                      // 重新渲染
+          card.characters[next] = '';
+          renderAttrs();
         } else {
-          alert('已添加全部可用属性');        // 两种都存在时提示
+          alert('已添加全部可用属性');
         }
       };
 
@@ -373,10 +386,11 @@
     function collectForm(body,card,type){
       const q = name=>body.querySelector(`[name="${name}"]`);
       if(type==='prophecy'){
-        card.title = q('title').value.trim();
-        card.ename = q('ename').value.trim();
-        card.intro = q('intro').value.trim();
-        card.effect= q('effect').value.trim();
+        card.title             = q('title').value.trim();
+        card.ename             = q('ename').value.trim();
+        card.intro             = q('intro').value.trim();
+        card.effect            = q('effect').value.trim();
+        card.responsive_effect = q('responsive_effect').value.trim();
         return;
       }
       /* 怪兽卡 */
