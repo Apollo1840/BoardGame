@@ -1,4 +1,4 @@
 card_title|level|monster_type|description|attack|defence|characters|skills|image
-斯巴达武士|0|土|【人族】在这个充满怪物的基姆世界，人类也是怪物的一种。|5|5|{}|[{"skill_name":"背水一击","number_power":1,"skill_text":"本回合的下次攻击攻击力+1"}]|pictures/knight.png
-狼巨人|1|木|【兽人族】栖息在巨木林的巨大的狼人，最大的身高可以到20米。|7|6|{"react_characters":"被翻面召唤的回合可以攻击己方怪兽，如果成功破坏，将会给对方造成伤害。"}|[{"skill_name":"狼嗥","number_power":0,"skill_text":"可以额外召唤一只名字中带有“狼”的怪兽。"},{"skill_name":"森林重击","number_power":3,"skill_text":"此卡可以攻击对方对方场上所有怪兽。"}]|pictures/knight.png
-双头尸牛|3|水|【不死族】双头独角牛。本是兽人族，却被视为凶相而被族人杀死。在怨恨中成为了不死族。|9|7|{"normal_characters":"此回合此卡沉默，我方一回合可以使用两次预言卡。","react_characters":"被攻击破坏时，如果有三层灵力及其以上，可以消耗所有灵力，抵消一次死亡。"}|[{"skill_name":"波浪鼓","number_power":2,"skill_text":"攻击技能。造成的伤害翻倍。"}]|pictures/knight.png
+斯巴达武士|0|土|【人族】在这个充满怪物的基姆世界，人类也是怪物的一种。|5|5|{}|[{"skill_name":"背水一击","number_power":1,"skill_text":"本回合的下次攻击攻击力+1"}]|pictures/spartan_samurai.png
+狼巨人|1|木|【兽人族】栖息在巨木林的巨大的狼人，最大的身高可以到20米。|7|6|{"react_characters":"被翻面召唤的回合可以攻击己方怪兽，如果成功破坏，将会给对方造成伤害。"}|[{"skill_name":"狼嗥","number_power":0,"skill_text":"可以额外召唤一只名字中带有“狼”的怪兽。"},{"skill_name":"森林重击","number_power":3,"skill_text":"此卡可以攻击对方对方场上所有怪兽。"}]|pictures/wolf_gaint.png
+双头尸牛|3|水|【不死族】双头牛头人。本是兽人族，却被视为凶相而被族人杀死。在怨恨中成为了不死族。|9|7|{"normal_characters":"此回合此卡沉默，我方一回合可以使用两次预言卡。","react_characters":"被攻击破坏时，如果有三层灵力及其以上，可以消耗所有灵力，抵消一次死亡。"}|[{"skill_name":"波浪鼓","number_power":2,"skill_text":"攻击技能。造成的伤害翻倍。"}]|pictures/doublehead_bull.png

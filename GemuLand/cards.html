@@ -21,13 +21,13 @@
 
     /* 图片区 */
     .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
-                              display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
+                            display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
     .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
 
     /* 文本区 */
     .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px;
-                     height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end;
-                     gap:2px; overflow:hidden; z-index:2; font-size:10px; }
+                    height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end;
+                    gap:2px; overflow:hidden; z-index:2; font-size:10px; }
 
     /* 文本框 */
     .content-box { background:rgba(255,255,255,0.9); border:1px solid rgba(0,0,0,0.2);
@@ -37,20 +37,20 @@
     .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
     .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
 
-    /* 技能框：名称左、描述右，灵力图标下方 */
+    /* 技能框 */
     .skill-box { display:grid; grid-template-columns: auto 1fr; grid-auto-rows: auto; gap:4px; }
     .skill-name { font-weight:bold; font-size:10px; }
     .skill-desc { font-size:9px; }
     .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
     .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
 
-    /* 边框颜色 */
+    /* 边框色 */
     .card.prophecy { border-color:#4a6cf7; }
     .card.monster  { border-color:#f74a4a; }
 
     /* 底部数值 */
     .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
-                       font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
+                      font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
     .stats .atk::before { content:'▲'; margin-right:2px; }
     .stats .def::before { content:'◇'; margin-right:2px; }
 
@@ -60,131 +60,128 @@
 <body>
   <div id="card-container"></div>
   <script>
-    /************** 工具函数 **************/
-    async function loadCSV(path) {
-      const text = await (await fetch(path)).text();
-      return text.split('\n').slice(1).filter(r=>r.trim());
+    /* ---------- 工具 ---------- */
+    async function loadCSV(path){
+      const txt = await (await fetch(path)).text();
+      return txt.split('\n').slice(1).filter(r=>r.trim());
     }
-    function safeParse(str) { try { return JSON.parse(str); } catch { return {}; } }
+    const safeParse = str => { try{ return JSON.parse(str); } catch { return {}; } };
 
-    /************** 预言卡 **************/
-    function createProphecyCard(cols) {
-      /* 兼容旧 CSV (4 列) 与新 CSV (5 列) */
+    /* ---------- 预言卡 ---------- */
+    function createProphecyCard(cols){
       const [title,intro,effect,responsive_effect='',image] =
             cols.length===4 ? [cols[0],cols[1],cols[2],'',cols[3]] : cols;
 
       const card = document.createElement('div'); card.className='card prophecy';
-
-      /* 标题 */
-      const hdr = document.createElement('div');
-      hdr.className='card-title';
-      hdr.innerHTML=`<span class="name">${title}</span>`;
-      card.append(hdr);
-
-      /* 图片 */
-      const imgW = document.createElement('div'); imgW.className='card-image-container';
-      const img = document.createElement('img'); img.src=image; imgW.append(img);
-      card.append(imgW);
-
-      /* 文本区 */
+      card.innerHTML =
+        `<div class="card-title"><span class="name">${title}</span></div>
+         <div class="card-image-container"><img src="${image}"></div>`;
       const area = document.createElement('div'); area.className='card-content';
-      const boxes = [
-        ['介绍', intro],
-        ['效果', effect]
-      ];
-      /* 有响应效果时追加 */
-      if (responsive_effect) boxes.push(['响应效果', responsive_effect]);
 
-      boxes.forEach(([label, text])=>{
-        const b = document.createElement('div'); b.className='content-box';
-        b.innerHTML =
-          `<div class="box-title">${label}</div>
-           <div class="box-content">${text}</div>`;
-        area.append(b);
-      });
+      /* 介绍：无标题、无边框 */
+      if(intro){
+        area.innerHTML +=
+          `<div class="content-box attribute-box">
+             <div class="box-content">${intro}</div>
+           </div>`;
+      }
+
+      /* 效果：仅当非空时渲染 */
+      if(effect){
+        area.innerHTML +=
+          `<div class="content-box">
+             <div class="box-title">效果</div>
+             <div class="box-content">${effect}</div>
+           </div>`;
+      }
+
+      /* 响应效果：同样按需渲染 */
+      if(responsive_effect){
+        area.innerHTML +=
+          `<div class="content-box">
+             <div class="box-title">响应效果</div>
+             <div class="box-content">${responsive_effect}</div>
+           </div>`;
+      }
 
       shrinkToFit(area);
       card.append(area);
       return card;
     }
 
-    /************** 怪兽卡 **************/
-    function createMonsterCard([title,level,type,desc,atk,def,charStr,skillStr,image]) {
+    /* ---------- 怪兽卡 ---------- */
+    function createMonsterCard([title,level,type,desc,atk,def,charStr,skillStr,image]){
       const chars = safeParse(charStr), skills = safeParse(skillStr);
-      const card = document.createElement('div'); card.className='card monster';
-
-      /* 标题: 等级图标, 名称, 类型 */
       const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level)));
-      const hdr = document.createElement('div'); hdr.className='card-title';
-      hdr.innerHTML=`<span class="level">${lvlIcons}</span><span class="name">${title}</span><span class="type">${type}</span>`;
-      card.append(hdr);
 
-      /* 图片 */
-      const imgW = document.createElement('div'); imgW.className='card-image-container';
-      const img = document.createElement('img'); img.src=image; imgW.append(img);
-      card.append(imgW);
+      const card = document.createElement('div'); card.className='card monster';
+      card.innerHTML =
+        `<div class="card-title">
+           <span class="level">${lvlIcons}</span>
+           <span class="name">${title}</span>
+           <span class="type">${type}</span>
+         </div>
+         <div class="card-image-container"><img src="${image}"></div>`;
 
-      /* 文本区 */
       const area = document.createElement('div'); area.className='card-content';
-      /* 描述 */
+
       if(desc){
-        const b=document.createElement('div'); b.className='content-box attribute-box';
-        b.innerHTML=`<div class="box-content">${desc}</div>`; area.append(b);
+        area.innerHTML +=
+          `<div class="content-box attribute-box">
+             <div class="box-content">${desc}</div>
+           </div>`;
       }
-      /* 属性 */
+
       const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
       Object.entries(chars).forEach(([k,v])=>{
         if(attrMap[k]){
-          const b=document.createElement('div'); b.className='content-box attribute-box';
-          b.innerHTML=`<div class="box-title">${attrMap[k]}</div><div class="box-content">${v}</div>`;
-          area.append(b);
+          area.innerHTML +=
+            `<div class="content-box attribute-box">
+               <div class="box-title">${attrMap[k]}</div>
+               <div class="box-content">${v}</div>
+             </div>`;
         }
       });
-      /* 技能 */
-      if(Array.isArray(skills)) skills.forEach(sk=>{
-        const b=document.createElement('div'); b.className='content-box';
-        b.innerHTML =
-          `<div class="skill-box">
-             <div>
-               <div class="skill-name">${sk.skill_name}</div>
-               <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.number_power)}</div>
-             </div>
-             <div class="skill-desc">${sk.skill_text}</div>
-           </div>`;
-        area.append(b);
-      });
+
+      if(Array.isArray(skills)){
+        skills.forEach(sk=>{
+          area.innerHTML +=
+            `<div class="content-box">
+               <div class="skill-box">
+                 <div>
+                   <div class="skill-name">${sk.skill_name}</div>
+                   <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.number_power)}</div>
+                 </div>
+                 <div class="skill-desc">${sk.skill_text}</div>
+               </div>
+             </div>`;
+        });
+      }
 
       shrinkToFit(area);
       card.append(area);
 
-      /* 底部数值 */
-      const stats=document.createElement('div'); stats.className='stats';
-      stats.innerHTML=`<div class="atk">攻击: ${atk}</div><div class="def">防御: ${def}</div>`;
-      card.append(stats);
+      card.innerHTML +=
+        `<div class="stats">
+           <div class="atk">攻击: ${atk}</div>
+           <div class="def">防御: ${def}</div>
+         </div>`;
       return card;
     }
 
-    /************** 缩放适应 **************/
-    function shrinkToFit(el) {
-      let fs=parseFloat(window.getComputedStyle(el).fontSize);
-      while(el.scrollHeight>el.clientHeight&&fs>5){
+    /* ---------- 缩放 ---------- */
+    function shrinkToFit(el){
+      let fs=parseFloat(getComputedStyle(el).fontSize);
+      while(el.scrollHeight>el.clientHeight && fs>5){
         fs-=0.5; el.style.fontSize=fs+'px';
       }
     }
 
-    /************** 主入口 **************/
+    /* ---------- 主入口 ---------- */
     (async()=>{
-      const pRows = await loadCSV('prophecy_cards.csv');
-      const mRows = await loadCSV('monster_cards.csv');
       const ctr = document.getElementById('card-container');
-
-      pRows.forEach(r=>{
-        const cols = r.split('|');
-        ctr.append(createProphecyCard(cols));
-      });
-      mRows.forEach(r=>{
-        ctr.append(createMonsterCard(r.split('|')));
-      });
+      (await loadCSV('prophecy_cards.csv')).forEach(r=>ctr.append(createProphecyCard(r.split('|'))));
+      (await loadCSV('monster_cards.csv')).forEach(r=>ctr.append(createMonsterCard(r.split('|'))));
     })();
   </script>
 </body>
