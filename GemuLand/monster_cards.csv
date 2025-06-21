@@ -1,0 +1,5 @@
+card_title|level|monster_type|description|attack|defence|characters|skills|image
+暗影骑士|5|土|这是一位强大的战士|8|6|{"normal_characters":"力量:8","react_characters":"敏捷:6"}|[{"number_power":2,"skill_name":"暗影突袭","skill_text":"对单个目标造成双倍伤害"},{"number_power":3,"skill_name":"黑暗庇护","skill_text":"获得护盾吸收伤害"}]|pictures/knight.png
+烈焰凤凰|6|火|浴火重生之灵|5|3|{"normal_characters":"生命:5"}|[{"number_power":4,"skill_name":"烈焰冲击","skill_text":"对所有敌人造成3点火焰伤害"},{"number_power":2,"skill_name":"涅槃重生","skill_text":"本回合死亡后复活并恢复2点生命"}]|pictures/knight.png
+深渊吞噬者|4|水|潜伏在阴影中，寻找猎物|7|5|{"normal_characters":"攻击:7","react_characters":"隐匿:5"}|[{"number_power":1,"skill_name":"吞噬","skill_text":"吞噬一只非传奇怪兽并获得其力量"}]|pictures/knight.png
+森林守护者|3|木|守护古老林地的精灵|6|4|{"normal_characters":"生命:6","react_characters":"自然:4"}|[]|pictures/knight.png
