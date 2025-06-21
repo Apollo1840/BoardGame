@@ -4,293 +4,146 @@
   <meta charset="UTF-8" />
   <title>卡牌生成器</title>
   <style>
-    /* 全局打印调整，确保半透明和图片正常打印 */
-    img, .content-box, .card-title {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
+    /* 打印保真 */
+    img, .content-box, .card-title { print-color-adjust: exact; }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:center; }
 
-    /* 页面布局 */
-    body {
-      font-family: sans-serif;
-      background: #f0f0f0;
-      padding: 20px;
-    }
-    #card-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(63mm, 1fr));
-      gap: 10px;
-      justify-items: center;
-    }
+    /* 卡牌基座 */
+    .card { position:relative; width:63mm; height:88mm; border:1px solid #333; border-radius:8px; background:#fff; overflow:hidden; page-break-inside:avoid; }
 
-    /* 卡牌基础样式 */
-    .card {
-      position: relative;
-      width: 63mm;
-      height: 88mm;
-      border: 1px solid #333;
-      border-radius: 8px;
-      background: #fff;
-      overflow: hidden;
-      page-break-inside: avoid;
-    }
+    /* 标题栏 */
+    .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
+                  background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; }
+    .card-title .level, .card-title .type { font-size:11px; width:15%; text-align:center; }
+    .card-title .name { font-size:12px; flex:1; text-align:center; }
+    .prophecy .card-title { justify-content:center; }
 
-    /* 卡牌标题栏：包含怪兽等级、名称、属性或预言卡名称 */
-    .card-title {
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      right: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255,255,255,0.9);
-      border-radius: 4px;
-      padding: 2px 4px;
-      font-weight: bold;
-      font-size: 12px;
-      z-index: 3;
-    }
-    .card-title .level { width: 15%; text-align: left; font-size: 11px; }
-    .card-title .name  { width: 70%; text-align: center; font-size: 12px; }
-    .card-title .type  { width: 15%; text-align: right; font-size: 11px; }
+    /* 图片区 */
+    .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
+                              display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
+    .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
 
-    /* 预言卡标题居中调整 */
-    .prophecy .card-title { justify-content: center; }
+    /* 文本区 */
+    .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px;
+                     height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end;
+                     gap:2px; overflow:hidden; z-index:2; font-size:10px; }
 
-    /* 图片区域：位于标题下方至卡片1/3高度线之间 */
-    .card-image-container {
-      position: absolute;
-      top: 24px;                /* 标题高度（~16px）+间距 */
-      left: 4px;
-      right: 4px;
-      bottom: calc(4px + 29.33mm); /* 卡片底部1/3上方约29.33mm */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1;
-    }
-    .card-image-container img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      display: block;
-    }
+    /* 文本框 */
+    .content-box { background:rgba(255,255,255,0.9); border:1px solid rgba(0,0,0,0.2);
+                   border-radius:4px; padding:3px; display:grid; grid-template-columns:auto 1fr;
+                   align-items:start; overflow:hidden; }
+    .content-box.attribute-box { border:none; }
+    .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
+    .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
 
-    /* 文本区：位于卡片底部50%高度内，浮于图片上 */
-    .card-content {
-      position: absolute;
-      bottom: calc(4px + 16px); /* 为底部数值区留16px */
-      left: 4px;
-      right: 4px;
-      height: calc(50% - 4px - 16px);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      gap: 2px;
-      overflow: hidden;
-      z-index: 2;
-      font-size: 10px;
-    }
+    /* 技能框：名称左、描述右，灵力图标下方 */
+    .skill-box { display:grid; grid-template-columns: auto 1fr; grid-auto-rows: auto; gap:4px; }
+    .skill-name { font-weight:bold; font-size:10px; }
+    .skill-desc { font-size:9px; }
+    .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
+    .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
 
-    /* 文本框通用样式 */
-    .content-box {
-      background: rgba(255,255,255,0.9);
-      border: 1px solid rgba(0,0,0,0.2);
-      border-radius: 4px;
-      padding: 3px;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: start;
-      overflow: hidden;
-    }
-    .box-title {
-      font-weight: bold;
-      font-size: 10px;
-      margin-right: 3px;
-      white-space: nowrap;
-    }
-    .box-content {
-      font-size: 9px;
-      line-height: 1.2;
-      text-align: justify;
-      overflow: hidden;
-    }
+    /* 边框颜色 */
+    .card.prophecy { border-color:#4a6cf7; }
+    .card.monster  { border-color:#f74a4a; }
 
-    /* 怪兽卡和预言卡边框颜色 */
-    .card.prophecy { border-color: #4a6cf7; }
-    .card.monster { border-color: #f74a4a; }
+    /* 底部数值 */
+    .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
+                       font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
+    .stats .atk::before { content:'▲'; margin-right:2px; }
+    .stats .def::before { content:'◇'; margin-right:2px; }
 
-    /* 技能小圆点符号 */
-    .skill-power { display: flex; align-items: center; margin-right: 3px; flex-shrink: 0; }
-    .power-icon { width: 5px; height: 5px; border-radius: 50%; background: #333; margin-right: 1px; }
-    .skill-content { display: grid; grid-template-columns: auto 1fr; overflow: hidden; }
-    .skill-name { font-weight: bold; text-transform: uppercase; font-size: 10px; margin-bottom: 1px; grid-column: 1 / span 2; }
-
-    /* 怪兽卡底部数值区：攻击/防御同一行左右对齐 */
-    .monster .stats {
-      position: absolute;
-      bottom: 4px;
-      left: 4px;
-      right: 4px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      background: rgba(255,255,255,0.9);
-      padding: 1px 4px;
-      border-radius: 4px;
-      z-index: 4;
-    }
-
-    /* 打印样式：移除阴影和背景 */
-    @media print {
-      body { background: none; padding: 0; }
-      #card-container { gap: 5px; }
-      .card { box-shadow: none; }
-    }
+    @media print { body{background:none;padding:0;} #card-container{gap:5px;} .card{box-shadow:none;} }
   </style>
 </head>
 <body>
-  <!-- 卡片容器：通过 JS 动态插入 -->
   <div id="card-container"></div>
-
   <script>
-    /**
-     * 异步加载 CSV 文件，返回去除表头的行数组
-     */
+    // 异步加载 CSV
     async function loadCSV(path) {
-      const res = await fetch(path);
-      const text = await res.text();
-      return text.split('\n').slice(1).filter(row => row.trim());
+      const text = await (await fetch(path)).text();
+      return text.split('\n').slice(1).filter(r=>r.trim());
     }
+    // 解析 JSON
+    function safeParse(str) { try { return JSON.parse(str); } catch { return {}; } }
 
-    /**
-     * 安全解析 JSON 字符串，失败返回空对象
-     */
-    function safeParse(jsonStr) {
-      try { return JSON.parse(jsonStr); }
-      catch (e) { return {}; }
-    }
-
-    /**
-     * 创建并返回预言卡 DOM
-     * @param {[title,intro,effect,image]} fields
-     */
-    function createProphecyCard(fields) {
-      const [title, introduction, effect, image] = fields;
-      const card = document.createElement('div');
-      card.className = 'card prophecy';
-
-      // 标题
-      const header = document.createElement('div');
-      header.className = 'card-title';
-      header.innerHTML = `<span class="name">${title}</span>`;
-      card.appendChild(header);
-
-      // 图片
-      const imgWrap = document.createElement('div');
-      imgWrap.className = 'card-image-container';
-      const img = document.createElement('img'); img.src = image;
-      imgWrap.appendChild(img);
-      card.appendChild(imgWrap);
-
-      // 文本内容
-      const area = document.createElement('div'); area.className = 'card-content';
-      [['介绍', introduction], ['效果', effect]].forEach(([label, text]) => {
-        const box = document.createElement('div'); box.className = 'content-box';
-        box.innerHTML = `<div class="box-title">${label}</div><div class="box-content">${text || ''}</div>`;
-        area.appendChild(box);
+    // 生成预言卡
+    function createProphecyCard([title,intro,effect,image]) {
+      const card = document.createElement('div'); card.className='card prophecy';
+      const hdr = document.createElement('div'); hdr.className='card-title'; hdr.innerHTML=`<span class="name">${title}</span>`;
+      card.append(hdr);
+      const imgW = document.createElement('div'); imgW.className='card-image-container';
+      const img = document.createElement('img'); img.src=image; imgW.append(img); card.append(imgW);
+      const area = document.createElement('div'); area.className='card-content';
+      [['介绍',intro],['效果',effect]].forEach(([l,t])=>{
+        const b = document.createElement('div'); b.className='content-box';
+        b.innerHTML = `<div class="box-title">${l}</div><div class="box-content">${t||''}</div>`;
+        area.append(b);
       });
-      shrinkToFit(area);
-      card.appendChild(area);
+      shrinkToFit(area); card.append(area);
       return card;
     }
 
-    /**
-     * 创建并返回怪兽卡 DOM
-     * @param {[title,level,type,desc,atk,def,chars,skills,image]} fields
-     */
-    function createMonsterCard(fields) {
-      const [title, level, type, desc, atk, def, charStr, skillStr, image] = fields;
-      const chars = safeParse(charStr);
-      const skills= safeParse(skillStr);
-      const card = document.createElement('div');
-      card.className = 'card monster';
-
-      // 标题: 等级-名称-属性
-      const header = document.createElement('div');
-      header.className = 'card-title';
-      header.innerHTML = `
-        <span class="level">${level}</span>
-        <span class="name">${title}</span>
-        <span class="type">${type}</span>`;
-      card.appendChild(header);
-
+    // 生成怪兽卡
+    function createMonsterCard([title,level,type,desc,atk,def,charStr,skillStr,image]) {
+      const chars = safeParse(charStr), skills = safeParse(skillStr);
+      const card = document.createElement('div'); card.className='card monster';
+      // 标题: 等级图标, 名称, 类型
+      const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level)));
+      const hdr = document.createElement('div'); hdr.className='card-title';
+      hdr.innerHTML=`<span class="level">${lvlIcons}</span><span class="name">${title}</span><span class="type">${type}</span>`;
+      card.append(hdr);
       // 图片
-      const imgWrap = document.createElement('div');
-      imgWrap.className = 'card-image-container';
-      const img = document.createElement('img'); img.src = image;
-      imgWrap.appendChild(img);
-      card.appendChild(imgWrap);
-
-      // 文本内容：描述 + 属性 + 技能
-      const area = document.createElement('div'); area.className = 'card-content';
-      if (desc) {
-        const box = document.createElement('div'); box.className = 'content-box';
-        box.innerHTML = `<div class="box-title">描述</div><div class="box-content">${desc}</div>`;
-        area.appendChild(box);
-      }
-      // 属性映射
-      const attrMap = { normal_characters: '通常属性', react_characters: '反应属性' };
-      Object.entries(chars).forEach(([key, val]) => {
-        if (attrMap[key]) {
-          const box = document.createElement('div'); box.className = 'content-box';
-          box.innerHTML = `<div class="box-title">${attrMap[key]}</div><div class="box-content">${val}</div>`;
-          area.appendChild(box);
+      const imgW = document.createElement('div'); imgW.className='card-image-container';
+      const img = document.createElement('img'); img.src=image; imgW.append(img); card.append(imgW);
+      // 文本区
+      const area = document.createElement('div'); area.className='card-content';
+      // 描述
+      if(desc) { const b=document.createElement('div'); b.className='content-box'; b.innerHTML=`<div class="box-content">${desc}</div>`; area.append(b); }
+      // 属性
+      const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
+      Object.entries(chars).forEach(([k,v])=>{
+        if(attrMap[k]){ const b=document.createElement('div'); b.className='content-box attribute-box';
+          b.innerHTML=`<div class="box-title">${attrMap[k]}</div><div class="box-content">${v}</div>`; area.append(b);
         }
       });
-      // 技能列表
-      if (Array.isArray(skills)) skills.forEach(sk => {
-        const box = document.createElement('div'); box.className='content-box';
-        box.innerHTML = `
-          <div class="box-title">${sk.skill_name}</div>
-          <div class="box-content">
-            <div class="skill-power">${'<div class="power-icon"></div>'.repeat(sk.number_power)}</div>
-            ${sk.skill_text}
-          </div>`;
-        area.appendChild(box);
+      // 技能
+      if(Array.isArray(skills)) skills.forEach(sk=>{
+        const b=document.createElement('div'); b.className='content-box';
+        b.innerHTML =
+          `<div class="skill-box">
+             <div>
+               <div class="skill-name">${sk.skill_name}</div>
+               <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.number_power)}</div>
+             </div>
+             <div class="skill-desc">${sk.skill_text}</div>
+           </div>`;
+        area.append(b);
       });
-      shrinkToFit(area);
-      card.appendChild(area);
-
-      // 底部攻击/防御
-      const stats = document.createElement('div'); stats.className='stats';
-      stats.innerHTML = `<div>攻击: ${atk}</div><div>防御: ${def}</div>`;
-      card.appendChild(stats);
-
+      shrinkToFit(area); card.append(area);
+      // 底部数值
+      const stats=document.createElement('div'); stats.className='stats';
+      stats.innerHTML=`<div class="atk">攻击: ${atk}</div><div class="def">防御: ${def}</div>`;
+      card.append(stats);
       return card;
     }
 
-    /**
-     * 缩小字体直到内容区域无滚动
-     */
+    // 缩放适应
     function shrinkToFit(el) {
-      let fs = parseFloat(window.getComputedStyle(el).fontSize);
-      while (el.scrollHeight > el.clientHeight && fs > 5) {
-        fs -= 0.5;
-        el.style.fontSize = fs + 'px';
-      }
+      let fs=parseFloat(window.getComputedStyle(el).fontSize);
+      while(el.scrollHeight>el.clientHeight&&fs>5){fs-=0.5;el.style.fontSize=fs+'px';}
     }
 
-    // 页面初始化：加载 CSV 并生成卡片
-    (async () => {
-      const pRows = await loadCSV('prophecy_cards.csv');
-      const mRows = await loadCSV('monster_cards.csv');
-      const container = document.getElementById('card-container');
-
-      pRows.forEach(row => container.appendChild(createProphecyCard(row.split('|'))));
-      mRows.forEach(row => container.appendChild(createMonsterCard(row.split('|'))));
+    // 初始化
+    (async()=>{
+      const p=await loadCSV('prophecy_cards.csv');
+      const m=await loadCSV('monster_cards.csv');
+      const ctr=document.getElementById('card-container');
+      p.forEach(r=>ctr.append(createProphecyCard(r.split('|'))));
+      m.forEach(r=>ctr.append(createMonsterCard(r.split('|'))));
     })();
   </script>
 </body>
 </html>
+
