@@ -99,8 +99,14 @@
       const img = document.createElement('img'); img.src=image; imgW.append(img); card.append(imgW);
       // 文本区
       const area = document.createElement('div'); area.className='card-content';
-      // 描述
-      if(desc) { const b=document.createElement('div'); b.className='content-box'; b.innerHTML=`<div class="box-content">${desc}</div>`; area.append(b); }
+            // 描述
+      if(desc) {
+        const b = document.createElement('div');
+        // 使用 attribute-box 类移除边框
+        b.className = 'content-box attribute-box';
+        b.innerHTML = `<div class="box-content">${desc}</div>`;
+        area.append(b);
+      } 
       // 属性
       const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
       Object.entries(chars).forEach(([k,v])=>{
@@ -146,4 +152,3 @@
   </script>
 </body>
 </html>
-
