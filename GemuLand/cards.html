@@ -1,145 +1,145 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <title>卡牌生成器</title>
-  <style>
-    /* 打印保真 */
-    img, .content-box, .card-title { print-color-adjust: exact; }
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-    #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:center; }
+    <meta charset="UTF-8"/>
+    <title>卡牌生成器</title>
+    <style>
+        /* 打印保真 */
+        img, .content-box, .card-title { print-color-adjust: exact; }
+        body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+        #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:center; }
 
-    /* 卡牌基座 */
-    .card {
-      position: relative;
-      width: 63mm;
-      height: 88mm;
-      border: 1px solid #000;   
-      border-radius: 8px;
-      overflow: hidden;
-      page-break-inside: avoid;
-      -webkit-print-color-adjust: exact;   /* 旧版 Chromium、Safari */
-      print-color-adjust: exact;           /* 新标准写法 */
-    }
+        /* 卡牌基座 */
+        .card {
+            position: relative;
+            width: 63mm;
+            height: 88mm;
+            border: 1px solid #000;
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+            -webkit-print-color-adjust: exact;   /* 旧版 Chromium、Safari */
+            print-color-adjust: exact;           /* 新标准写法 */
+        }
 
-    /* 分类底色 */
-    .card.monster  { background:#e6f3e6; }   /* 低饱和浅绿 */
-    .card.prophecy { background:#e9f1fb; }   /* 低饱和浅蓝 */
+        /* 分类底色 */
+        .card.monster  { background:#e6f3e6; }   /* 低饱和浅绿 */
+        .card.prophecy { background:#e9f1fb; }   /* 低饱和浅蓝 */
 
-    /* 标题栏 */
-    .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
-                  background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; }
-    .card-title .level, .card-title .type { font-size:11px; width:15%; text-align:center; }
-    .card-title .name { font-size:12px; flex:1; text-align:center; }
-    .prophecy .card-title { justify-content:center; }
+        /* 标题栏 */
+        .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
+            background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; }
+        .card-title .level, .card-title .type { font-size:11px; width:15%; text-align:center; }
+        .card-title .name { font-size:12px; flex:1; text-align:center; }
+        .prophecy .card-title { justify-content:center; }
 
-    /* 图片区 */
-    .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
-                            display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
-    .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+        /* 图片区 */
+        .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
+            display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
+        .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
 
-    /* 文本区 */
-    .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px;
-                    height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end;
-                    gap:2px; overflow:hidden; z-index:2; font-size:10px; }
+        /* 文本区 */
+        .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px;
+            height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end;
+            gap:2px; overflow:hidden; z-index:2; font-size:10px; }
 
-    /* 文本框 */
-    .content-box{
-      background: rgba(255,255,255,0.75);  /* 透明度 ↑ （原 0.90）*/
-      border: 1px solid rgba(0,0,0,0.2);
-      border-radius: 4px;
-      padding: 3px;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      align-items: start;
-      overflow: hidden;
-    }
-    .content-box.attribute-box { border:none; }
-    .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
-    .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
+        /* 文本框 */
+        .content-box{
+            background: rgba(255,255,255,0.75);  /* 透明度 ↑ （原 0.90）*/
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            padding: 3px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: start;
+            overflow: hidden;
+        }
+        .content-box.attribute-box { border:none; }
+        .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
+        .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
 
-    /* 技能框 */
-    .skill-box { display:grid; grid-template-columns: auto 1fr; grid-auto-rows: auto; gap:4px; }
-    .skill-name { font-weight:bold; font-size:10px; }
-    .skill-desc { font-size:9px; }
-    .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
-    .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
+        /* 技能框 */
+        .skill-box { display:grid; grid-template-columns: auto 1fr; grid-auto-rows: auto; gap:4px; }
+        .skill-name { font-weight:bold; font-size:10px; }
+        .skill-desc { font-size:9px; }
+        .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
+        .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
 
-    /* 底部数值 */
-    .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
-                      font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
-    .stats .atk::before { content:'▲'; margin-right:2px; }
-    .stats .def::before { content:'◇'; margin-right:2px; }
+        /* 底部数值 */
+        .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
+            font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
+        .stats .atk::before { content:'▲'; margin-right:2px; }
+        .stats .def::before { content:'◇'; margin-right:2px; }
 
-    @media print { 
-      body{background:none;padding:0;}
-      #card-container{gap:5px;} 
-      .card{box-shadow:none;} 
-      .card.monster  { background:#e6f3e6 !important; }
-      .card.prophecy { background:#e9f1fb !important; }
-    }
-    
-  </style>
+        @media print {
+            body{background:none;padding:0;}
+            #card-container{gap:5px;}
+            .card{box-shadow:none;}
+            .card.monster  { background:#e6f3e6 !important; }
+            .card.prophecy { background:#e9f1fb !important; }
+        }
+
+    </style>
 </head>
 <body>
-  <div id="card-container"></div>
-  <script>
+<div id="card-container"></div>
+<script>
     /* ---------- 工具 ---------- */
     async function loadCSV(path){
-      const txt = await (await fetch(path)).text();
-      return txt.split('\n').slice(1).filter(r=>r.trim());
+        const txt = await (await fetch(path)).text();
+        return txt.split('\n').slice(1).filter(r=>r.trim());
     }
     const safeParse = str => { try{ return JSON.parse(str); } catch { return {}; } };
 
     /* ---------- 预言卡 ---------- */
     function createProphecyCard(cols){
-      const [title,intro,effect,responsive_effect='',image] =
-            cols.length===4 ? [cols[0],cols[1],cols[2],'',cols[3]] : cols;
+        const [title,intro,effect,responsive_effect='',image] =
+        cols.length===4 ? [cols[0],cols[1],cols[2],'',cols[3]] : cols;
 
-      const card = document.createElement('div'); card.className='card prophecy';
-      card.innerHTML =
+        const card = document.createElement('div'); card.className='card prophecy';
+        card.innerHTML =
         `<div class="card-title"><span class="name">${title}</span></div>
          <div class="card-image-container"><img src="${image}"></div>`;
-      const area = document.createElement('div'); area.className='card-content';
+        const area = document.createElement('div'); area.className='card-content';
 
-      /* 介绍：无标题、无边框 */
-      if(intro){
-        area.innerHTML +=
-          `<div class="content-box attribute-box">
-             <div class="box-content">${intro}</div>
-           </div>`;
-      }
+        /* 介绍：无标题、无边框 */
+        if(intro){
+            area.innerHTML +=
+            `<div class="content-box attribute-box">
+               <div class="box-content">${intro}</div>
+             </div>`;
+        }
 
-      /* 效果：仅当非空时渲染 */
-      if(effect){
-        area.innerHTML +=
-          `<div class="content-box">
-             <div class="box-title">效果</div>
-             <div class="box-content">${effect}</div>
-           </div>`;
-      }
+        /* 效果：仅当非空时渲染 */
+        if(effect){
+            area.innerHTML +=
+            `<div class="content-box">
+               <div class="box-title">效果</div>
+               <div class="box-content">${effect}</div>
+             </div>`;
+        }
 
-      /* 响应效果：同样按需渲染 */
-      if(responsive_effect){
-        area.innerHTML +=
-          `<div class="content-box">
-             <div class="box-title">响应效果</div>
-             <div class="box-content">${responsive_effect}</div>
-           </div>`;
-      }
+        /* 响应效果：同样按需渲染 */
+        if(responsive_effect){
+            area.innerHTML +=
+            `<div class="content-box">
+               <div class="box-title">响应效果</div>
+               <div class="box-content">${responsive_effect}</div>
+             </div>`;
+        }
 
-      shrinkToFit(area);
-      card.append(area);
-      return card;
+        shrinkToFit(area);
+        card.append(area);
+        return card;
     }
 
     /* ---------- 怪兽卡 ---------- */
     function createMonsterCard([title,level,type,desc,atk,def,charStr,skillStr,image]){
-      const chars = safeParse(charStr), skills = safeParse(skillStr);
-      const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level)));
+        const chars = safeParse(charStr), skills = safeParse(skillStr);
+        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level)));
 
-      const card = document.createElement('div'); card.className='card monster';
-      card.innerHTML =
+        const card = document.createElement('div'); card.className='card monster';
+        card.innerHTML =
         `<div class="card-title">
            <span class="level">${lvlIcons}</span>
            <span class="name">${title}</span>
@@ -147,66 +147,83 @@
          </div>
          <div class="card-image-container"><img src="${image}"></div>`;
 
-      const area = document.createElement('div'); area.className='card-content';
+        const area = document.createElement('div'); area.className='card-content';
 
-      if(desc){
-        area.innerHTML +=
-          `<div class="content-box attribute-box">
-             <div class="box-content">${desc}</div>
-           </div>`;
-      }
-
-      const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
-      Object.entries(chars).forEach(([k,v])=>{
-        if(attrMap[k]){
-          area.innerHTML +=
+        if(desc){
+            area.innerHTML +=
             `<div class="content-box attribute-box">
-               <div class="box-title">${attrMap[k]}</div>
-               <div class="box-content">${v}</div>
+               <div class="box-content">${desc}</div>
              </div>`;
         }
-      });
 
-      if(Array.isArray(skills)){
-        skills.forEach(sk=>{
-          area.innerHTML +=
-            `<div class="content-box">
-               <div class="skill-box">
-                 <div>
-                   <div class="skill-name">${sk.skill_name}</div>
-                   <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.number_power)}</div>
-                 </div>
-                 <div class="skill-desc">${sk.skill_text}</div>
-               </div>
-             </div>`;
+        const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
+        Object.entries(chars).forEach(([k,v])=>{
+            if(attrMap[k]){
+                area.innerHTML +=
+                `<div class="content-box attribute-box">
+                   <div class="box-title">${attrMap[k]}</div>
+                   <div class="box-content">${v}</div>
+                 </div>`;
+            }
         });
-      }
 
-      shrinkToFit(area);
-      card.append(area);
+        if(Array.isArray(skills)){
+            skills.forEach(sk=>{
+                area.innerHTML +=
+                `<div class="content-box">
+                   <div class="skill-box">
+                     <div>
+                       <div class="skill-name">${sk.skill_name}</div>
+                       <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.number_power)}</div>
+                     </div>
+                     <div class="skill-desc">${sk.skill_text}</div>
+                   </div>
+                 </div>`;
+            });
+        }
 
-      card.innerHTML +=
+        shrinkToFit(area);
+        card.append(area);
+
+        card.innerHTML +=
         `<div class="stats">
            <div class="atk">攻击: ${atk}</div>
            <div class="def">防御: ${def}</div>
          </div>`;
-      return card;
+        return card;
     }
 
     /* ---------- 缩放 ---------- */
     function shrinkToFit(el){
-      let fs=parseFloat(getComputedStyle(el).fontSize);
-      while(el.scrollHeight>el.clientHeight && fs>5){
-        fs-=0.5; el.style.fontSize=fs+'px';
-      }
+        let fs=parseFloat(getComputedStyle(el).fontSize);
+        while(el.scrollHeight>el.clientHeight && fs>5){
+            fs-=0.5; el.style.fontSize=fs+'px';
+        }
     }
 
-    /* ---------- 主入口 ---------- */
-    (async()=>{
-      const ctr = document.getElementById('card-container');
-      (await loadCSV('prophecy_cards.csv')).forEach(r=>ctr.append(createProphecyCard(r.split('|'))));
-      (await loadCSV('monster_cards.csv')).forEach(r=>ctr.append(createMonsterCard(r.split('|'))));
-    })();
-  </script>
+    async function loadCSV(path) {
+        const res = await fetch(path, { cache: 'no-store' }); // ← 关键
+        const text = await res.text();
+        return text.split('\n').slice(1).filter(r => r.trim());
+    }
+    async function renderAllCards() {
+        const ctr = document.getElementById('card-container');
+        ctr.innerHTML = '';                       // 清空旧内容
+
+        (await loadCSV('prophecy_cards.csv'))
+            .forEach(r => ctr.append(createProphecyCard(r.split('|'))));
+
+        (await loadCSV('monster_cards.csv'))
+            .forEach(r => ctr.append(createMonsterCard(r.split('|'))));
+    }
+
+      /* ---------- 主入口 ---------- */
+        document.addEventListener('DOMContentLoaded', () => {
+        renderAllCards();                 // 首次渲染
+        setInterval(renderAllCards, 30000); // 每 5 秒更新一次；可按需调整
+    });
+
+
+</script>
 </body>
 </html>

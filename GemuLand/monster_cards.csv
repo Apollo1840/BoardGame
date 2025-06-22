@@ -5,3 +5,6 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 精灵短枪兵|1|火|【精灵族】精灵族的武器也迎来了技术的升级。|8|4|{"react_characters":"受到攻击的时候，可以通过移除一个灵力来临时获得防御力+2。"}|[{"skill_name":"精准射击","number_power":0,"skill_text":"【攻击技能】临时获得攻击力+1，但此攻击造成玩家伤害为0。"}]|pictures/elf_shooter.png
 幽夜猫|2|冰|【恶魔族】恶魔地界的宠物，很难在其他地方看到。|9|8|{"normal_characters":"此卡给对方造成伤害后，我方抽一张牌。"}|[{"skill_name":"寒霜吐息","number_power":1,"skill_text":"使对方一只怪兽本回合防御力-1"},{"skill_name":"报复冰刺","number_power":2,"skill_text":"当我方生命值更低才可使用，对方丢弃一张手牌"}]|pictures/night_cat.png
 石砖人|2|岩|【石头人族】废弃的城堡变化成的石头人|10|10|{}|[]|pictures/castle_man.png
+哥布林|0|无|【兽人族】脆弱的怪物，谁都可以踩两脚。|2|0|{"react_characters":"此卡从场上舍弃或者被破坏后，直接加入我方手牌（不会化作灵力）"}|[]|pictures/goblin.png
+大哥布林|1|无|【兽人族】抢夺了族人的食物而长大的哥布林，寿命很短。|7|3|{}|[{"skill_name":"召唤","number_power":0,"skill_text":"特殊召唤一只 <哥布林> 到我方场上。"},{"skill_name":"偷蛋","number_power":2,"skill_text":"将对方场上一只怪兽蛋移动到我方场上。"}]|pictures/big_goblin.png
+战士哥布林|0|无|【兽人族】有的哥布林似乎身经百战，但实际依然弱小可笑。|4|3|{"normal_characters":"场上有兽人族怪兽时，可以特殊召唤此卡。以这样的方式召唤的回合此卡不能攻击。","react_characters":"舍弃或被破坏时，抽一张牌，并立即覆盖在场上。"}|[]|pictures/fighter_goblin.png
