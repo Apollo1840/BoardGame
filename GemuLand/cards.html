@@ -23,8 +23,8 @@
         }
 
         /* 分类底色 */
-        .card.monster  { background:#e6f3e6; }   /* 低饱和浅绿 */
-        .card.prophecy { background:#e9f1fb; }   /* 低饱和浅蓝 */
+        .card.monster  { background:#ffffff; }   /* 纯白色 */
+        .card.prophecy { background:#dbe8ff; }   /* 低饱和浅蓝 */
 
         /* 标题栏 */
         .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
@@ -45,7 +45,7 @@
 
         /* 文本框 */
         .content-box{
-            background: rgba(255,255,255,0.75);  /* 透明度 ↑ （原 0.90）*/
+            background: rgba(255,255,255,0.75);
             border: 3px solid rgba(0,0,0,0.2);
             border-radius: 4px;
             padding: 3px;
@@ -71,11 +71,17 @@
         .stats .atk::before { content:'▲'; margin-right:2px; }
         .stats .def::before { content:'◇'; margin-right:2px; }
 
+        /* 红色标题：响应效果 & 反应属性 */
+        .responsive-effect .box-title,
+        .reaction-attr .box-title {
+            color: red;
+        }
+
         @media print {
             body{background:none;padding:0;}
             #card-container{gap:5px;}
             .card{box-shadow:none;}
-            .card.monster  { background:#e6f3e6 !important; }
+            .card.monster  { background:#ffffff !important; }
             .card.prophecy { background:#e9f1fb !important; }
         }
 
@@ -122,7 +128,7 @@
         /* 响应效果：同样按需渲染 */
         if(responsive_effect){
             area.innerHTML +=
-            `<div class="content-box">
+            `<div class="content-box responsive-effect">
                <div class="box-title">响应效果</div>
                <div class="box-content">${responsive_effect}</div>
              </div>`;
@@ -159,8 +165,9 @@
         const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
         Object.entries(chars).forEach(([k,v])=>{
             if(attrMap[k]){
+                const extraCls = k==='react_characters' ? ' reaction-attr' : '';
                 area.innerHTML +=
-                `<div class="content-box attribute-box">
+                `<div class="content-box attribute-box${extraCls}">
                    <div class="box-title">${attrMap[k]}</div>
                    <div class="box-content">${v}</div>
                  </div>`;
@@ -202,13 +209,13 @@
     }
 
     async function loadCSV(path) {
-        const res = await fetch(path, { cache: 'no-store' }); // ← 关键
+        const res = await fetch(path, { cache: 'no-store' });
         const text = await res.text();
         return text.split('\n').slice(1).filter(r => r.trim());
     }
     async function renderAllCards() {
         const ctr = document.getElementById('card-container');
-        ctr.innerHTML = '';                       // 清空旧内容
+        ctr.innerHTML = '';
 
         (await loadCSV('prophecy_cards.csv'))
             .forEach(r => ctr.append(createProphecyCard(r.split('|'))));
@@ -217,12 +224,11 @@
             .forEach(r => ctr.append(createMonsterCard(r.split('|'))));
     }
 
-      /* ---------- 主入口 ---------- */
-        document.addEventListener('DOMContentLoaded', () => {
+    /* ---------- 主入口 ---------- */
+    document.addEventListener('DOMContentLoaded', () => {
         renderAllCards();                 // 首次渲染
-        setInterval(renderAllCards, 30000); // 每 5 秒更新一次；可按需调整
+        setInterval(renderAllCards, 30000); // 每 30 秒更新一次
     });
-
 
 </script>
 </body>
