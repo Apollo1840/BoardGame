@@ -20,14 +20,13 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 圣女|0|光|【人种】洁癖，拒绝谈恋爱。|0|3|{"normal_characters":"我方所有怪物防御力+1。","react_characters":"当我方抽牌时，如果我方手牌数量小于4，则再抽一张。"}|[{"skill_name":"神除","number_power":1,"skill_text":"如果对方场上怪物数量多于我方，丢弃一张手牌，破坏对方场上一张卡片。"},{"skill_name":"圣灭","number_power":0,"skill_text":"破坏对方场上一张正面表示的预言卡。"}]|pictures/protector.png
 谋士集团|0||【人种】三个人总是吵架，但形影不离。|2|6|{"react_characters":"一回合一次。当对方使用发出攻击指令时，我方翻出牌堆第一张牌，如果是0级怪兽可以直接召唤并接受攻击。如果是预言卡，可直接使用。如果无法召唤或使用，则丢弃。"}|[]|pictures/clevers.png
 阴阳真人|0|虚|【人种】中二的修行之人。|3|3|{"normal_characters":"操作阶段可额外使用一张预言卡。","react_characters":"当对方在我方回合使用预言卡时，将<天借真力>从牌堆或弃牌堆加入手牌。"}|[{"skill_name":"八门遁甲","number_power":1,"skill_text":"将对方场上一张卡片返回对方手牌。"}]|pictures/yin_yang.png
-重锤骑士|1|金|【兽人种】温和的兽人，喜欢和人类生活在一起。|7|9|{}|[]|pictures/hard_knight.png
+重锤骑士|1|金|【兽人种】温和的兽人，喜欢和人活在一起。|7|9|{}|[]|pictures/hard_knight.png
 江湖侠客|1|金|【人种】女装大佬，枪法了得。|6|4|{"normal_characters":"一回合一次，将对方对此卡的攻击无效化。"}|[]|pictures/female_lancher.png
 敏捷女猎人|1|金|【人种】学习了变化之术，可以变猫。|3|5|{"normal_characters":"此卡在场上，我方受到的所有伤害-1。"}|[{"skill_name":"隐蔽气息","number_power":1,"skill_text":"防御力+6直到对方回合结束。"},{"skill_name":"偷袭","number_power":1,"skill_text":"直接攻击对方玩家。并查看对方1张手牌。"}]|pictures/female_killer.png
 水晶球灵|1|雷|【灵体种】可以化成各种猫型态。|2|4|{"normal_characters":"对方手牌如果比我方多，则我方每使用一次预言卡，则可查看对方一张手牌。","react_characters":"当有怪物被战斗破坏后，查看我方牌堆最上方的牌。"}|[{"skill_name":"出灵","number_power":0,"skill_text":"从弃牌堆随机，或者从牌堆上方抽取一张牌作为此卡的灵力。"},{"skill_name":"转灵","number_power":0,"skill_text":"重新分配我方场上4点以下灵力。"}]|pictures/ball_magician.png
 女武师|1||【人种】天生怪力的哑巴。|6|5|{"normal_characters":"在对方回合防御力+3"}|[{"skill_name":"高速拳法","number_power":0,"skill_text":"【攻击技能】攻击+3"},{"skill_name":"一蛇绝杀","number_power":4,"skill_text":"【攻击技能】攻击+10"}]|pictures/girl_boxer.png
 法盾师|1|虚|【人种】最大的特点是但小。|0|2|{"react_characters":"丢弃一张预言卡，无效化对方一次效果释放。"}|[{"skill_name":"法盾","number_power":0,"skill_text":"我方一只怪物防御+5，直至对方回合结束。"},{"skill_name":"加涅尔守护","number_power":1,"skill_text":"无效化下回合三次对方攻击。"},{"skill_name":"灵力转移","number_power":0,"skill_text":"重新分配我方场上6点以下灵力。"}]|pictures/magic_shield.png
 大将|2|金|【人种】正义温和的将军城城主，育有二儿二女。|9|9|{"normal_characters":"此卡在场上，对方不能选择其他人族为攻击对象。"}|[{"skill_name":"赏钱","number_power":1,"skill_text":"抽一张牌。"}]|pictures/general.png
-月族女战士|2|金|【人种】非常神秘，偶尔出没在将军城。|6|10|{"react_characters":"当场上有怪物使用灵力施展技能后，此卡吸收其使用掉的灵力。一回合合计最高2点。"}|[]|pictures/moon_fighter.png
+月族女战士-夙|2|金|【人种】|6|10|{"react_characters":"当场上有怪物使用灵力施展技能后，此卡吸收其使用掉的灵力。一回合合计最高2点。"}|[]|pictures/moon_fighter.png
 青山剑仙|1|金|【灵体种】本体是剑，剑仙是青山神剑的器灵。|6|0|{"normal_characters":"此卡无法被灵力更低的怪物攻击选中。","react_characters":"（一回合一次）当受到攻击力或防御力增益的时候，从弃牌堆随机获得一张预言卡。"}|[{"skill_name":"剑气决","number_power":0,"skill_text":"我方给对方造成非战斗伤害的回合，抽两张牌，并放回一张手牌到牌堆上方。"},{"skill_name":"灵升诀","number_power":1,"skill_text":"将我方场上一只怪兽放回手牌，对方暂时不能改变手牌顺序，我方抽取一张加入手牌。"}]|pictures/sword_god.png
 阴阳女童|0||【人种】腹黑小女孩，据说是能掌握混沌之力的天才。|2|4|{"react_characters":"当我方造成非攻击伤害时，追加1点伤害。"}|[{"skill_name":"天地异相","number_power":1,"skill_text":"此回合我方造成的战斗伤害翻倍。"},{"skill_name":"嘲讽吸收","number_power":0,"skill_text":"指定场上一只怪物对自己发出额外攻击，之后吸收其一点灵力。"},{"skill_name":"鼓励","number_power":2,"skill_text":"我方场上一只怪兽可以再使用一次技能。"}]|pictures/yingyang_baby.png
-贪婪壶灵|0|金|【灵体种】年龄非常大的器灵。|1|1|{"normal_characters":"不会被战斗破坏。","react_characters":"当对方在抽牌阶段外抽牌时，我方同步抽相同张数。"}|[]|pictures/greedy.png

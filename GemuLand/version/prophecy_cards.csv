@@ -14,7 +14,7 @@ card_title|introduction|effect|responsive_effect|image
 狂暴派对||我方场上所有怪物攻击+（我方场上怪兽数量）。对方场上所有怪物防御+（对方场上怪兽数量）。此回合造成的战斗伤害翻倍。||pictures/outrage.png
 经验分享|||我方一只怪物被战斗破坏时，下回合我方所有怪物攻击+（战斗伤害值）。|pictures/share_exp.png
 完美洞穴||此卡使用后，会一直存在于场上。在布置阶段，可以将任意数量的我方场上怪物放置在此卡上面，或从此卡上方取出任意数量的怪物，召唤到场上。||pictures/goblin_cave.png
-分配不均||如果我方此回合已经进行过两次以上召唤，可以将我方一只怪物翻面成怪兽蛋，然后抽取对方两张手牌。||pictures/inequal.png
+分配不均||如果我方此回合已经进行过两次以上召唤，可以将我方两只怪物翻面并抽取对方两张手牌。||pictures/inequal.png
 融入压力||我方所有怪物的基础攻击力变成和的平均值（向上取整）。||pictures/integration.png
 阵前演讲||本回合我方全体怪物攻击力+3。||pictures/fight_speech.png
 天借真力||指定场上一只怪物，攻击力+5。|当我方一只怪物被攻击时，防御力+5。|pictures/temp_power.png
@@ -25,8 +25,4 @@ card_title|introduction|effect|responsive_effect|image
 圣光保护|【永续】|此卡发动后会一直存在在场上。我方所有怪物防御+2。||pictures/protection.png
 国库宝藏||丢弃一张手牌（或场上的牌，或灵力），抽2张牌。||pictures/land_gold.png
 嗜血指令||指定一只怪物攻击力+3，此回合它造成的战斗伤害翻倍。||pictures/blood_kill.png
-强势抢夺|||对方抽卡后，抽取那张牌或对方一张手牌。|pictures/snatch.png
-哥布灵体|【永续】百年一遇的友善哥布林，被同伴残害而死后变成了灵体。|使用后，在我方回合视为怪物卡：灵体种，ATK: 4，DEF: 4。||pictures/goblin_gost.png
-一场箭雨||我方场上每只怪物给对方造成5点伤害。||pictures/arrows.png
-灵光乍现||从弃牌堆随机，或牌堆上方抽取两张牌作为灵力，随机分配在我方怪物上。||pictures/spirit_shine.png
-大预言书|【永续】预言家什么也没说，只是默默写了本书|将此卡移出的回合，可以额外再使用最多三次预言卡。||pictures/prophey_book.png
+抢夺|||对方抽卡后，抽取那张牌或对方一张手牌。|pictures/snatch.png
