@@ -77,8 +77,13 @@
             color: red;
         }
 
+        @page {               /* 新增 */
+            margin: 0;        /* 0 mm 页边距 */
+            size: auto;       /* 让浏览器保持原纸张大小 */
+        }
+
         @media print {
-            body{background:none;padding:0;}
+            body{background:none;margin:0;padding:0;}   /* 原来已有 padding:0，这里同时把 margin 也归零 */
             #card-container{gap:5px;}
             .card{box-shadow:none;}
             .card.monster  { background:#ffffff !important; }
