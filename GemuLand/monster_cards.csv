@@ -31,7 +31,11 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 青山剑仙|1|金|【灵体种】本体是剑，剑仙是青山神剑的器灵。|6|0|{"normal_characters":"此卡无法被灵力更低的怪物攻击选中。","react_characters":"（一回合一次）当受到攻击力或防御力增益的时候，从弃牌堆随机获得一张预言卡。"}|[{"skill_name":"剑气决","number_power":0,"skill_text":"我方给对方造成非战斗伤害的回合，抽两张牌，并放回一张手牌到牌堆上方。"},{"skill_name":"灵升诀","number_power":1,"skill_text":"将我方场上一只怪兽放回手牌，对方暂时不能改变手牌顺序，我方抽取一张加入手牌。"}]|pictures/sword_god.png
 阴阳女童|0||【人类种】腹黑小女孩，据说是能掌握混沌之力的天才。|2|4|{"react_characters":"当我方造成非攻击伤害时，追加1点伤害。"}|[{"skill_name":"天地异相","number_power":1,"skill_text":"此回合我方造成的战斗伤害翻倍。"},{"skill_name":"嘲讽吸收","number_power":0,"skill_text":"指定场上一只怪物对自己发出额外攻击，之后吸收其一点灵力。"},{"skill_name":"鼓励","number_power":2,"skill_text":"我方场上一只怪兽可以再使用一次技能。"}]|pictures/yingyang_baby.png
 贪婪壶灵|0|金|【灵体种】年龄非常大的器灵。|1|1|{"normal_characters":"不会被战斗破坏。","react_characters":"当对方在抽牌阶段外抽牌时，我方同步抽相同张数。"}|[]|pictures/greedy.png
+<<<<<<< HEAD
 小翼虎魔|0|暗|【魔灵种】喜欢在风中讲鬼故事。|3|3|{"react_characters":"当对方给予我方非战斗伤害时，我可查看对方三张手牌。"}|[{"skill_name":"翼盾","number_power":0,"skill_text":"直到下次对方回合结束，此卡获得一次被卡片效果破坏免疫。"},{"skill_name":"虎天冲","number_power":1,"skill_text":"此卡这回合不能攻击，破坏对方场上一张永续预言卡。"}]|pictures/small_fly_tiger.png
 双胞胎哥布林|0||【兽人种】从出生就形影不离的两只哥布林|2|2|{"normal_characters":"在场上视为两只怪物。一回合被攻击破坏两次或被卡片破坏两次才会被破坏。"}|[{"skill_name":"双重攻击","number_power":1,"skill_text":"此回合可以攻击两次。"}]|pictures/double_goblin.png
 刚铎幼龙|0||【龙种】|10|6|{"normal_characters":"破坏我方场上一张卡片，或是丢弃一张手牌，才可召唤此卡。每回合给我方带来3点伤害。"}|[]|pictures/little_dragon.png
 天使卫兵|0||【天使种】|3|5|{}|[{"skill_name":"圣罚","number_power":0,"skill_text":"【攻击技能】被攻击的怪物无法发动技能直到对方回合结束。"},{"skill_name":"天赐","number_power":1,"skill_text":"声明对方一张手牌，如果命中，获得该手牌。"}]|pictures/angle_guard.png
+=======
+小翼虎魔|0|暗|【魔灵种】喜欢在风中讲鬼故事。|3|3|{"react_characters":"当对方给予我方非战斗伤害时，我可查看对方三张手牌。"}|[{"skill_name":"翼盾","number_power":0,"skill_text":"直到下次对方回合结束，此卡获得一次被卡片效果破坏免疫。"},{"skill_name":"虎天冲","number_power":1,"skill_text":"此卡这回合不能攻击，破坏对方场上一张永续预言卡。"}]|pictures/small_fly_tiger.png
+>>>>>>> cf5ea7b19feb487281a72cda4cb97acb2df5a5b9
