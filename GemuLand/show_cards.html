@@ -24,7 +24,7 @@
 
         /* 分类底色 */
         .card.monster  { background:#ffffff; }   /* 纯白色 */
-        .card.prophecy { background:#dbe8ff; }   /* 低饱和浅蓝 */
+        .card.prophecy { background:#a4c8ff; }   /* 低饱和浅蓝 */
 
         /* 标题栏 */
         .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
@@ -232,7 +232,7 @@
     /* ---------- 主入口 ---------- */
     document.addEventListener('DOMContentLoaded', () => {
         renderAllCards();                 // 首次渲染
-        setInterval(renderAllCards, 30000); // 每 30 秒更新一次
+        setInterval(renderAllCards, 120000); // 每 120 秒更新一次
     });
 
 </script>
