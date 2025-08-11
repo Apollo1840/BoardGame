@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>卡牌统计</title>
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
+  <style>
+    :root { scroll-behavior: smooth; }
+    body { padding: 20px; background: #f7f7f7; }
+    .section-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); padding: 16px; }
+    .kpi { display:flex; gap:12px; flex-wrap:wrap; }
+    .kpi .card { border: 0; border-radius: 10px; background: #f8f9fa; padding: 12px 14px; }
+    .kpi .val { font-size: 1.25rem; font-weight: 700; }
+    details summary { cursor: pointer; }
+    .matrix-table th, .matrix-table td { text-align: center; }
+    .stat-box { max-height: 80vh; overflow: auto; }
+    .kpi-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap:12px; }
+    .kpi-grid .k { border:0; border-radius:10px; background:#f8f9fa; padding:10px 12px; }
+    .kpi-grid .k .lvl { font-weight:600; }
+    .kpi-grid .k .num { font-size:1.1rem; font-weight:700; }
+    .kpi-grid .k .pct { color:#6c757d; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="m-0">统计视图</h4>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary btn-sm" href="editor.html">去编辑页</a>
+        <button id="btn-refresh" class="btn btn-outline-secondary btn-sm">刷新</button>
+      </div>
+    </div>
+
+    <!-- 顶部锚点导航（界面保持不变） -->
+    <ul class="nav nav-pills mb-3">
+      <li class="nav-item"><a class="nav-link active" href="#overview">总览</a></li>
+      <li class="nav-item"><a class="nav-link" href="#prophecy">预言卡</a></li>
+      <li class="nav-item"><a class="nav-link" href="#monster">怪兽卡</a></li>
+      <li class="nav-item"><a class="nav-link" href="#viz">可视化</a></li>
+    </ul>
+
+    <div id="panel" class="stat-box">加载中...</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <script>
+  /* ------------------------- 配置 & 状态 ------------------------- */
+  const CONFIG = {
+    prophecy: { path: 'prophecy_cards.csv' },
+    monster : { path: 'monster_cards.csv' }
+  };
+  const state = {
+    cards: { prophecy: [], monster: [] },
+    charts: { level: null, attr: null, race: null }
+  };
+
+  /* --------------------------- 工具函数（精简与复用） --------------------------- */
+  const $ = sel => document.querySelector(sel);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+  const nint = v => (Number.isFinite(+v) ? +v : 0);
+  const pct = (n, total) => total ? Math.round(100 * n / total) : 0;
+  const sortNumAsc = (a,b)=>a-b;
+  const sortByCountDesc = (a,b)=>b[1]-a[1];
+
+  const parseCSV = (raw) =>
+    window.Papa
+      ? Papa.parse(raw, { delimiter:'|', skipEmptyLines:true, newline:'\n' }).data
+      : raw.trim().split(/\r?\n/).map(r=>r.split('|'));
+
+  const destroyCharts = () => {
+    Object.values(state.charts).forEach(ch => ch && ch.destroy && ch.destroy());
+    state.charts = { level:null, attr:null, race:null };
+  };
+
+  const makeChart = (canvasId, type, labels, data, options={}) => {
+    const el = document.getElementById(canvasId);
+    if (!el || !labels.length) return null;
+    return new Chart(el, {
+      type,
+      data: { labels, datasets: [{ label:'数量', data }] },
+      options
+    });
+  };
+
+  /* 简单表（保留原 UI，但逻辑统一） */
+  const simpleTable = (mapObj) => {
+    const entries = Object.entries(mapObj).sort(sortByCountDesc);
+    if (!entries.length) return '<div class="text-muted">暂无数据</div>';
+    return `<table class="table table-sm table-bordered">
+      <thead><tr><th>名称</th><th>数量</th></tr></thead>
+      <tbody>${entries.map(([k,v])=>`<tr><td>${esc(k)}</td><td>${v}</td></tr>`).join('')}</tbody>
+    </table>`;
+  };
+
+  /* KPI 磁贴通用：map -> grid（数量 + 占比） */
+  const mapKPIGrid = (mapObj, total, labelPrefix='') => {
+    const entries = Object.entries(mapObj).sort(sortByCountDesc);
+    if (!entries.length) return '<div class="text-muted">暂无数据</div>';
+    return `<div class="kpi-grid">${
+      entries.map(([name, n])=>`
+        <div class="k kpi-tile">
+          <div class="lvl">${esc(labelPrefix)}${esc(name)}</div>
+          <div class="num">${n}</div>
+          <div class="pct">${pct(n,total)}%</div>
+        </div>`).join('')
+    }</div>`;
+  };
+
+  /* 等级 KPI（保留原外观） */
+  const levelKPIGrid = (levelMap, total) => {
+    const levels = Object.keys(levelMap).map(n=>+n).sort(sortNumAsc);
+    if (!levels.length) return '<div class="text-muted">暂无数据</div>';
+    return `<div class="kpi-grid">${
+      levels.map(l=>{
+        const n = levelMap[l] || 0;
+        return `<div class="k kpi-tile">
+          <div class="lvl">等级 ${l}</div>
+          <div class="num">${n}</div>
+          <div class="pct">${pct(n,total)}%</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  };
+
+  /* 通用等级表（details 中使用） */
+  const levelTable = (levelMap) => {
+    const levels = Object.keys(levelMap).map(n=>+n).sort(sortNumAsc);
+    if (!levels.length) return '<div class="text-muted">暂无数据</div>';
+    return `<table class="table table-sm table-bordered">
+      <thead><tr><th>等级</th><th>数量</th></tr></thead>
+      <tbody>${levels.map(l=>`<tr><td>${l}</td><td>${levelMap[l]}</td></tr>`).join('')}</tbody>
+    </table>`;
+  };
+
+  /* 通用：分组矩阵（行=组名，如属性/种族；列=等级） */
+  const matrixTable = (groupLevelMap, rowLabel='组 \\ 等级', rowTotalName='组小计') => {
+    const rows = Object.keys(groupLevelMap).sort();
+    const colSet = new Set();
+    rows.forEach(r => Object.keys(groupLevelMap[r]).forEach(l => colSet.add(+l)));
+    const cols = Array.from(colSet).sort(sortNumAsc);
+    if (!rows.length || !cols.length) return '<div class="text-muted">暂无数据</div>';
+
+    const thead = `<thead><tr><th style="min-width:120px;">${esc(rowLabel)}</th>${cols.map(l=>`<th>${l}</th>`).join('')}<th>${esc(rowTotalName)}</th></tr></thead>`;
+    let tbody = '';
+    rows.forEach(r=>{
+      let sum = 0;
+      const tds = cols.map(l=>{ const v=(groupLevelMap[r]&&groupLevelMap[r][l])||0; sum+=v; return `<td>${v}</td>`; }).join('');
+      tbody += `<tr><th>${esc(r)}</th>${tds}<th>${sum}</th></tr>`;
+    });
+    const colSums = cols.map(l=> Object.values(groupLevelMap).reduce((a,m)=>a+(m[l]||0),0));
+    const total = colSums.reduce((a,b)=>a+b,0);
+
+    return `<div class="table-responsive">
+      <table class="table table-sm table-bordered matrix-table">
+        ${thead}
+        <tbody>${tbody}<tr class="table-secondary"><th>等级小计</th>${colSums.map(v=>`<th>${v}</th>`).join('')}<th>${total}</th></tr></tbody>
+      </table>
+    </div>`;
+  };
+
+  /* 统一的 CSV 行→卡片 对象 */
+  const rowToCard = (type, row) => {
+    if (type==='prophecy'){
+      const [t,intro,effect,responsive_effect='',image] = (row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row);
+      const title = t || '';
+      const ename = (image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
+      return { title, ename, intro:intro||'', effect:effect||'', responsive_effect:responsive_effect||'', image: image || (ename?`pictures/${ename}.png`: '') };
+    }
+    const [t,lvl,typ,desc,atk,def,charStr,skillStr,image] = row;
+    const title = t || '';
+    const ename = (image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
+    return {
+      title, ename,
+      level: nint(lvl),
+      monster_type: typ || '',
+      description: desc || '',
+      attack: nint(atk),
+      defence: nint(def),
+      characters: (()=>{ try{return JSON.parse(charStr);}catch{return {};} })(),
+      skills: (()=>{ try{return JSON.parse(skillStr);}catch{return [];} })(),
+      image: image || (ename?`pictures/${ename}.png`:'')
+    };
+  };
+
+    async function loadAll(){
+    const panel = document.querySelector('#panel');
+    panel.textContent = '加载中...';
+    try{
+      for (const k of Object.keys(CONFIG)) {
+        const txt = await fetchCsvNoCache(CONFIG[k].path);  // ← 关键改动
+        if (!txt.trim()) { state.cards[k] = []; continue; }
+
+        const rows = window.Papa
+          ? Papa.parse(txt, { delimiter:'|', skipEmptyLines:true, newline:'\n' }).data
+          : txt.trim().split(/\r?\n/).map(r=>r.split('|'));
+
+        if (rows.length && Array.isArray(rows[0])) rows.shift(); // 去表头
+        state.cards[k] = rows.map(r => rowToCard(k, r));
+      }
+      renderStats();
+    } catch (e) {
+      console.error('加载 CSV 失败：', e);
+      panel.innerHTML = '<div class="alert alert-danger mb-0">加载失败，请检查 CSV 路径或在本地服务器下访问。</div>';
+    }
+  }
+
+  /* --------------------------- 统计计算（保持原语义） --------------------------- */
+  function computeStats() {
+    const prophecy = state.cards.prophecy || [];
+    const monster  = state.cards.monster  || [];
+
+    const allCnt      = prophecy.length + monster.length;
+    const prophecyCnt = prophecy.length;
+    const monsterCnt  = monster.length;
+
+    const isPermanent = c => /【\s*永续\s*】/.test(String(c.intro||''));
+    const prophecyPermanentCnt = prophecy.reduce((acc,c)=>acc+(isPermanent(c)?1:0),0);
+    const prophecyNormalCnt    = prophecyCnt - prophecyPermanentCnt;
+
+    const levelMap = {};
+    const attrMap  = {};
+    const attrLevelMap = {};
+    const raceMap  = {};
+    const raceLevelMap = {};
+
+    for (const c of monster){
+      const level = nint(c.level);
+      levelMap[level] = (levelMap[level]||0)+1;
+
+      const attr = c.monster_type || '未知';
+      attrMap[attr] = (attrMap[attr]||0)+1;
+      (attrLevelMap[attr] ||= {}); attrLevelMap[attr][level] = (attrLevelMap[attr][level]||0)+1;
+
+      const m = String(c.description||'').match(/【([^】\n\r]{1,20})种】/);
+      const race = m ? m[1] : '未知';
+      raceMap[race] = (raceMap[race]||0)+1;
+      (raceLevelMap[race] ||= {}); raceLevelMap[race][level] = (raceLevelMap[race][level]||0)+1;
+    }
+
+    return {
+      allCnt, prophecyCnt, monsterCnt,
+      prophecyPermanentCnt, prophecyNormalCnt,
+      levelMap, attrMap, attrLevelMap, raceMap, raceLevelMap
+    };
+  }
+
+  /* --------------------------- 渲染（界面不变） --------------------------- */
+  function renderStats() {
+    const panel = $('#panel');
+    const s = computeStats();
+
+    panel.innerHTML = `
+      <!-- 总览 -->
+      <div id="overview" class="section-card mb-3">
+        <h5 class="mb-3">总览</h5>
+        <div class="kpi">
+          <div class="card"><div class="text-muted">全部卡牌</div><div class="val">${s.allCnt}</div></div>
+          <div class="card"><div class="text-muted">怪兽卡</div><div class="val">${s.monsterCnt}</div></div>
+          <div class="card"><div class="text-muted">预言卡</div><div class="val">${s.prophecyCnt}</div></div>
+        </div>
+      </div>
+
+      <!-- 预言卡 -->
+      <div id="prophecy" class="section-card mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">预言卡</h5>
+          <span class="badge text-bg-secondary">introduction 内含「【永续】」视为永续预言卡</span>
+        </div>
+        <div class="kpi mt-3">
+          <div class="card"><div class="text-muted">永续预言卡</div><div class="val">${s.prophecyPermanentCnt}</div></div>
+          <div class="card"><div class="text-muted">普通预言卡</div><div class="val">${s.prophecyNormalCnt}</div></div>
+          <div class="card"><div class="text-muted">永续占比</div><div class="val">${s.prophecyCnt ? Math.round(100*s.prophecyPermanentCnt/s.prophecyCnt) : 0}%</div></div>
+        </div>
+      </div>
+
+      <!-- 怪兽卡 -->
+      <div id="monster" class="section-card mb-3">
+        <h5 class="mb-3">怪兽卡</h5>
+
+        <!-- 等级 KPI -->
+        <h6 class="mt-2">等级分布（KPI）</h6>
+        ${levelKPIGrid(s.levelMap, s.monsterCnt)}
+        <details class="mt-2">
+          <summary class="mb-2">展开查看等级分布表格</summary>
+          ${levelTable(s.levelMap)}
+        </details>
+
+        <!-- 属性 KPI + 表格（折叠） -->
+        <h6 class="mt-3">属性分布（KPI）</h6>
+        ${mapKPIGrid(s.attrMap, s.monsterCnt)}
+        <details class="mt-2">
+          <summary class="mb-2">展开查看属性分布表格</summary>
+          ${simpleTable(s.attrMap)}
+        </details>
+
+        <!-- 种族 KPI + 表格（折叠） -->
+        <h6 class="mt-3">种族分布（KPI）</h6>
+        <div class="text-muted small mb-2">从 description 中匹配 “【××种】” 识别种族；若无匹配，记为“未知”。</div>
+        ${mapKPIGrid(s.raceMap, s.monsterCnt)}
+        <details class="mt-2">
+          <summary class="mb-2">展开查看种族分布表格</summary>
+          ${simpleTable(s.raceMap)}
+        </details>
+
+        <!-- 矩阵 -->
+        <h6 class="mt-3">等级 × 种族 矩阵</h6>
+        ${matrixTable(s.raceLevelMap, '种族 \\ 等级', '种族小计')}
+
+        <h6 class="mt-3">等级 × 属性 矩阵</h6>
+        ${matrixTable(s.attrLevelMap, '属性 \\ 等级', '属性小计')}
+      </div>
+
+      <!-- 可视化 -->
+      <div id="viz" class="section-card mb-3">
+        <h5 class="mb-3">可视化</h5>
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card p-3">
+              <h6 class="mb-2">等级分布（柱状图）</h6>
+              <canvas id="chart-level" height="200"></canvas>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card p-3">
+              <h6 class="mb-2">属性分布（饼图）</h6>
+              <canvas id="chart-attr" height="200"></canvas>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card p-3">
+              <h6 class="mb-2">种族分布（饼图）</h6>
+              <canvas id="chart-race" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    renderCharts(s);
+  }
+
+  async function fetchCsvNoCache(path) {
+    // 加时间戳 + 禁用缓存头，避免 CDN/浏览器命中老版本
+    const url = path + (path.includes('?') ? '&' : '?') + 't=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+    return res.ok ? res.text() : '';
+  }
+
+
+  /* --------------------------- 图表渲染（复用工厂） --------------------------- */
+  function renderCharts(s){
+    destroyCharts();
+
+    const levelLabels = Object.keys(s.levelMap).map(n=>+n).sort(sortNumAsc);
+    const levelData   = levelLabels.map(l=>s.levelMap[l]);
+    state.charts.level = makeChart('chart-level', 'bar', levelLabels, levelData, {
+      responsive:true,
+      plugins:{ legend:{ display:false } },
+      scales:{ x:{ title:{ display:true, text:'等级' } }, y:{ title:{ display:true, text:'数量' }, beginAtZero:true, precision:0 } }
+    });
+
+    const attrEntries = Object.entries(s.attrMap).sort(sortByCountDesc);
+    state.charts.attr = makeChart('chart-attr', 'pie', attrEntries.map(e=>e[0]), attrEntries.map(e=>e[1]), {
+      responsive:true, plugins:{ legend:{ position:'bottom' } }
+    });
+
+    const raceEntries = Object.entries(s.raceMap).sort(sortByCountDesc);
+    state.charts.race = makeChart('chart-race', 'pie', raceEntries.map(e=>e[0]), raceEntries.map(e=>e[1]), {
+      responsive:true, plugins:{ legend:{ position:'bottom' } }
+    });
+  }
+
+  /* --------------------------- 事件 & 启动 --------------------------- */
+  document.addEventListener('DOMContentLoaded', loadAll);
+  document.getElementById('btn-refresh').addEventListener('click', loadAll);
+  </script>
+</body>
+</html>

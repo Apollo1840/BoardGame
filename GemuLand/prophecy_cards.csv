@@ -1,6 +1,6 @@
 card_title|introduction|effect|responsive_effect|image
 反击号角|预言家在绝妙的时刻吹响了胜利的号角。|我方场上所有怪兽卡本回合受到的攻击力或防御力加成翻倍。|当对方怪兽发起攻击时，可以发动此卡，此卡发动后，本回合我方场上所有怪兽卡防御力+3。|pictures/counterattack_horn.png
-早产预兆|预言家预言了你的提早降临。|布置阶段才可以使用，额外翻面召唤一只怪物。以这个方式翻面召唤的怪物此回合不受对方卡片效果影响，且不会被战斗破坏。||pictures/premature_birth_sign.png
+早产预兆|【快速】预言家预言了你的提早降临。|额外翻面召唤一只怪物。以这个方式翻面召唤的怪物此回合不受对方卡片效果影响，且不会被战斗破坏。||pictures/premature_birth_sign.png
 饥寒交迫|不合时宜的寒潮和饥饿同时到来。||在我方回合，对方场上最后一只怪物被破坏时，再破坏对方2张手牌或1张预言卡。|pictures/cold_starve.png
 圣光毁灭|圣光降下天罚，预示着大地之母的唾弃||当场上怪物被战斗破坏时，给予对方该怪物防御力双倍的伤害。|pictures/light_boom.png
 致命礼物|谁会拒绝可爱的小猫咪呢？|指定我方一只3级以下的怪物卡，使其直接攻击对方玩家。||pictures/dangerous_gift.png
@@ -17,12 +17,12 @@ card_title|introduction|effect|responsive_effect|image
 分配不均||如果我方此回合已经进行过两次以上召唤，可以将我方一只怪物翻面成怪兽蛋，然后抽取对方两张手牌。||pictures/inequal.png
 融入压力||召唤一只怪物，我方所有怪物的基础攻击力变成和的平均值（向上取整）。||pictures/integration.png
 阵前演讲||本回合我方全体怪物攻击力+3。||pictures/fight_speech.png
-天借真力||指定场上一只怪物，攻击力+5。|当我方一只怪物被攻击时，防御力+5。|pictures/temp_power.png
-军队扩充||布置阶段才可以使用，还可以额外普通召唤两只怪物。本回合结束后，他们如果还在场上，则要回到手牌。||pictures/more_monster.png
+天借真力||指定场上一只怪物，攻击力+10。|当我方一只怪物被攻击时，防御力+10。|pictures/temp_power.png
+军队扩充|【快速】|额外普通召唤至多两只怪物。本回合结束后，他们如果还在场上，则要回到手牌。||pictures/more_monster.png
 闪电雷劫||选择对方一只拥有通常属性的怪物，将其破坏。|当对方使用预言卡时，如果我方场上除了此卡没有别的预言卡，可选择无效其效果并将其破坏，或破坏别的一张预言卡。|pictures/lighting_destroy.png
 不详征召||给予对方10点伤害。||pictures/bad_sign.png
-精良装备|【装备】|攻击力+1，防御力+2||pictures/great_arm.png
-圣光保护|【永续】|此卡发动后会一直存在在场上。我方所有怪物防御+2。||pictures/protection.png
+精良装备|【装备】|攻击力+1，防御力+4||pictures/great_arm.png
+圣光保护|【永续】|此卡发动后会一直存在在场上。我方所有怪物防御+3。||pictures/protection.png
 国库宝藏||丢弃一张手牌（或场上的牌，或灵力），抽2张牌。||pictures/land_gold.png
 嗜血指令||指定一只怪物攻击力+3，此回合它造成的战斗伤害翻倍。||pictures/blood_kill.png
 强势抢夺|||对方抽卡后，抽取那张牌或对方一张手牌。|pictures/snatch.png
@@ -35,3 +35,8 @@ card_title|introduction|effect|responsive_effect|image
 反击投掷|||当对方发出攻击指令时，破坏我方场上一张怪物卡。选择我方场上一只怪物，攻击+15，并发动一次攻击。|pictures/counter_attack.png
 连续预言||接下来可以额外使用一张预言卡。如果其发动成功，则可再额外使用一张。|在我方回合连锁发生时，此回合预言卡使用不受限制。|pictures/continous_prophecy.png
 严肃预言||可以额外使用一张非装备，非永续预言卡，该预言卡效果起效两次。||pictures/serious_prophecy.png
+厄运反转|||我方手牌由于卡片效果被丢弃时，我方获得三点灵力可随意分配到场上。|pictures/payback.png
+泡沫攻击|||发起攻击时，该次攻击攻击力+3，且不会成为对方效果触发条件或被对方永续预言牌效果牌影响。该怪物刷新技能使用次数。|pictures/bubble_attack.png
+嗜血血脉||选择一只怪物攻击力+15，我方生命值-5。||pictures/blood_power.png
+悬赏刺杀|||我方有效果触发的抽牌时，本回合我方造成的战斗伤害都+10。|pictures/reward_attack.png
+召唤术|【快速】|额外召唤一只怪物，并将此卡作为该怪物灵力附着。||pictures/summon.png
