@@ -4,7 +4,7 @@ card_title|introduction|effect|responsive_effect|image
 饥寒交迫|不合时宜的寒潮和饥饿同时到来。||在我方回合，对方场上最后一只怪物被破坏时，再破坏对方2张手牌或1张预言卡。|pictures/cold_starve.png
 圣光毁灭|圣光降下天罚，预示着大地之母的唾弃||当场上怪物被战斗破坏时，给予对方该怪物防御力双倍的伤害。|pictures/light_boom.png
 致命礼物|谁会拒绝可爱的小猫咪呢？|指定我方一只3级以下的怪物卡，使其直接攻击对方玩家。||pictures/dangerous_gift.png
-愚者之斧|【装备】在预言家的指引下，人们发现了这个神奇的魔斧。|装备怪物属性无效，不可使用技能。攻击力和防御力+3。||pictures/fool_arc.png
+愚者之斧|【永续/装备】在预言家的指引下，人们发现了这个神奇的魔斧。|装备怪物属性无效，不可使用技能。攻击力和防御力+3。||pictures/fool_arc.png
 阴暗世仇|【永续】预言家说，看吧，这就是你们的世仇。||当我方怪物被战斗破坏时，此卡发动，并将永久存在在场上。我方所有与被破坏那只怪物的种族相同的怪物，在与发动攻击的那个种族的怪物战斗时，攻击+3。|pictures/generation_hate.png
 河神献祭|预言家说，有的人需要为繁荣牺牲。|破坏我方场上一只怪物，抽3张牌。||pictures/sacrifice.png
 无畏围攻|预言家说，一起上还怕他什么？|我方场上任意只可以发动攻击的怪兽，发动一次联合攻击，攻击力为他们的和。联合攻击不会成为对方其他任何效果的触发条件。联合攻击后的怪物此回合不能发动攻击。||pictures/siege.png
@@ -21,7 +21,7 @@ card_title|introduction|effect|responsive_effect|image
 军队扩充|【快速】|额外普通召唤至多两只怪物。本回合结束后，他们如果还在场上，则要回到手牌。||pictures/more_monster.png
 闪电雷劫||选择对方一只拥有通常属性的怪物，将其破坏。|当对方使用预言卡时，如果我方场上除了此卡没有别的预言卡，可选择无效其效果并将其破坏，或破坏别的一张预言卡。|pictures/lighting_destroy.png
 不详征召||给予对方10点伤害。||pictures/bad_sign.png
-精良装备|【装备】|攻击力+1，防御力+4||pictures/great_arm.png
+精良装备|【永续/装备】|攻击力+1，防御力+4||pictures/great_arm.png
 圣光保护|【永续】|此卡发动后会一直存在在场上。我方所有怪物防御+3。||pictures/protection.png
 国库宝藏||丢弃一张手牌（或场上的牌，或灵力），抽2张牌。||pictures/land_gold.png
 嗜血指令||指定一只怪物攻击力+3，此回合它造成的战斗伤害翻倍。||pictures/blood_kill.png
@@ -36,7 +36,15 @@ card_title|introduction|effect|responsive_effect|image
 连续预言||接下来可以额外使用一张预言卡。如果其发动成功，则可再额外使用一张。|在我方回合连锁发生时，此回合预言卡使用不受限制。|pictures/continous_prophecy.png
 严肃预言||可以额外使用一张非装备，非永续预言卡，该预言卡效果起效两次。||pictures/serious_prophecy.png
 厄运反转|||我方手牌由于卡片效果被丢弃时，我方获得三点灵力可随意分配到场上。|pictures/payback.png
-泡沫攻击|||发起攻击时，该次攻击攻击力+3，且不会成为对方效果触发条件或被对方永续预言牌效果牌影响。该怪物刷新技能使用次数。|pictures/bubble_attack.png
+泡沫攻击|||发起攻击时，该次攻击攻击力+3，且不会成为对方效果触发条件，或被对方永续预言牌效果牌影响。该怪物刷新技能使用次数。|pictures/bubble_attack.png
 嗜血血脉||选择一只怪物攻击力+15，我方生命值-5。||pictures/blood_power.png
 悬赏刺杀|||我方有效果触发的抽牌时，本回合我方造成的战斗伤害都+10。|pictures/reward_attack.png
 召唤术|【快速】|额外召唤一只怪物，并将此卡作为该怪物灵力附着。||pictures/summon.png
+蟹尊将军钳|【永续/武器】|攻击+3，防御+2|生命受到损伤时，装备怪兽+1灵力。|pictures/krebs_weapon.png
+海上风暴|【永续】|此卡翻面的回合不能使用，且我方场上和手上一共有8张牌及其以上才能使用。丢弃我方所有场牌和手牌，破坏对方场上所有牌，我方再抽5张牌。||pictures/seastrom.png
+出售神鱼||对方选择我方场上一只怪物破坏。我方手牌抽到5张牌。||pictures/sale_god.png
+东海龙宫|【永续/场景】|支付两点灵力，丢弃一张手牌，破坏对方场上一张牌。|当有【连锁】发生时，此卡获得一点灵力。|pictures/dragon_palace.png
+大海源流||选择一只【鱼种】或【鱼人种】或水属性怪物，攻击力 x 3。||pictures/stream.png
+祸福相依||抽牌时启动。让对方猜该卡牌类型（怪物/预言）。如果猜中，我方再抽一张牌；如果没猜中，我方可【直接召唤】或使用该卡。||pictures/good_or_bad.png
+灵力冲击|||对方发起攻击指令时，攻击无效。被攻击怪物可支付一点灵力，破坏对方场上一只怪物。|pictures/spirit_back.png
+失落宝藏|【永续】||一回合触发一次。当我方受到卡牌效果损伤时，从弃牌堆选择一张牌加入手牌。|pictures/lost_treasure.png

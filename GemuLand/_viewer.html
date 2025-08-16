@@ -72,10 +72,10 @@
         .stats .def::before { content:'◇'; margin-right:2px; }
 
         /* 红色标题：响应效果 & 反应属性 */
-        .responsive-effect .box-title,
-        .reaction-attr .box-title {
-            color: red;
-        }
+
+        .responsive-effect .box-title { color: red; }
+        .reaction-attr .box-title { color: red; }
+        .normal-attr .box-title { color: blue; }
 
         @page {               /* 新增 */
             margin: 0;        /* 0 mm 页边距 */
@@ -168,14 +168,16 @@
         }
 
         const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
-        Object.entries(chars).forEach(([k,v])=>{
-            if(attrMap[k]){
-                const extraCls = k==='react_characters' ? ' reaction-attr' : '';
+        Object.entries(chars).forEach(([k, v]) => {
+            if (attrMap[k]) {
+                let extraCls = '';
+                if (k === 'react_characters') extraCls = ' reaction-attr';
+                if (k === 'normal_characters') extraCls = ' normal-attr';
                 area.innerHTML +=
-                `<div class="content-box attribute-box${extraCls}">
-                   <div class="box-title">${attrMap[k]}</div>
-                   <div class="box-content">${v}</div>
-                 </div>`;
+                    `<div class="content-box attribute-box${extraCls}">
+                       <div class="box-title">${attrMap[k]}</div>
+                       <div class="box-content">${v}</div>
+                     </div>`;
             }
         });
 
