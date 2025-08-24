@@ -45,6 +45,6 @@ card_title|introduction|effect|responsive_effect|image
 出售神鱼||对方选择我方场上一只怪物破坏。我方手牌抽到5张牌。||pictures/sale_god.png
 东海龙宫|【永续/场景】|支付两点灵力，丢弃一张手牌，破坏对方场上一张牌。|当有【连锁】发生时，此卡获得一点灵力。|pictures/dragon_palace.png
 大海源流||选择一只【鱼种】或【鱼人种】或水属性怪物，攻击力 x 3。||pictures/stream.png
-祸福相依||抽牌时启动。让对方猜该卡牌类型（怪物/预言）。如果猜中，我方再抽一张牌；如果没猜中，我方可【直接召唤】或使用该卡。||pictures/good_or_bad.png
+祸福相依|【快速】|让对方猜该卡牌类型（怪物/预言）。如果猜中，我方再抽一张牌；如果没猜中，我方可【直接召唤】或使用该卡。||pictures/good_or_bad.png
 灵力冲击|||对方发起攻击指令时，攻击无效。被攻击怪物可支付一点灵力，破坏对方场上一只怪物。|pictures/spirit_back.png
 失落宝藏|【永续】||一回合触发一次。当我方受到卡牌效果损伤时，从弃牌堆选择一张牌加入手牌。|pictures/lost_treasure.png

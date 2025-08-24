@@ -5,7 +5,7 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 精灵短枪兵|1|火|【精灵种】精灵种的武器也迎来了技术的升级。|7|7|{"react_characters":"受到攻击的时候，可以通过移除一个灵力来获得防御力+3，直到回合结束。不可叠加。"}|[{"skill_name":"精准射击","number_power":0,"skill_text":"【攻击技能】临时获得攻击力+2，但此攻击造成玩家伤害为0。"}]|pictures/elf_shooter.png
 幽夜猫|2|冰|【恶魔种】恶魔地界的宠物，很难在其他地方看到。|9|8|{"normal_characters":"此卡给对方造成伤害后，我方抽一张牌。"}|[{"skill_name":"寒霜吐息","number_power":1,"skill_text":"使对方一只怪兽本回合防御力-3。"},{"skill_name":"报复冰刺","number_power":2,"skill_text":"当我方生命值更低才可使用，此回合使用的某张预言卡的效果可以再发挥一次。"}]|pictures/night_cat.png
 石砖人|2|岩|【石头人种】废弃的城堡变化成的石头人|10|10|{}|[]|pictures/castle_man.png
-哥布林|0||【兽人种】脆弱的怪物，谁都可以踩两脚。|2|0|{"react_characters":"此卡从场上舍弃或者被破坏后，直接加入我方手牌（不会化作灵力），且再抽一张牌。"}|[]|pictures/goblin.png
+哥布林|0||【兽人种】脆弱的怪物，谁都可以踩两脚。|2|0|{"react_characters":"此卡从场上舍弃或者被破坏后，直接加入我方手牌，且我方再抽一张牌。"}|[]|pictures/goblin.png
 大嘴哥布林|1||【兽人种】抢夺了族人的食物而长大的哥布林，寿命很短。|7|3|{}|[{"skill_name":"召唤","number_power":0,"skill_text":"特殊召唤一只0级兽人种怪物到我方场上。"},{"skill_name":"强袭","number_power":1,"skill_text":"【攻击技能】此卡攻击造成的战斗伤害 + （我方场上怪兽数量）"}]|pictures/big_goblin.png
 战士哥布林|0||【兽人种】有的哥布林似乎身经百战，但实际依然没什么杀伤力。|3|3|{"normal_characters":"场上有兽人族怪兽时，可以特殊召唤此卡。以这样的方式召唤的回合此卡不能攻击。","react_characters":"被防御力高于此卡的怪物攻击时，防御+2"}|[{"skill_name":"到处切磋","number_power":0,"skill_text":"如果我方场上有攻击力高于此卡的怪物，则此回合此卡攻击+1；如果我方场上有怪物，但没有攻击力高于此卡的怪物，则抽一张牌。"}]|pictures/fighter_goblin.png
 刺客哥布林|0|金|【兽人种】虽然但是，在大白天会不会太显眼了一点。|2|0|{"normal_characters":"当我方场上有其他怪兽时，无法指定为被攻击的对象。攻击力+我方场上的怪兽数量x2。"}|[]|pictures/assassin_goblin.png
@@ -13,8 +13,8 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 哥布林萨满|1|木|【兽人种】没有什么智慧，都是装的。|0|2|{}|[{"skill_name":"哥布林幻影","number_power":2,"skill_text":"从手牌特殊召唤一只怪物。该怪物无法发出攻击指令，对方回合结束后从任意处都要回到我方手牌。"},{"skill_name":"神圣祝福","number_power":1,"skill_text":"操作阶段开始使用，破坏一只怪物，回合结束。直到对方回合结束我方怪物都不会被战斗破坏，也不会被对方预言破坏。"},{"skill_name":"灵力吸收","number_power":0,"skill_text":"吸收我方场上任意数量的灵力。或者将此卡灵力全部分配给另一只怪兽。"}]|pictures/goblin_sama.png
 坐骑狼|1||【动物种】有于智商比较低，所以可以乘骑一会儿的狼。|3|5|{"react_characters":"我方怪物发动攻击时，此卡可以协同攻击。该怪物攻击力+此卡攻击力。","normal_characters":"对方场上没有怪物时，攻击力+4"}|[]|pictures/ride_wolf.png
 哥布林厨师长|0||【兽人种】孩子，该回家吃饭了。|0|3|{}|[{"skill_name":"佳肴","number_power":1,"skill_text":"我方场上所有除自己外兽人族，攻击+2。"},{"skill_name":"躲锅里","number_power":0,"skill_text":"此回合不攻击，防御力+4直至对方回合结束。"}]|pictures/goblin_chef.png
-白化哥布林|0||【兽人种】哥布林内部也有不受待见的。|3|2|{"normal_characters":"此卡可以放置在预言卡区域，视作怪物卡。当我方场上有其他怪物时，对方不能指定此卡为攻击对象。"}|[{"skill_name":"祝福","number_power":1,"skill_text":"将攻击力加到另一个怪物身上。该怪物此回合可以额外攻击一次。"}]|pictures/white_goblin.png
-哥布林圣壶|0||【器具种】哥布林这个肮脏的种族竟然有如此圣器。|0|5|{"normal_characters":"一回合一次，可以支付20点生命值，将两只怪物从弃牌堆加入手牌。"}|[{"skill_name":"圣育","number_power":0,"skill_text":"丢弃一张手牌，特殊召唤一只2级以下怪物。"},{"skill_name":"族诞","number_power":1,"skill_text":"丢弃两张手牌，重新进入布置阶段。且召唤次数不受限制。"},{"skill_name":"种运","number_power":2,"skill_text":"丢弃三张手牌，破坏对方场上一只怪物，一张预言，一张手牌。"}]|pictures/goblin_vase.png
+白化哥布林|0||【兽人种】哥布林内部也有不受待见的。|3|2|{"normal_characters":"布置阶段时可以将此卡放置或移动到预言卡区域，并视作怪物卡。当我方场上有其他怪物时，对方不能指定此卡为攻击对象。"}|[{"skill_name":"祝福","number_power":1,"skill_text":"将攻击力加到另一个怪物身上。该怪物此回合可以额外攻击一次。"}]|pictures/white_goblin.png
+哥布林圣壶|0||【器具种】哥布林这个肮脏的种族竟然有如此圣器。|0|5|{"normal_characters":"一回合一次，可以支付20点生命值，将两只怪物从弃牌堆加入手牌。"}|[{"skill_name":"圣育","number_power":0,"skill_text":"丢弃一张手牌，额外召唤一只1级以下名字中带有【哥布林】的怪物。该怪物此回合不能攻击。"},{"skill_name":"族诞","number_power":1,"skill_text":"丢弃两张手牌，重新进入布置阶段。且召唤次数不受限制。"},{"skill_name":"种运","number_power":2,"skill_text":"丢弃三张手牌，破坏对方场上一只怪物，一张预言，一张手牌。"}]|pictures/goblin_vase.png
 少年勇士|0|金|【人类种】意气风发的少年勇士。|6|4|{}|[]|pictures/young_fighter.png
 邪术师|0|暗|【人类种】天生魅体，但是热衷钻研学术。|6|0|{"react_characters":"对方结束布置阶段时，给予对方5点伤害。"}|[]|pictures/dark_magician.png
 圣女|0|光|【人类种】洁癖，拒绝谈恋爱。|0|3|{"normal_characters":"我方所有怪物防御力+1。","react_characters":"当我方抽牌时，如果我方手牌数量小于4，则再抽一张。"}|[{"skill_name":"神除","number_power":1,"skill_text":"如果对方场上怪物数量多于我方，丢弃一张手牌，破坏对方场上一张卡片。"},{"skill_name":"圣灭","number_power":0,"skill_text":"破坏对方场上一张正面表示的预言卡。"}]|pictures/protector.png
@@ -46,6 +46,6 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 龙虾骑士|1|水|【鱼人种】|4|3|{"normal_characters":"此卡攻击力+最高场上其他卡片攻击力加成。"}|[{"skill_name":"虾线冲击","number_power":0,"skill_text":"支付5点生命，破坏对方场上一张覆盖的预言卡。并获得一点灵力，可随意分配。"},{"skill_name":"突刺","number_power":1,"skill_text":"【攻击技能】如果此卡攻击力大与对方两只怪兽防御力的总和，可以一起破坏，并计算战斗伤害。"}]|pictures/lobster.png
 虎金大哥|0||【鱼人种】|5|2|{"normal_characters":"此卡造成的战斗伤害翻1.5倍（向上取整）"}|[{"skill_name":"虎鲸拳","number_power":1,"skill_text":"攻击力x2"}]|pictures/hujin.png
 龙王三公主|2|水|【鱼人种】|10|5|{"normal_characters":"一回合一次，可以无效化对此卡的一次攻击，或者一次效果。"}|[]|pictures/dragon_princess.png
-预言夫人|0|水|【鱼人种】趋利避害的高手。|1|8|{"normal_characters":"但抽牌连锁发生时，可查看对方一张盖牌或手牌。"}|[]|pictures/prophecy.png
+预言夫人|0|水|【鱼人种】趋利避害的高手。|1|8|{"react_characters":"当抽牌连锁发生时，可查看对方一张盖牌或手牌。"}|[]|pictures/prophecy.png
 水灵蛇|0|水|【鱼种】|1|0|{"normal_characters":"每回合结束阶段获得一点灵力，可以分配到其他怪物上，并+8生命。","react_characters":"此卡被战斗破坏时，对方复活一只怪物。"}|[]|pictures/godfish.png
 舞鱼人|0|水|【鱼人种】|0|3|{"normal_characters":"此卡在场上，我方每回合可以使用两张预言卡。或者某一回合使用一次的效果启动两次。"}|[{"skill_name":"舞者之姿","number_power":0,"skill_text":"支付5生命，下次对此卡的攻击无效化。"},{"skill_name":"进攻之舞","number_power":0,"skill_text":"每丢弃一张手牌，此卡此回合攻击力+5（最多三张）"}]|pictures/dance_fish.png

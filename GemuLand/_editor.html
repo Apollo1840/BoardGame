@@ -213,7 +213,13 @@
         card.ename = file2ename(card.title).replace(/\s+/g,'_').toLowerCase();
       }
       card.image = card.image || (card.ename ? `pictures/${card.ename}.png` : '');
-      editing ? list[idx]=card : list.push(card);
+      if(editing){
+        // Remove the old card and push the updated one to the end
+        list.splice(idx,1);
+        list.push(card);
+      }else{
+        list.push(card);
+      }
       modal.remove(); renderTable();
     };
   }

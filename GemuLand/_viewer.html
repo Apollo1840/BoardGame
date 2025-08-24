@@ -24,7 +24,84 @@
 
         /* 分类底色 */
         .card.monster  { background:#ffffff; }   /* 纯白色 */
-        .card.prophecy { background:#a4c8ff; }   /* 低饱和浅蓝 */
+        .card.prophecy {
+            position: relative;
+            background: none;
+        }
+        .card.prophecy::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-image: var(--prophecy-bg, none);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(12px) brightness(0.7) saturate(1.2);
+            border-radius: 8px;
+            transition: background-image 0.3s;
+        }
+        .card.prophecy .card-image-container {
+            position: absolute;
+            top: 24px;
+            left: 4px;
+            right: 4px;
+            bottom: calc(4px + 29.33mm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            overflow: hidden;
+        }
+        .card.prophecy .card-content {
+            position: absolute;
+            bottom: calc(4px + 16px);
+            left: 4px;
+            right: 4px;
+            height: calc(50% - 4px - 16px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            gap: 2px;
+            overflow: hidden;
+            z-index: 3;
+            font-size: 10px;
+        }
+        .card.prophecy .card-title {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10,30,80,0.5) !important;
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-weight: bold;
+            font-size: 12px;
+            z-index: 3;
+            color: #fff !important;
+        }
+
+        /* 预言卡文本框深蓝半透明底白字 */
+        .card.prophecy .content-box {
+            background: rgba(10,30,80,0.5) !important;
+            color: #fff !important;
+            border-color: rgba(255,255,255,0.2) !important;
+        }
+        .card.prophecy .box-title,
+        .card.prophecy .box-content {
+            color: #fff !important;
+        }
+        /* 响应效果标题依然为红色 */
+        .card.prophecy .responsive-effect .box-title {
+            color: red !important;
+        }
+        .card.prophecy .card-title {
+            background: rgba(10,30,80,0.5) !important;
+            color: #fff !important;
+        }
 
         /* 标题栏 */
         .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
@@ -108,6 +185,12 @@
         cols.length===4 ? [cols[0],cols[1],cols[2],'',cols[3]] : cols;
 
         const card = document.createElement('div'); card.className='card prophecy';
+        // Set blurred background image via CSS variable
+        if(image){
+            card.style.setProperty('--prophecy-bg', `url('${image}')`);
+        } else {
+            card.style.removeProperty('--prophecy-bg');
+        }
         card.innerHTML =
         `<div class="card-title"><span class="name">${title}</span></div>
          <div class="card-image-container"><img src="${image}"></div>`;
@@ -141,6 +224,10 @@
 
         shrinkToFit(area);
         card.append(area);
+        // Set the background image for the pseudo-element (in case of async rendering)
+        setTimeout(()=>{
+            card.style.setProperty('--prophecy-bg', image ? `url('${image}')` : 'none');
+        }, 0);
         return card;
     }
 
@@ -224,11 +311,17 @@
         const ctr = document.getElementById('card-container');
         ctr.innerHTML = '';
 
-        (await loadCSV('prophecy_cards.csv'))
-            .forEach(r => ctr.append(createProphecyCard(r.split('|'))));
-
-        (await loadCSV('monster_cards.csv'))
-            .forEach(r => ctr.append(createMonsterCard(r.split('|'))));
+        const prophecyRows = await loadCSV('prophecy_cards.csv');
+        const monsterRows = await loadCSV('monster_cards.csv');
+        const maxLen = Math.max(prophecyRows.length, monsterRows.length);
+        for (let i = 0; i < maxLen; i++) {
+            if (i < prophecyRows.length) {
+                ctr.append(createProphecyCard(prophecyRows[i].split('|')));
+            }
+            if (i < monsterRows.length) {
+                ctr.append(createMonsterCard(monsterRows[i].split('|')));
+            }
+        }
     }
 
     /* ---------- 主入口 ---------- */
