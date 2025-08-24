@@ -2,29 +2,30 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
-  <title>卡牌编辑器</title>
-
+  <title>卡牌编辑器（FS Access，无外链依赖）</title>
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
   <style>
     body { padding: 20px; background: #f7f7f7; }
     .card-table { max-height: 75vh; overflow: auto; }
     .modal.d-block { display: block; }
+    .file-badge { font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container" id="app"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js"></script>
   <script>
+  'use strict';
+
   /************ 配置 & 状态 ************/
   const CONFIG = {
     prophecy: {
-      path: 'prophecy_cards.csv',
+      defaultName: 'prophecy_cards.csv',
       header: ['card_title','introduction','effect','responsive_effect','image']
     },
     monster: {
-      path: 'monster_cards.csv',
+      defaultName: 'monster_cards.csv',
       header: ['card_title','level','monster_type','description',
                'attack','defence','characters','skills','image']
     }
@@ -39,82 +40,201 @@
     level:'等级',monster_type:'属性',
     description:'背景介绍',attack:'ATK',defence:'DEF'
   };
-  const state = { current: 'prophecy', cards: { prophecy: [], monster: [] } };
+  const state = {
+    current: 'prophecy',
+    cards: { prophecy: [], monster: [] },
+    handles: { prophecy: null, monster: null },
+    filenames: { prophecy: '', monster: '' }
+  };
 
   /************ 工具 ************/
   const $ = sel => document.querySelector(sel);
   const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+  const isSecureContextOk = () => window.isSecureContext;
+
   function safeParse(str, def){ try{ return JSON.parse(str);}catch{ return def; } }
   function file2ename(p){
     if (!p) return '';
     return String(p).replace(/^pictures\//,'').replace(/\.(png|jpg|jpeg|gif)$/i,'');
   }
-  function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, m=>(
-    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+  function slugify(s){ return String(s||'').trim().replace(/\s+/g,'_').toLowerCase(); }
+  function escapeHtml(s){
+    return String(s??'').replace(/[&<>"']/g, m=>(
+      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
+  }
+  function isHeaderRow(row, header){
+    if (!Array.isArray(row) || row.length !== header.length) return false;
+    for (let i=0;i<header.length;i++) if (row[i] !== header[i]) return false;
+    return true;
+  }
+
+  /************ 轻量 CSV 解析（| 分隔 + 反斜杠转义） ************/
+  // 规则：
+  //  - 字段分隔符：|
+  //  - 转义：\| 表示字面 '|'
+  //  - 字面反斜杠：\\ -> '\'
+  //  - 文本换行保存为字面 "\n"，读入时再还原成真实换行
+  function parsePipeCsv(text){
+    const lines = String(text||'').split(/\r?\n/).filter(l => l.length>0);
+    return lines.map(line => {
+      const out = [];
+      let cur = '';
+      for (let i=0; i<line.length; i++){
+        const ch = line[i];
+        if (ch === '\\') {
+          const next = line[i+1];
+          if (next === '|') { cur += '|'; i++; continue; }
+          if (next === '\\') { cur += '\\'; i++; continue; }
+          // 保留反斜杠本身（不吞掉）
+          cur += '\\';
+          continue;
+        }
+        if (ch === '|') { out.push(cur); cur=''; continue; }
+        cur += ch;
+      }
+      out.push(cur);
+      return out.map(decodeText);
+    });
+  }
+  function encodeField(v){
+    return String(v??'')
+      .replace(/\|/g, '\\|')      // 转义分隔符
+      .replace(/\r?\n/g, '\\n');  // 换行 -> 字面 \n
+  }
+  function decodeText(s){
+    // 注意：顺序先还原 \|，再将 \n -> 换行
+    return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n');
+  }
 
   /******** 行 ↔︎ 对象 ********/
   function rowToCard(type,row){
     if(type==='prophecy'){
       const [t,intro,effect,responsive_effect='',image] =
         row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row;
-      const title = t || '';
-      const enameFromTitle = title ? title.trim().replace(/\s+/g,'_').toLowerCase() : '';
+      const title = decodeText(t || '');
+      const enameFromTitle = title ? slugify(title) : '';
       const ename = file2ename(image) || enameFromTitle;
       return {
-        title, ename,
-        intro:intro||'', effect:effect||'', responsive_effect:responsive_effect||'',
+        title,
+        ename,
+        intro: decodeText(intro||''),
+        effect: decodeText(effect||''),
+        responsive_effect: decodeText(responsive_effect||''),
         image: image || (ename ? `pictures/${ename}.png` : '')
       };
     }
     const [t,lvl,typ,desc,atk,def,charStr,skillStr,image] = row;
-    const title = t || '';
-    const enameFromTitle = title ? title.trim().replace(/\s+/g,'_').toLowerCase() : '';
+    const title = decodeText(t || '');
+    const enameFromTitle = title ? slugify(title) : '';
     const ename = file2ename(image) || enameFromTitle;
     return {
-      title, ename,
+      title,
+      ename,
       level: Number.isFinite(+lvl) ? +lvl : 0,
-      monster_type: typ || '',
-      description: desc || '',
+      monster_type: decodeText(typ || ''),
+      description: decodeText(desc || ''),
       attack: Number.isFinite(+atk) ? +atk : 0,
       defence: Number.isFinite(+def) ? +def : 0,
-      characters: safeParse(charStr, {}),
-      skills: safeParse(skillStr, []),
+      // JSON 字段在保存时可能对 '|' 做了转义，这里先还原再 parse
+      characters: safeParse(String(charStr??'').replace(/\\\|/g,'|'), {}),
+      skills:     safeParse(String(skillStr??'').replace(/\\\|/g,'|'), []),
       image: image || (ename ? `pictures/${ename}.png` : '')
     };
   }
   function cardToRow(type,c){
-    const esc = v=>String(v??'').replace(/\|/g,'\\|');
-    return type==='prophecy'
-      ? [c.title, esc(c.intro), esc(c.effect), esc(c.responsive_effect), c.image]
-      : [c.title, c.level, c.monster_type,
-         esc(c.description), c.attack, c.defence,
-         JSON.stringify(c.characters),
-         JSON.stringify(c.skills),
-         c.image];
+    const esc = v => encodeField(v);
+    if (type==='prophecy'){
+      return [esc(c.title), esc(c.intro), esc(c.effect), esc(c.responsive_effect), c.image];
+    }
+    return [
+      esc(c.title),
+      c.level,
+      esc(c.monster_type),
+      esc(c.description),
+      c.attack,
+      c.defence,
+      // JSON 也做分隔符转义（读入时再还原）
+      encodeField(JSON.stringify(c.characters)),
+      encodeField(JSON.stringify(c.skills)),
+      c.image
+    ];
   }
 
-  /******** 加载 ********/
-  async function loadAll(){
+  /******** File System Access：打开/保存 ********/
+  async function pickOpenCsv(type){
+    if (!isSecureContextOk()){
+      alert('需要在 HTTPS 或 localhost 下使用 File System Access API');
+      return;
+    }
     try{
-      for(const k of Object.keys(CONFIG)){
-        const raw = await fetch(CONFIG[k].path).then(r=>r.ok?r.text():'').catch(()=>'');
-
-        if(!raw.trim()){ state.cards[k]=[]; continue; }
-
-        const rows = window.Papa
-          ? Papa.parse(raw,{delimiter:'|',skipEmptyLines:true,newline:'\n'}).data
-          : raw.trim().split(/\r?\n/).map(r=>r.split('|'));
-        if (rows.length && Array.isArray(rows[0])) rows.shift();
-        state.cards[k] = rows.map(r=>rowToCard(k,r));
-      }
-    } catch (e){
-      console.error('加载 CSV 失败：', e);
-    } finally {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description:'CSV', accept: { 'text/csv': ['.csv'] } }],
+        excludeAcceptAllOption: false,
+        multiple: false
+      });
+      state.handles[type] = handle;
+      state.filenames[type] = handle.name || CONFIG[type].defaultName;
+      const file = await handle.getFile();
+      const text = await file.text();
+      const rows = parsePipeCsv(text);
+      // 只有在首行严格等于 header 时才移除
+      if (rows.length && isHeaderRow(rows[0], CONFIG[type].header)) rows.shift();
+      state.cards[type] = rows.map(r=>rowToCard(type,r));
       render();
+    }catch(e){
+      if (e?.name !== 'AbortError') console.error('打开 CSV 失败：\n', e);
     }
   }
 
-  /******** 渲染（仅编辑页需要 prophecy/monster 两个 Tab） ********/
+  async function pickSaveFile(type){
+    const handle = await window.showSaveFilePicker({
+      suggestedName: state.filenames[type] || CONFIG[type].defaultName,
+      types: [{ description:'CSV', accept: { 'text/csv': ['.csv'] } }]
+    });
+    state.handles[type] = handle;
+    state.filenames[type] = handle.name || CONFIG[type].defaultName;
+    return handle;
+  }
+
+  function buildCsvTextFor(type){
+    const rows = (state.cards[type]||[]).map(c=>cardToRow(type,c));
+    rows.unshift(CONFIG[type].header);
+    return rows.map(r=>r.join('|')).join('\n');
+  }
+
+  async function saveCsv(type, {saveAs=false} = {}){
+    if (!isSecureContextOk()){
+      alert('需要在 HTTPS 或 localhost 下使用 File System Access API');
+      return;
+    }
+    try{
+      let handle = state.handles[type];
+      if (!handle || saveAs) handle = await pickSaveFile(type);
+      const csv = buildCsvTextFor(type);
+      const writable = await handle.createWritable();
+      await writable.write(csv);
+      await writable.close();
+      toast('已写入：' + (state.filenames[type] || CONFIG[type].defaultName));
+    }catch(e){
+      if (e?.name !== 'AbortError') {
+        console.error('保存失败：', e);
+        alert('保存失败：' + (e?.message || e));
+      }
+    }
+  }
+
+  // 兜底：下载为本地文件（不写回原文件）
+  function downloadCsv(type){
+    const csv = buildCsvTextFor(type);
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = state.filenames[type] || CONFIG[type].defaultName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  /******** 渲染 ********/
   function render(){
     $('#app').innerHTML = `
       <div class="d-flex align-items-center justify-content-between mb-3">
@@ -122,22 +242,30 @@
           <li class="nav-item"><a class="nav-link ${state.current==='prophecy'?'active':''}" role="button" data-tab="prophecy">预言卡牌</a></li>
           <li class="nav-item"><a class="nav-link ${state.current==='monster'?'active':''}"  role="button" data-tab="monster">怪兽卡牌</a></li>
         </ul>
-        <div class="text-muted small">编辑页</div>
+        <div class="text-muted small">编辑页（File System Access）</div>
       </div>
+
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <button id="btn-open"   class="btn btn-outline-secondary btn-sm">打开CSV（当前Tab）</button>
+        <button id="btn-save"   class="btn btn-success btn-sm">保存（覆盖所选文件）</button>
+        <button id="btn-saveas" class="btn btn-primary btn-sm">另存为</button>
+        <button id="btn-export" class="btn btn-outline-primary btn-sm">导出下载（兜底）</button>
+        <span class="badge bg-light text-dark file-badge">
+          当前：${state.filenames[state.current] ? escapeHtml(state.filenames[state.current]) : '未绑定文件'}
+        </span>
+      </div>
+
       <div id="panel" class="bg-white p-3 rounded shadow-sm"></div>
-      <div class="text-center mt-3">
-        <button id="btn-save"   class="btn btn-success me-2">保存（覆盖 CSV）</button>
-        <button id="btn-saveas" class="btn btn-primary">另存为</button>
-      </div>`;
+    `;
 
     $$('[data-tab]').forEach(a=>{
       a.onclick = () => { state.current=a.dataset.tab; render(); };
     });
 
-    const btnSave = $('#btn-save');
-    const btnSaveAs = $('#btn-saveas');
-    if (btnSave)   btnSave.onclick   = () => downloadCsv(true);
-    if (btnSaveAs) btnSaveAs.onclick = () => downloadCsv(false);
+    $('#btn-open').onclick   = () => pickOpenCsv(state.current);
+    $('#btn-save').onclick   = () => saveCsv(state.current, {saveAs:false});
+    $('#btn-saveas').onclick = () => saveCsv(state.current, {saveAs:true});
+    $('#btn-export').onclick = () => downloadCsv(state.current);
 
     renderTable();
   }
@@ -145,20 +273,30 @@
   function renderTable(){
     const type = state.current, list = state.cards[type] || [];
     const panel = $('#panel');
-    if(!list.length){ panel.innerHTML = '<p class="text-muted m-0">暂无数据</p>'; return; }
+    if(!list.length){
+      panel.innerHTML = `
+        <div class="py-5 text-center text-muted">
+          暂无数据。请点击“打开CSV（当前Tab）”选择文件，或“新增”创建卡牌后保存。
+        </div>
+        <div class="text-center">
+          <button id="btn-add" class="btn btn-outline-primary">+ 新增</button>
+        </div>`;
+      $('#btn-add').onclick = ()=>openForm(null);
+      return;
+    }
     const keys = DISPLAY[type];
     let html = `
       <div class="card-table">
         <table class="table table-sm table-bordered align-middle">
           <thead><tr>
             ${keys.map(k=>`<th>${LABELS[k]}</th>`).join('')}
-            <th style="width:90px;">操作</th>
+            <th style="width:120px;">操作</th>
           </tr></thead><tbody>`;
 
     list.forEach((c,i)=>{
       html += '<tr>';
       keys.forEach(k=> html+=`<td>${escapeHtml(c[k])}</td>`);
-      html += `<td>
+      html += `<td class="text-nowrap">
         <button class="btn btn-warning btn-sm me-1" data-edit="${i}">编辑</button>
         <button class="btn btn-danger  btn-sm" data-del="${i}">删</button>
       </td></tr>`;
@@ -178,7 +316,12 @@
   function openForm(idx){
     const type = state.current, list = state.cards[type];
     const editing = idx!==null;
-    const card = editing ? JSON.parse(JSON.stringify(list[idx])) : createEmptyCard(type);
+    let card;
+    if (editing) {
+      card = JSON.parse(JSON.stringify(list[idx])); // 深拷贝
+    } else {
+      card = createEmptyCard(type);
+    }
 
     const modal = document.createElement('div');
     modal.className='modal d-block';
@@ -209,16 +352,17 @@
     modal.querySelector('[data-save]').onclick = () =>{
       collectForm(body,card,type);
       if(!card.title.trim()){ alert('卡名不能为空'); return; }
-      if(!card.ename){
-        card.ename = file2ename(card.title).replace(/\s+/g,'_').toLowerCase();
-      }
+      if(!card.ename) card.ename = slugify(card.title);
       card.image = card.image || (card.ename ? `pictures/${card.ename}.png` : '');
+
       if(editing){
-        // Remove the old card and push the updated one to the end
-        list.splice(idx,1);
-        list.push(card);
+        const arr = state.cards[type].slice();
+        // 关键：用下标删老卡，再 push 到末尾（保证“移动到最后”）
+        arr.splice(idx, 1);
+        arr.push(card);
+        state.cards[type] = arr;
       }else{
-        list.push(card);
+        state.cards[type] = (state.cards[type]||[]).concat(card);
       }
       modal.remove(); renderTable();
     };
@@ -390,23 +534,29 @@
     });
   }
 
-  /******** 导出 ********/
-  function downloadCsv(cover){
-    const type = state.current;
-    const rows = (state.cards[type]||[]).map(c=>cardToRow(type,c));
-    rows.unshift(CONFIG[type].header);
-    const csv = rows.map(r=>r.join('|')).join('\n');
-    const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = cover ? CONFIG[type].path
-                       : CONFIG[type].path.replace('.csv',`_${new Date().toISOString().slice(0,19).replace(/[-T:]/g,'')}.csv`);
-    a.click();
-    URL.revokeObjectURL(a.href);
+  /******** 简易提示 ********/
+  function toast(msg){
+    const el = document.createElement('div');
+    el.className = 'position-fixed top-0 start-50 translate-middle-x mt-3 alert alert-success shadow';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 1600);
   }
 
   /******** 启动 ********/
-  document.addEventListener('DOMContentLoaded', loadAll);
+  document.addEventListener('DOMContentLoaded', ()=>{
+    render();
+
+    // Ctrl+S / Cmd+S 快捷保存当前 Tab
+    window.addEventListener('keydown', (e)=>{
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      if ((isMac && e.metaKey && e.key.toLowerCase()==='s') ||
+          (!isMac && e.ctrlKey && e.key.toLowerCase()==='s')) {
+        e.preventDefault();
+        saveCsv(state.current, {saveAs:false});
+      }
+    });
+  });
   </script>
 </body>
 </html>

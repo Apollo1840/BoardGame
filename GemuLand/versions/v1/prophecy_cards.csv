@@ -41,11 +41,10 @@ card_title|introduction|effect|responsive_effect|image
 悬赏刺杀|||我方有效果触发的抽牌时，本回合我方造成的战斗伤害都+10。|pictures/reward_attack.png
 召唤术|【快速】|额外召唤一只怪物，并将此卡作为该怪物灵力附着。||pictures/summon.png
 蟹尊将军钳|【永续/武器】|攻击+3，防御+2|生命受到损伤时，装备怪兽+1灵力。|pictures/krebs_weapon.png
+海上风暴|【永续】|此卡翻面的回合不能使用，且我方场上和手上一共有8张牌及其以上才能使用。丢弃我方所有场牌和手牌，破坏对方场上所有牌，我方再抽5张牌。||pictures/seastrom.png
 出售神鱼||对方选择我方场上一只怪物破坏。我方手牌抽到5张牌。||pictures/sale_god.png
 东海龙宫|【永续/场景】|支付两点灵力，丢弃一张手牌，破坏对方场上一张牌。|当有【连锁】发生时，此卡获得一点灵力。|pictures/dragon_palace.png
 大海源流||选择一只【鱼种】或【鱼人种】或水属性怪物，攻击力 x 3。||pictures/stream.png
 祸福相依||抽牌时启动。让对方猜该卡牌类型（怪物/预言）。如果猜中，我方再抽一张牌；如果没猜中，我方可【直接召唤】或使用该卡。||pictures/good_or_bad.png
 灵力冲击|||对方发起攻击指令时触发。该攻击无效；被攻击怪物可支付一点灵力，破坏对方场上一只怪物。|pictures/spirit_back.png
 失落宝藏|【永续】||一回合触发一次。当我方受到卡牌效果损伤时，从弃牌堆选择一张牌加入手牌。|pictures/lost_treasure.png
-海上风暴|【永续】|（此卡翻面的回合不能使用；且我方场上和手上一共有8张牌及其以上才能使用）丢弃我方所有场牌和手牌，破坏对方场上所有牌，我方再抽5张牌。||pictures/seastrom.png
-风袭||丢弃一张手牌，将对方场上一张牌弹回对方手中。||pictures/wind_attack.png

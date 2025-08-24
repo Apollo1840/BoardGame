@@ -170,7 +170,20 @@
     </style>
 </head>
 <body>
-<div id="card-container"></div>
+<div id="sidebar-panel" style="position:fixed;left:0;top:0;height:100vh;width:220px;background:#222;color:#fff;z-index:100;box-shadow:2px 0 8px rgba(0,0,0,0.08);padding:24px 16px 16px 16px;display:flex;flex-direction:column;gap:18px;">
+  <h4 style="margin:0 0 12px 0;font-size:18px;">控制面板</h4>
+  <button id="btn-refresh" class="btn btn-primary mb-2" style="width:100%;">刷新卡牌</button>
+  <div class="mb-2">
+    <label for="card-count" style="font-size:14px;">显示卡牌数量</label>
+    <input id="card-count" type="number" min="1" value="9" style="width:100%;margin-top:4px;">
+  </div>
+  <button id="btn-print" class="btn btn-success" style="width:100%;">打印/导出 PDF</button>
+  <div style="flex:1"></div>
+  <div style="font-size:12px;color:#aaa;text-align:center;">© BoardGame 工具</div>
+</div>
+<div id="main-content" style="margin-left:240px;">
+  <div id="card-container"></div>
+</div>
 <script>
     /* ---------- 工具 ---------- */
     async function loadCSV(path){
@@ -307,12 +320,16 @@
         const text = await res.text();
         return text.split('\n').slice(1).filter(r => r.trim());
     }
+    let allProphecyRows = [], allMonsterRows = [];
+    let displayCount = 9;
+
     async function renderAllCards() {
         const ctr = document.getElementById('card-container');
         ctr.innerHTML = '';
 
-        const prophecyRows = await loadCSV('prophecy_cards.csv');
-        const monsterRows = await loadCSV('monster_cards.csv');
+        // Only use the latest N cards (interleaved)
+        const prophecyRows = allProphecyRows.slice(-displayCount);
+        const monsterRows = allMonsterRows.slice(-displayCount);
         const maxLen = Math.max(prophecyRows.length, monsterRows.length);
         for (let i = 0; i < maxLen; i++) {
             if (i < prophecyRows.length) {
@@ -324,10 +341,43 @@
         }
     }
 
+    async function reloadCSVsAndRender() {
+        allProphecyRows = await loadCSV('prophecy_cards.csv');
+        allMonsterRows = await loadCSV('monster_cards.csv');
+        renderAllCards();
+    }
+
     /* ---------- 主入口 ---------- */
     document.addEventListener('DOMContentLoaded', () => {
-        renderAllCards();                 // 首次渲染
-        setInterval(renderAllCards, 120000); // 每 120 秒更新一次
+        // Initial load
+        reloadCSVsAndRender();
+
+        // Refresh button
+        document.getElementById('btn-refresh').onclick = reloadCSVsAndRender;
+
+        // Card count input
+        const cardCountInput = document.getElementById('card-count');
+        cardCountInput.onchange = function() {
+            let val = parseInt(cardCountInput.value, 10);
+            if (isNaN(val) || val < 1) val = 1;
+            displayCount = val;
+            renderAllCards();
+        };
+
+        // Print button
+        document.getElementById('btn-print').onclick = function() {
+            // Hide sidebar for print
+            document.getElementById('sidebar-panel').style.display = 'none';
+            document.getElementById('main-content').style.marginLeft = '0';
+            setTimeout(()=>{
+                window.print();
+                // Restore sidebar after print
+                setTimeout(()=>{
+                    document.getElementById('sidebar-panel').style.display = '';
+                    document.getElementById('main-content').style.marginLeft = '240px';
+                }, 100);
+            }, 50);
+        };
     });
 
 </script>
