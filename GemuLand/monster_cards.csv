@@ -46,7 +46,8 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 龙虾骑士|1|水|【鱼人种】|4|3|{"normal_characters":"此卡攻击力+最高场上其他卡片攻击力加成。"}|[{"skill_name":"虾线冲击","number_power":0,"skill_text":"支付5点生命，破坏对方场上一张覆盖的预言卡。并获得一点灵力，可随意分配。"},{"skill_name":"突刺","number_power":1,"skill_text":"【攻击技能】如果此卡攻击力大与对方两只怪兽防御力的总和，可以一起破坏，并计算战斗伤害。"}]|pictures/lobster.png
 虎金大哥|0||【鱼人种】|5|2|{"normal_characters":"此卡造成的战斗伤害翻1.5倍（向上取整）"}|[{"skill_name":"虎鲸拳","number_power":1,"skill_text":"攻击力x2"}]|pictures/hujin.png
 龙王三公主|2|水|【鱼人种】|10|5|{"normal_characters":"一回合一次，可以无效化对此卡的一次攻击，或者一次效果。"}|[]|pictures/dragon_princess.png
-预言夫人|0|水|【鱼人种】趋利避害的高手。|1|8|{"react_characters":"当抽牌连锁发生时，可查看对方一张盖牌或手牌。"}|[]|pictures/prophecy.png
 水灵蛇|0|水|【鱼种】|1|0|{"normal_characters":"每回合结束阶段获得一点灵力，可以分配到其他怪物上，并+8生命。","react_characters":"此卡被战斗破坏时，对方复活一只怪物。"}|[]|pictures/godfish.png
 舞鱼人|0|水|【鱼人种】|0|3|{"normal_characters":"此卡在场上，我方每回合可以使用两张预言卡。或者某一回合使用一次的效果启动两次。"}|[{"skill_name":"舞者之姿","number_power":0,"skill_text":"支付5生命，下次对此卡的攻击无效化。"},{"skill_name":"进攻之舞","number_power":0,"skill_text":"每丢弃一张手牌，此卡此回合攻击力+5（最多三张）"}]|pictures/dance_fish.png
 风灵真君|0|风|【天仙种】|5|3|{"react_characters":"当场上有卡牌回到手牌时，此卡攻击+15直到该回合结束。"}|[{"skill_name":"风卷残云","number_power":1,"skill_text":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png
+预言夫人|0|水|【鱼人种】趋利避害的高手。|1|8|{"react_characters":"有效果被抽牌触发时，可查看对方一张盖牌或手牌。"}|[]|pictures/prophecy.png
+罗汉金仙|0|金|【天仙种】|0|8|{"react_characters":"当场上有卡牌离开场上时，此卡防御力+5直到该回合结束，并获得一个免于效果破坏的护盾（不可叠加）。"}|[]|pictures/gold_budda.png
