@@ -50,3 +50,8 @@ card_title|introduction|effect|responsive_effect|image
 祸福相依|||我方抽牌时。让对方猜该卡牌类型（怪物/预言）。如果没猜中，我方可丢弃该抽牌并从对方手牌或盖牌抽走一张牌；如果猜中，我方可【直接召唤】或使用该卡。|pictures/good_or_bad.png
 护体金光|||当对方发起攻击时，无效该攻击，对方随机一张正面表示的卡回到对方手牌。|pictures/golden_protection.png
 大漠风袭||丢弃一张手牌，将对方场上一张牌弹回对方手中。|对方某怪物攻击结束后，我方一只怪物发起一次攻击。|pictures/wind_attack.png
+神识天眼||查看对方一张盖牌和两张手牌。再将一张盖牌返回对方手中。||pictures/sky_eye.png
+雷劫林|【永续】||进行高级怪物召唤后，随机破坏对方场上一张正面表示的卡。|pictures/thunder_forest.png
+天眼威能|||我方回合结束时触发，指明一张牌，对方手牌或盖牌中有，则对方必须丢弃。之后我方继续指明，直到失败。|pictures/eye_power.png
+神坛贡品|【快速】|布置阶段一次如果召唤的是一只2级及其以下的怪物，那么该次召唤不需要灵力消耗。此卡不会作为灵力附着。||pictures/offering.png
+仙人梯||额外召唤一只怪物（所需灵力-1），之后随机丢弃一张手牌。||pictures/god_land.png

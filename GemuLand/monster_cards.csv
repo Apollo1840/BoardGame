@@ -51,3 +51,6 @@ card_title|level|monster_type|description|attack|defence|characters|skills|image
 风灵真君|0|风|【天仙种】|5|3|{"react_characters":"当场上有卡牌回到手牌时，此卡攻击+15直到该回合结束。"}|[{"skill_name":"风卷残云","number_power":1,"skill_text":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png
 预言夫人|0|水|【鱼人种】趋利避害的高手。|1|8|{"react_characters":"有效果被抽牌触发时，可查看对方一张盖牌或手牌。"}|[]|pictures/prophecy.png
 罗汉金仙|0|金|【天仙种】|0|8|{"react_characters":"当场上有卡牌离开场上时，此卡防御力+5直到该回合结束，并获得一个免于效果破坏的护盾（不可叠加）。"}|[]|pictures/gold_budda.png
+莲花盾仙|0|木|【天仙种】|1|6|{"normal_characters":"此卡在场上时，对方不能指定攻击此卡右侧怪物。"}|[{"skill_name":"莲花盾","number_power":0,"skill_text":"丢弃一张手牌，防御力+3直到对方回合结束。"}]|pictures/lotus_shield.png
+莲花剑仙|1|木|【天仙种】|6|4|{"react_characters":"此卡发动攻击时，可以将防御力数值加到攻击上。攻击结束后防御力归零直到对方回合结束。"}|[{"skill_name":"莲花剑法","number_power":0,"skill_text":"弃牌堆顶上为预言卡才可启动，本回合可以攻击两次。"}]|pictures/lotus_sword.png
+观音上仙|2|光|【天仙种】|5|10|{"normal_characters":"此卡在场上，召唤高级怪物所需灵力-1。召唤出的高级怪物获得一点灵力。"}|[]|pictures/guanyin.png
