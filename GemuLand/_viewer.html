@@ -190,7 +190,15 @@
         const txt = await (await fetch(path)).text();
         return txt.split('\n').slice(1).filter(r=>r.trim());
     }
-    const safeParse = str => { try{ return JSON.parse(str); } catch { return {}; } };
+    // 修正：支持单引号 JSON
+    function fixJsonQuotes(str) {
+        if (!str) return str;
+        if (str.trim().startsWith("'{") || str.trim().startsWith("'[") ) {
+            str = str.trim().replace(/^'/, '').replace(/'$/, '');
+        }
+        return str.replace(/'/g, '"');
+    }
+    const safeParse = (str, def={}) => { try{ return JSON.parse(fixJsonQuotes(str)); } catch { return def; } };
 
     /* ---------- 预言卡 ---------- */
     function createProphecyCard(cols){
@@ -246,24 +254,27 @@
 
     /* ---------- 怪兽卡 ---------- */
     function createMonsterCard([title,level,type,desc,atk,def,charStr,skillStr,image]){
-        const chars = safeParse(charStr), skills = safeParse(skillStr);
-        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level)));
+        // 新增 magic 字段，修正参数顺序
+        // [title,level,type,desc,atk,def,magic,charStr,skillStr,image]
+        const [title1,level1,type1,desc1,atk1,def1,magic1,charStr1,skillStr1,image1] = arguments[0];
+        const chars = safeParse(charStr1, {}), skills = safeParse(skillStr1, []);
+        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
 
         const card = document.createElement('div'); card.className='card monster';
         card.innerHTML =
         `<div class="card-title">
            <span class="level">${lvlIcons}</span>
-           <span class="name">${title}</span>
-           <span class="type">${type}</span>
+           <span class="name">${title1}</span>
+           <span class="type">${type1}</span>
          </div>
-         <div class="card-image-container"><img src="${image}"></div>`;
+         <div class="card-image-container"><img src="${image1}"></div>`;
 
         const area = document.createElement('div'); area.className='card-content';
 
-        if(desc){
+        if(desc1){
             area.innerHTML +=
             `<div class="content-box attribute-box">
-               <div class="box-content">${desc}</div>
+               <div class="box-content">${desc1}</div>
              </div>`;
         }
 
@@ -301,8 +312,8 @@
 
         card.innerHTML +=
         `<div class="stats">
-           <div class="atk">攻击: ${atk}</div>
-           <div class="def">防御: ${def}</div>
+           <div class="atk">攻击: ${atk1}</div>
+           <div class="def">防御: ${def1}</div>
          </div>`;
         return card;
     }

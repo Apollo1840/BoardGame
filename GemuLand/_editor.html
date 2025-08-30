@@ -27,18 +27,18 @@
     monster: {
       defaultName: 'monster_cards.csv',
       header: ['card_title','level','monster_type','description',
-               'attack','defence','characters','skills','image']
+               'attack','defence','magic','characters','skills','image']
     }
   };
   const DISPLAY = {
     prophecy: ['title','ename','intro','effect','responsive_effect'],
-    monster : ['title','ename','level','monster_type','description','attack','defence']
+    monster : ['title','ename','level','monster_type','description','attack','defence','magic']
   };
   const LABELS = {
     title:'卡名',ename:'英文名',intro:'背景介绍',
     effect:'效果',responsive_effect:'响应效果',
     level:'等级',monster_type:'属性',
-    description:'背景介绍',attack:'ATK',defence:'DEF'
+    description:'背景介绍',attack:'ATK',defence:'DEF',magic:'MAG'
   };
   const state = {
     current: 'prophecy',
@@ -123,10 +123,24 @@
         image: image || (ename ? `pictures/${ename}.png` : '')
       };
     }
-    const [t,lvl,typ,desc,atk,def,charStr,skillStr,image] = row;
+    // 10 columns: t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image
+    const [t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image] = row;
     const title = decodeText(t || '');
     const enameFromTitle = title ? slugify(title) : '';
     const ename = file2ename(image) || enameFromTitle;
+    // 修正：CSV 里用单引号包裹的 JSON 需转为双引号
+    function fixJsonQuotes(str) {
+      if (!str) return str;
+      // 只在外层是单引号时替换
+      if (str.trim().startsWith("'{") || str.trim().startsWith("'[") ) {
+        // 去除外层单引号
+        str = str.trim().replace(/^'/, '').replace(/'$/, '');
+      }
+      // 替换所有单引号为双引号（不在字符串内部的情况）
+      // 更安全的做法是只替换键和字符串值的引号
+      // 这里只做简单替换，假设没有嵌套单引号
+      return str.replace(/'/g, '"');
+    }
     return {
       title,
       ename,
@@ -135,9 +149,10 @@
       description: decodeText(desc || ''),
       attack: Number.isFinite(+atk) ? +atk : 0,
       defence: Number.isFinite(+def) ? +def : 0,
+      magic: Number.isFinite(+magic) ? +magic : 0,
       // JSON 字段在保存时可能对 '|' 做了转义，这里先还原再 parse
-      characters: safeParse(String(charStr??'').replace(/\\\|/g,'|'), {}),
-      skills:     safeParse(String(skillStr??'').replace(/\\\|/g,'|'), []),
+      characters: safeParse(fixJsonQuotes(String(charStr??'').replace(/\|/g,'|')), {}),
+      skills:     safeParse(fixJsonQuotes(String(skillStr??'').replace(/\|/g,'|')), []),
       image: image || (ename ? `pictures/${ename}.png` : '')
     };
   }
@@ -153,6 +168,7 @@
       esc(c.description),
       c.attack,
       c.defence,
+      c.magic,
       // JSON 也做分隔符转义（读入时再还原）
       encodeField(JSON.stringify(c.characters)),
       encodeField(JSON.stringify(c.skills)),
@@ -319,6 +335,11 @@
     let card;
     if (editing) {
       card = JSON.parse(JSON.stringify(list[idx])); // 深拷贝
+      // Ensure characters and skills are always objects/arrays if present in CSV
+      if(type==='monster') {
+        if (!card.characters || typeof card.characters !== 'object') card.characters = {};
+        if (!Array.isArray(card.skills)) card.skills = [];
+      }
     } else {
       card = createEmptyCard(type);
     }
@@ -402,47 +423,55 @@
     }
     return `
       <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">卡名</label>
-          <input name="title" class="form-control" value="${escapeHtml(c.title)}">
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">英文名</label>
-          <input name="ename" class="form-control" value="${escapeHtml(c.ename)}">
-        </div>
-
+        <!-- First row: three columns (等级, 卡名, 属性) -->
         <div class="col-md-3">
           <label class="form-label">等级</label>
           <input type="number" name="level" class="form-control" value="${c.level}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">卡名</label>
+          <input name="title" class="form-control" value="${escapeHtml(c.title)}">
         </div>
         <div class="col-md-3">
           <label class="form-label">属性 (monster_type)</label>
           <input name="monster_type" class="form-control" value="${escapeHtml(c.monster_type)}">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">攻击</label>
-          <input type="number" name="attack" class="form-control" value="${c.attack}">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">防御</label>
-          <input type="number" name="defence" class="form-control" value="${c.defence}">
+
+        <!-- Second row: one column (英文名) -->
+        <div class="col-12">
+          <label class="form-label">英文名</label>
+          <input name="ename" class="form-control" value="${escapeHtml(c.ename)}">
         </div>
 
+        <!-- Third row: background description -->
         <div class="col-12">
           <label class="form-label">背景介绍</label>
           <textarea name="description" rows="2" class="form-control">${escapeHtml(c.description)}</textarea>
         </div>
-
-        <div class="col-12"><hr>
-          <h6>属性 characters</h6>
-          <div id="attr-container"></div>
-          <button id="add-attr" class="btn btn-outline-secondary btn-sm mt-1" type="button">添加属性</button>
+      </div>
+      <div class="col-12"><hr>
+        <h6>属性 characters</h6>
+        <div id="attr-container"></div>
+        <button id="add-attr" class="btn btn-outline-secondary btn-sm mt-1" type="button">添加属性</button>
+      </div>
+      <div class="col-12"><hr>
+        <h6>技能 skills</h6>
+        <div id="skill-container"></div>
+        <button id="add-skill" class="btn btn-outline-secondary btn-sm mt-1" type="button">添加技能</button>
+      </div>
+      <div class="row g-3 mt-2">
+        <!-- Last row: three columns (攻击, 魔力, 防御) -->
+        <div class="col-md-4">
+          <label class="form-label">攻击</label>
+          <input type="number" name="attack" class="form-control" value="${c.attack}">
         </div>
-
-        <div class="col-12"><hr>
-          <h6>技能 skills</h6>
-          <div id="skill-container"></div>
-          <button id="add-skill" class="btn btn-outline-secondary btn-sm mt-1" type="button">添加技能</button>
+        <div class="col-md-4">
+          <label class="form-label">魔力</label>
+          <input type="number" name="magic" class="form-control" value="${c.magic}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">防御</label>
+          <input type="number" name="defence" class="form-control" value="${c.defence}">
         </div>
       </div>`;
   }
@@ -479,6 +508,17 @@
       });
     };
     const renderSkills = ()=>{
+      // Before re-render, save current edits from DOM to card.skills
+      const rows = $$('#skill-container .skill-row', container);
+      if (rows.length === card.skills.length) {
+        rows.forEach((row, i) => {
+          card.skills[i] = {
+            skill_name: row.querySelector('.skill-name').value.trim(),
+            number_power: +row.querySelector('.skill-power').value || 0,
+            skill_text: row.querySelector('.skill-text').value.trim()
+          };
+        });
+      }
       skillC.innerHTML='';
       card.skills.forEach((s,i)=>skillC.insertAdjacentHTML('beforeend',skillHtml(i,s)));
     };
@@ -516,9 +556,10 @@
     card.ename        = q('ename').value.trim();
     card.level        = +q('level').value || 0;
     card.monster_type = q('monster_type').value.trim();
-    card.description  = q('description').value.trim();
     card.attack       = +q('attack').value || 0;
     card.defence      = +q('defence').value || 0;
+    card.magic        = +q('magic').value || 0;
+    card.description  = q('description').value.trim();
 
     card.characters = {};
     $$('#attr-container .attr-key', body).forEach((sel,i)=>{
