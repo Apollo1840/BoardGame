@@ -380,34 +380,15 @@
       }
     }
 
-    async function reloadCSVsAndRender(){
-      let prophecy, monster; const ts=Date.now();
-      if(lang==='en'){
-        prophecy=await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
-        monster =await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
-      }else{
-        prophecy=await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
-        monster =await loadCSVWithHeader('monster_cards.csv?t='+ts);
-      }
-      prophecyHeader=prophecy.headerArr; allProphecyRows=prophecy.rowsArr;
-      monsterHeader =monster.headerArr;  allMonsterRows =monster.rowsArr;
-      await renderAllCards();
-    }
-
-    function setLangClass(){ document.body.classList.toggle('en-mode', lang==='en'); }
-
-    /* ---------- 打印流程（背景网格 + 固定排版） ---------- */
-    document.addEventListener('DOMContentLoaded', ()=>{
-      reloadCSVsAndRender();
-      setLangClass();
-
-      document.getElementById('btn-refresh').onclick=reloadCSVsAndRender;
-
-      const cardCountInput=document.getElementById('card-count');
-      cardCountInput.onchange=function(){
-        let val=parseInt(cardCountInput.value,10);
-        if(isNaN(val)||val<1) val=1;
-        displayCount=val;
+    async function reloadCSVsAndRender() {
+        // 适配 GitHub Pages：自动从当前 HTML 所在目录加载 CSV
+        function getCsvUrl(filename) {
+            // 取当前 HTML 路径，拼接 CSV 文件名
+            const base = window.location.pathname.replace(/\/[^/]*$/, '/');
+            return base + filename;
+        }
+        allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards.csv'));
+        allMonsterRows = await loadCSV(getCsvUrl('monster_cards.csv'));
         renderAllCards();
       };
 
@@ -507,7 +488,6 @@
           updateLangSwitch();
         }
       };
-    });
   </script>
 </body>
 </html>
