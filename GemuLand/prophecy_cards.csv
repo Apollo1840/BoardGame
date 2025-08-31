@@ -30,7 +30,6 @@ card_title|introduction|effect|responsive_effect|image
 大漠风袭||丢弃一张手牌，将对方场上一张牌弹回对方手中。|当对方某怪物攻击结束后：我方一只怪物发起一次攻击。|pictures/wind_attack.png
 护体金光|||当对方发起攻击时：无效该攻击，对方随机一张正面表示的卡回到对方手牌。|pictures/golden_protection.png
 祸福相依|||当我方抽牌时：让对方猜该卡牌类型（怪物/预言）。如果没猜中，我方可丢弃该抽牌并从对方手牌或盖牌抽走一张牌；如果猜中，我方可【直接召唤】或使用该卡。|pictures/good_or_bad.png
-阴暗世仇|【永续】预言家说，看吧，这就是你们的世仇。||当我方某种族怪物（X种）被其他种族怪物（Y种）战斗破坏时，此卡才可以发动，并将永久存在在场上。当我方X种怪物，在与Y种怪物战斗时：攻击+3。|pictures/generation_hate.png
 三角效应||如果我方场上正好有三只怪物，选择一项发动：1）抽三张牌。2）破坏对方场上所有预言卡。|对方发动攻击时：如果我方场上正好有三只怪物，更改攻击指定目标到我方任一只怪物上。此卡返回覆盖状态。|pictures/tri_effect.png
 进攻陷阱|||当对方发动攻击后：破坏对方一张怪物卡。|pictures/attack_trap.png
 灵力冲击|||当对方发起攻击时：该攻击无效；被攻击怪物可支付一点灵力，破坏对方场上一只怪物。|pictures/spirit_back.png
@@ -58,3 +57,4 @@ card_title|introduction|effect|responsive_effect|image
 一场箭雨||我方场上每存在一只怪物，给对方造成5点伤害。||pictures/arrows.png
 灵光乍现||灵力+2，随机分配在我方怪物上。||pictures/spirit_shine.png
 严肃预言||可以额外使用一张自上个我方回合就覆盖的（非装备，非永续）预言卡，该预言卡效果起效两次。||pictures/serious_prophecy.png
+阴暗世仇|【永续】预言家说，看吧，这就是你们的世仇。||当我方某种族怪物（X种）被其他种族怪物（Y种）战斗破坏时，此卡才可以发动，并将永久存在在场上。当我方X种怪物，在与Y种怪物战斗时：攻击+5。|pictures/generation_hate.png
