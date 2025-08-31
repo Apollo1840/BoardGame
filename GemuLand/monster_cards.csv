@@ -46,7 +46,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 莲花盾仙|0|木|【天仙种】|1|6|0|{"normal_characters":"此卡在场上时，对方不能指定攻击此卡右侧怪物。"}|[{"skill_name":"莲花盾","number_power":0,"skill_text":"丢弃一张手牌，防御力+3直到对方回合结束。"}]|pictures/lotus_shield.png
 莲花剑仙|1|木|【天仙种】|6|4|0|{"react_characters":"此卡发动攻击时，可以将防御力数值加到攻击上。攻击结束后防御力归零直到对方回合结束。"}|[{"skill_name":"莲花剑法","number_power":0,"skill_text":"弃牌堆顶上为预言卡才可启动，本回合可以攻击两次。"}]|pictures/lotus_sword.png
 虔诚信徒|0||【人类种】|0|0|0|{"normal_characters":"将此卡破坏，可以从手牌额外召唤一张怪物（所需灵力-1）。"}|[]|pictures/faithful.png
-幽夜猫|2|冰|【恶魔种】恶魔地界的宠物，很难在其他地方看到。|9|5|1|{"normal_characters":"此卡给对方造成伤害后，我方抽一张牌。"}|[{"skill_name":"寒霜吐息","number_power":0,"skill_text":"使对方一只怪兽本回合防御力-5。"},{"skill_name":"折射冰刺","number_power":1,"skill_text":"当我方生命值更低才可使用，此回合使用的某张预言卡的效果可以再发挥一次。"}]|pictures/night_cat.png
 大将|2|金|【人类种】正义温和的将军城城主，育有二儿二女。|9|10|0.3|{"normal_characters":"此卡在场上，对方不能选择其他【人类种】为攻击对象。"}|[{"skill_name":"赏钱","number_power":1,"skill_text":"抽一张牌。"}]|pictures/general.png
 月族女战士|2|金|【人类种】非常神秘，偶尔出没在将军城。|8|11|0.2|{"react_characters":"当场上有怪物使用灵力施展技能后，此卡吸收其使用掉的灵力。一回合合计最高2点。"}|[{"skill_name":"月之祝福","number_power":6,"skill_text":"将6点灵力平均分配给我方场上所有怪物。"}]|pictures/moon_fighter.png
 龙王三公主|2|水|【鱼人种】能谋善战，未来的女龙王。|10|8|1|{"normal_characters":"一回合一次，可以无效化对此卡的一次攻击，或者一次效果。"}|[]|pictures/dragon_princess.png
@@ -58,3 +57,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 护法童子|1|虚|【天仙种】|6|0|0|{}|[{"skill_name":"护法阵","number_power":0,"skill_text":"指定我方一只怪物，他获得一次不被战斗破坏的护盾。"},{"skill_name":"挑衅","number_power":0,"skill_text":"指定对方一只怪物对此卡发动攻击，攻击造成的伤害由对方承担。"}]|pictures/childgod.png
 巨蟹骑士|1|火|【鱼人种】|5|6|0|{"react_characters":"收到灵力时，防御力+3直到对方回合结束。或再丢弃一张手牌，攻击力+3直到回合结束。"}|[{"skill_name":"蟹黄宝","number_power":0,"skill_text":"支付5点生命值，抽两张牌，丢弃一张手牌。"},{"skill_name":"烈焰蟹击","number_power":3,"skill_text":"攻击力+5直到回合结束，战斗伤害翻倍。"}]|pictures/krebs.png
 龙虾骑士|1|水|【鱼人种】|6|5|0|{"normal_characters":"此卡攻击力+最高场上其他卡片攻击力加成。"}|[{"skill_name":"虾线冲击","number_power":0,"skill_text":"支付5点生命，破坏对方场上一张覆盖的预言卡。并获得一点灵力，可随意分配。"},{"skill_name":"突刺","number_power":1,"skill_text":"【攻击技能】如果此卡攻击力大与对方两只怪兽防御力的总和，可以一起破坏，并计算战斗伤害。"}]|pictures/lobster.png
+幽夜猫|2|冰|【恶魔种】恶魔地界的宠物，很难在其他地方看到。|9|5|1|{"normal_characters":"此卡给对方造成伤害后，我方抽一张牌。"}|[{"skill_name":"寒霜吐息","number_power":0,"skill_text":"使对方一只怪兽本回合防御力-5。"},{"skill_name":"折射冰晶","number_power":1,"skill_text":"(当我方生命值更低才可使用) 此回合使用的某张预言卡的效果可以再发挥一次。"}]|pictures/night_cat.png
+树枝女|0|木|【植物人种】|2|3|1|{"normal_characters":"我方每使用一张预言卡，此卡获得一点灵力。"}|[{"skill_name":"传输灵力","number_power":0,"skill_text":"将此卡至多2点灵力转移到别的怪物卡上。"}]|pictures/woodwoman.png
+超级彩虹桉|1|木|【植物种】|8|6|0.5|{"normal_characters":"每点携带灵力给自身+1攻击力，+1防御力。"}|[]|pictures/rainbow_tree.png
