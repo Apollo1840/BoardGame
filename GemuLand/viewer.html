@@ -635,10 +635,8 @@
             prophecy = await loadCSVWithHeader(getCsvUrl('prophecy_cards.csv'));
             monster = await loadCSVWithHeader(getCsvUrl('monster_cards.csv'));
         }
-        prophecyHeader = prophecy.headerArr;
-        allProphecyRows = prophecy.rowsArr;
-        monsterHeader = monster.headerArr;
-        allMonsterRows = monster.rowsArr;
+        allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards.csv'));
+        allMonsterRows = await loadCSV(getCsvUrl('monster_cards.csv'));
         renderAllCards();
     }
 
