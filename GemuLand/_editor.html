@@ -32,7 +32,7 @@
   };
   const DISPLAY = {
     prophecy: ['title','ename','intro','effect','responsive_effect'],
-    monster : ['title','ename','level','monster_type','description','attack','defence','magic']
+    monster : ['title','ename','level','monster_type','description','attack','defence', 'magic'] 
   };
   const LABELS = {
     title:'卡名',ename:'英文名',intro:'背景介绍',
@@ -149,7 +149,7 @@
       description: decodeText(desc || ''),
       attack: Number.isFinite(+atk) ? +atk : 0,
       defence: Number.isFinite(+def) ? +def : 0,
-      magic: Number.isFinite(+magic) ? +magic : 0,
+      magic: isNaN(parseFloat(magic)) ? 0 : parseFloat(magic),
       // JSON 字段在保存时可能对 '|' 做了转义，这里先还原再 parse
       characters: safeParse(fixJsonQuotes(String(charStr??'').replace(/\|/g,'|')), {}),
       skills:     safeParse(fixJsonQuotes(String(skillStr??'').replace(/\|/g,'|')), []),
@@ -467,7 +467,7 @@
         </div>
         <div class="col-md-4">
           <label class="form-label">魔力</label>
-          <input type="number" name="magic" class="form-control" value="${c.magic}">
+          <input type="text" inputmode="decimal" pattern="[0-9.]*" name="magic" class="form-control" value="${c.magic}">
         </div>
         <div class="col-md-4">
           <label class="form-label">防御</label>
@@ -558,7 +558,7 @@
     card.monster_type = q('monster_type').value.trim();
     card.attack       = +q('attack').value || 0;
     card.defence      = +q('defence').value || 0;
-    card.magic        = +q('magic').value || 0;
+    card.magic        = isNaN(parseFloat(q('magic').value)) ? 0 : parseFloat(q('magic').value);
     card.description  = q('description').value.trim();
 
     card.characters = {};
