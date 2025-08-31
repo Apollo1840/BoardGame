@@ -353,8 +353,14 @@
     }
 
     async function reloadCSVsAndRender() {
-        allProphecyRows = await loadCSV('prophecy_cards.csv');
-        allMonsterRows = await loadCSV('monster_cards.csv');
+        // 适配 GitHub Pages：自动从当前 HTML 所在目录加载 CSV
+        function getCsvUrl(filename) {
+            // 取当前 HTML 路径，拼接 CSV 文件名
+            const base = window.location.pathname.replace(/\/[^/]*$/, '/');
+            return base + filename;
+        }
+        allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards.csv'));
+        allMonsterRows = await loadCSV(getCsvUrl('monster_cards.csv'));
         renderAllCards();
     }
 
