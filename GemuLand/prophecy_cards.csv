@@ -12,7 +12,6 @@ card_title|introduction|effect|responsive_effect|image
 大预言书|【永续】预言家什么也没说，只是默默写了本书|将此卡移出的回合，可以额外再使用最多三次预言卡。||pictures/prophey_book.png
 召唤术|【快速】|额外召唤一只怪物，并将此卡作为该怪物灵力附着。||pictures/summon.png
 出售神鱼||对方选择我方场上一只怪物破坏。我方手牌抽到5张牌。||pictures/sale_god.png
-大海源流||选择一只【鱼种】或【鱼人种】或水属性怪物，攻击力 x 3。||pictures/stream.png
 海上风暴|【永续】|（此卡翻面的回合不能使用；且我方场上和手上一共有8张牌及其以上才能使用）丢弃我方所有场牌和手牌，破坏对方场上所有牌，我方再抽5张牌。||pictures/seastrom.png
 神识天眼||查看对方一张盖牌和两张手牌。再将一张盖牌返回对方手中。||pictures/sky_eye.png
 仙人梯||额外召唤一只怪物（所需灵力-1），之后随机丢弃一张手牌。||pictures/god_land.png
@@ -24,7 +23,6 @@ card_title|introduction|effect|responsive_effect|image
 破石而出||（场上没有怪物才可以使用）从弃牌堆【直接召唤】一只3级及其以下的怪物。||pictures/earth_breaking.png
 饥寒交迫|不合时宜的寒潮和饥饿同时到来。||当对方场上最后一只怪物被破坏时：再破坏对方2张手牌或1张预言卡。|pictures/cold_starve.png
 天眼威能|||当我方回合结束时：指明一张牌，对方手牌或盖牌中有，则对方必须丢弃。之后我方继续指明，直到失败。|pictures/eye_power.png
-雷劫林|【永续】||当进行高级怪物召唤后：随机破坏对方场上一张正面表示的卡。|pictures/thunder_forest.png
 连续预言||接下来可以额外使用一张预言卡。如果其发动成功，则可从场上再翻面额外使用一张预言卡。|当我方回合【连锁】发生后：此回合预言卡使用不受限制。|pictures/continous_prophecy.png
 分配不均|||当我方此回合进行额外召唤后：将我方一只怪物翻面成怪兽蛋，然后抽取对方两张手牌。|pictures/inequal.png
 大漠风袭||丢弃一张手牌，将对方场上一张牌弹回对方手中。|当对方某怪物攻击结束后：我方一只怪物发起一次攻击。|pictures/wind_attack.png
@@ -58,3 +56,5 @@ card_title|introduction|effect|responsive_effect|image
 灵光乍现||灵力+2，随机分配在我方怪物上。||pictures/spirit_shine.png
 严肃预言||可以额外使用一张自上个我方回合就覆盖的（非装备，非永续）预言卡，该预言卡效果起效两次。||pictures/serious_prophecy.png
 阴暗世仇|【永续】预言家说，看吧，这就是你们的世仇。||当我方某种族怪物（X种）被其他种族怪物（Y种）战斗破坏时，此卡才可以发动，并将永久存在在场上。当我方X种怪物，在与Y种怪物战斗时：攻击+5。|pictures/generation_hate.png
+雷劫圣林|【永续】||当我方进行高级怪物召唤后：随机破坏对方场上一张正面表示的卡。|pictures/thunder_forest.png
+大海源流||选择一只0级【鱼种】（或【鱼人种】，或（水）属性）怪物，下次攻击攻击力 x 3。||pictures/stream.png
