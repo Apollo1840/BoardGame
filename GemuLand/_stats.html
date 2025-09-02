@@ -137,12 +137,23 @@
   };
 
   /* 通用：分组矩阵（行=组名，如属性/种族；列=等级） */
-  const matrixTable = (groupLevelMap, rowLabel='组 \\ 等级', rowTotalName='组小计') => {
-    const rows = Object.keys(groupLevelMap).sort();
+  const matrixTable = (groupLevelMap, rowLabel='组 \\ 等级', rowTotalName='组小计', sortRowsByTotal=false) => {
+    let rows = Object.keys(groupLevelMap);
     const colSet = new Set();
     rows.forEach(r => Object.keys(groupLevelMap[r]).forEach(l => colSet.add(+l)));
     const cols = Array.from(colSet).sort(sortNumAsc);
     if (!rows.length || !cols.length) return '<div class="text-muted">暂无数据</div>';
+
+    // 计算每行总数
+    const rowTotals = {};
+    rows.forEach(r => {
+      rowTotals[r] = cols.reduce((sum, l) => sum + (groupLevelMap[r][l] || 0), 0);
+    });
+    if (sortRowsByTotal) {
+      rows = rows.sort((a, b) => rowTotals[b] - rowTotals[a]);
+    } else {
+      rows = rows.sort();
+    }
 
     const thead = `<thead><tr><th style="min-width:120px;">${esc(rowLabel)}</th>${cols.map(l=>`<th>${l}</th>`).join('')}<th>${esc(rowTotalName)}</th></tr></thead>`;
     let tbody = '';
@@ -170,7 +181,7 @@
       const ename = (image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
       return { title, ename, intro:intro||'', effect:effect||'', responsive_effect:responsive_effect||'', image: image || (ename?`pictures/${ename}.png`: '') };
     }
-    const [t,lvl,typ,desc,atk,def,charStr,skillStr,image] = row;
+    const [t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image] = row;
     const title = t || '';
     const ename = (image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
     return {
@@ -180,6 +191,7 @@
       description: desc || '',
       attack: nint(atk),
       defence: nint(def),
+      magic: parseFloat(magic),
       characters: (()=>{ try{return JSON.parse(charStr);}catch{return {};} })(),
       skills: (()=>{ try{return JSON.parse(skillStr);}catch{return [];} })(),
       image: image || (ename?`pictures/${ename}.png`:'')
@@ -248,6 +260,31 @@
     };
   }
 
+  function computeProphecyDetailStats(prophecy) {
+    const total = prophecy.length;
+    let normal = 0, quick = 0, normal_permanent = 0, equip_permanent = 0;
+    let onlyEffect = 0, onlyReact = 0, both = 0;
+    prophecy.forEach(c => {
+      const intro = c.intro || '';
+      if (/【快速/.test(intro)) quick++;
+      else if (/【永续\/装备/.test(intro)) equip_permanent++;
+      else if (/【永续/.test(intro)) normal_permanent++;
+      else normal++;
+      const hasEffect = (c.effect||'').trim().length > 0;
+      const hasReact = (c.responsive_effect||'').trim().length > 0;
+      if (hasEffect && hasReact) both++;
+      else if (hasEffect) onlyEffect++;
+      else if (hasReact) onlyReact++;
+    });
+    function pct(n) { return total ? Math.round(n*100/total) : 0; }
+    return {
+      total,
+      normal, quick, normal_permanent, equip_permanent,
+      onlyEffect, onlyReact, both,
+      pct
+    };
+  }
+
   /* --------------------------- 渲染（界面不变） --------------------------- */
   function renderStats() {
     const panel = $('#panel');
@@ -270,10 +307,58 @@
           <h5 class="mb-0">预言卡</h5>
           <span class="badge text-bg-secondary">introduction 内含「【永续】」视为永续预言卡</span>
         </div>
-        <div class="kpi mt-3">
-          <div class="card"><div class="text-muted">永续预言卡</div><div class="val">${s.prophecyPermanentCnt}</div></div>
-          <div class="card"><div class="text-muted">普通预言卡</div><div class="val">${s.prophecyNormalCnt}</div></div>
-          <div class="card"><div class="text-muted">永续占比</div><div class="val">${s.prophecyCnt ? Math.round(100*s.prophecyPermanentCnt/s.prophecyCnt) : 0}%</div></div>
+        <div class="mt-3">
+          ${(() => {
+            const d = computeProphecyDetailStats(state.cards.prophecy);
+            return `
+              <div class="kpi-grid mb-3" style="grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));">
+                <div class="k kpi-tile">
+                  <div class="lvl">总数</div>
+                  <div class="num">${d.total}</div>
+                  <div class="pct">100%</div>
+                </div>
+              </div>
+              <div class="kpi-grid mb-3" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="k kpi-tile">
+                  <div class="lvl">普通预言卡</div>
+                  <div class="num">${d.normal}</div>
+                  <div class="pct">${d.pct(d.normal)}%</div>
+                </div>
+                <div class="k kpi-tile">
+                  <div class="lvl">【快速】预言卡</div>
+                  <div class="num">${d.quick}</div>
+                  <div class="pct">${d.pct(d.quick)}%</div>
+                </div>
+                <div class="k kpi-tile">
+                  <div class="lvl">【永续】预言卡</div>
+                  <div class="num">${d.normal_permanent}</div>
+                  <div class="pct">${d.pct(d.normal_permanent)}%</div>
+                </div>
+                <div class="k kpi-tile">
+                  <div class="lvl">【永续/装备】预言卡</div>
+                  <div class="num">${d.equip_permanent}</div>
+                  <div class="pct">${d.pct(d.equip_permanent)}%</div>
+                </div>
+              </div>
+              <div class="kpi-grid mb-3" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="k kpi-tile">
+                  <div class="lvl">仅效果</div>
+                  <div class="num">${d.onlyEffect}</div>
+                  <div class="pct">${d.pct(d.onlyEffect)}%</div>
+                </div>
+                <div class="k kpi-tile">
+                  <div class="lvl">仅响应效果</div>
+                  <div class="num">${d.onlyReact}</div>
+                  <div class="pct">${d.pct(d.onlyReact)}%</div>
+                </div>
+                <div class="k kpi-tile">
+                  <div class="lvl">效果+响应效果</div>
+                  <div class="num">${d.both}</div>
+                  <div class="pct">${d.pct(d.both)}%</div>
+                </div>
+              </div>
+            `;
+          })()}
         </div>
       </div>
 
@@ -284,11 +369,7 @@
         <!-- 等级 KPI -->
         <h6 class="mt-2">等级分布（KPI）</h6>
         ${levelKPIGrid(s.levelMap, s.monsterCnt)}
-        <details class="mt-2">
-          <summary class="mb-2">展开查看等级分布表格</summary>
-          ${levelTable(s.levelMap)}
-        </details>
-
+        
         <!-- 属性 KPI + 表格（折叠） -->
         <h6 class="mt-3">属性分布（KPI）</h6>
         ${mapKPIGrid(s.attrMap, s.monsterCnt)}
@@ -308,10 +389,10 @@
 
         <!-- 矩阵 -->
         <h6 class="mt-3">等级 × 种族 矩阵</h6>
-        ${matrixTable(s.raceLevelMap, '种族 \\ 等级', '种族小计')}
+        ${matrixTable(s.raceLevelMap, '种族 \\ 等级', '种族小计', true)}
 
         <h6 class="mt-3">等级 × 属性 矩阵</h6>
-        ${matrixTable(s.attrLevelMap, '属性 \\ 等级', '属性小计')}
+        ${matrixTable(s.attrLevelMap, '属性 \\ 等级', '属性小计', true)}
       </div>
 
       <!-- 可视化 -->
@@ -337,6 +418,7 @@
             </div>
           </div>
         </div>
+        ${renderAtkDefHistograms(state.cards.monster)}
       </div>
     `;
 
@@ -372,6 +454,117 @@
     state.charts.race = makeChart('chart-race', 'pie', raceEntries.map(e=>e[0]), raceEntries.map(e=>e[1]), {
       responsive:true, plugins:{ legend:{ position:'bottom' } }
     });
+
+    // Render atk/magic/def histograms for each level
+    const monsterCards = state.cards.monster || [];
+    const levelGroups = {};
+    monsterCards.forEach(c => {
+      const lvl = nint(c.level);
+      (levelGroups[lvl] ||= []).push(c);
+    });
+    // Ensure level 0 is included in histograms
+    if (!levelGroups[0]) levelGroups[0] = [];
+    const levels = Object.keys(levelGroups).map(n=>+n).sort(sortNumAsc);
+    levels.forEach(lvl => {
+      const cards = levelGroups[lvl];
+      // ATK histogram
+      const atkCounts = {};
+      cards.forEach(c => {
+        const atk = nint(c.attack);
+        atkCounts[atk] = (atkCounts[atk]||0)+1;
+      });
+      const atkLabels = Object.keys(atkCounts).map(n=>+n).sort(sortNumAsc);
+      const atkData = atkLabels.map(a=>atkCounts[a]);
+      makeChart(`chart-atk-${lvl}`, 'bar', atkLabels, atkData, {
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{ x:{ title:{ display:true, text:'攻击' } }, y:{ title:{ display:true, text:'数量' }, beginAtZero:true, precision:0 } }
+      });
+      // MAGIC histogram (bin floats, e.g. (0-0.5], (0.5-1], ...)
+      const magicCounts = {};
+      const binSize = 0.5; // bin width
+      const maxMagic = Math.max(...cards.map(c => parseFloat(c.magic) || 0), 4); // up to 4
+      for (let binStart = 0; binStart < maxMagic; binStart += binSize) {
+        const binEnd = binStart + binSize;
+        const binLabel = `(${binStart}-${binEnd}]`;
+        magicCounts[binLabel] = 0;
+      }
+      cards.forEach(c => {
+        let magic = parseFloat(c.magic);
+        if (!isFinite(magic)) magic = 0;
+        let binStart = Math.floor(magic / binSize) * binSize;
+        // For edge case, if magic == maxMagic, put in last bin
+        if (magic === maxMagic) binStart = maxMagic - binSize;
+        const binEnd = binStart + binSize;
+        const binLabel = `(${binStart}-${binEnd}]`;
+        if (binLabel in magicCounts) magicCounts[binLabel]++;
+      });
+      const magicLabels = Object.keys(magicCounts).sort((a,b)=>{
+        const na = parseFloat(a);
+        const nb = parseFloat(b);
+        return na-nb;
+      });
+      const magicData = magicLabels.map(a=>magicCounts[a]);
+      makeChart(`chart-magic-${lvl}`, 'bar', magicLabels, magicData, {
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{ x:{ title:{ display:true, text:'魔法区间' } }, y:{ title:{ display:true, text:'数量' }, beginAtZero:true, precision:0 } }
+      });
+      // DEF histogram
+      const defCounts = {};
+      cards.forEach(c => {
+        const def = nint(c.defence);
+        defCounts[def] = (defCounts[def]||0)+1;
+      });
+      const defLabels = Object.keys(defCounts).map(n=>+n).sort(sortNumAsc);
+      const defData = defLabels.map(a=>defCounts[a]);
+      makeChart(`chart-def-${lvl}`, 'bar', defLabels, defData, {
+        responsive:true,
+        plugins:{ legend:{ display:false } },
+        scales:{ x:{ title:{ display:true, text:'防御' } }, y:{ title:{ display:true, text:'数量' }, beginAtZero:true, precision:0 } }
+      });
+    });
+  }
+
+  function renderAtkDefHistograms(monsterCards) {
+    // Group cards by level
+    const levelGroups = {};
+    monsterCards.forEach(c => {
+      const lvl = nint(c.level);
+      (levelGroups[lvl] ||= []).push(c);
+    });
+    // Ensure level 0 is included in histograms
+    if (!levelGroups[0]) levelGroups[0] = [];
+    const levels = Object.keys(levelGroups).map(n=>+n).sort(sortNumAsc);
+    if (!levels.length) return '<div class="text-muted">暂无数据</div>';
+
+    // Prepare containers for charts
+    let html = '<h6 class="mt-4">不同等级的攻击/魔法/防御分布（直方图）</h6>';
+    levels.forEach(lvl => {
+      html += `
+        <div class="row align-items-center mb-4">
+          <div class="col-md-4">
+            <div class="card p-3">
+              <div class="mb-2">等级 ${lvl} 攻击分布</div>
+              <canvas id="chart-atk-${lvl}" height="120"></canvas>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card p-3">
+              <div class="mb-2">等级 ${lvl} 魔法分布</div>
+              <canvas id="chart-magic-${lvl}" height="120"></canvas>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card p-3">
+              <div class="mb-2">等级 ${lvl} 防御分布</div>
+              <canvas id="chart-def-${lvl}" height="120"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    return html;
   }
 
   /* --------------------------- 事件 & 启动 --------------------------- */
