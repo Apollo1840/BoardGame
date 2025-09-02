@@ -10,7 +10,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 白化哥布林|0||【兽人种】哥布林内部也有不受待见的。|3|2|0|{"normal_characters":"布置阶段时可以将此卡放置或移动到预言卡区域，并视作怪物卡。当我方场上有其他怪物时，对方不能指定此卡为攻击对象。"}|[{"skill_name":"祝福","number_power":1,"skill_text":"将攻击力加到另一个怪物身上。该怪物此回合可以额外攻击一次。"}]|pictures/white_goblin.png
 哥布林圣壶|0||【器具种】哥布林这个肮脏的种族竟然有如此圣器。|0|5|0|{"normal_characters":"一回合一次，可以支付20点生命值，将两只怪物从弃牌堆加入手牌。"}|[{"skill_name":"圣育","number_power":0,"skill_text":"丢弃一张手牌，额外召唤一只1级以下名字中带有【哥布林】的怪物。该怪物此回合不能攻击。"},{"skill_name":"族诞","number_power":1,"skill_text":"丢弃两张手牌，重新进入布置阶段。且召唤次数不受限制。"},{"skill_name":"种运","number_power":2,"skill_text":"丢弃三张手牌，破坏对方场上一只怪物，一张预言，一张手牌。"}]|pictures/goblin_vase.png
 少年勇士|0|金|【人类种】意气风发的少年勇士。|6|4|0|{}|[]|pictures/young_fighter.png
-圣女|0|光|【人类种】洁癖，拒绝谈恋爱。|0|3|0|{"normal_characters":"我方所有怪物防御力+1。","react_characters":"当我方抽牌时，如果我方手牌数量小于4，则再抽一张。"}|[{"skill_name":"神除","number_power":1,"skill_text":"如果对方场上怪物数量多于我方，丢弃一张手牌，破坏对方场上一张卡片。"},{"skill_name":"圣灭","number_power":0,"skill_text":"破坏对方场上一张正面表示的预言卡。"}]|pictures/protector.png
 谋士集团|0||【人类种】三个人总是吵架，但形影不离。|2|6|0|{"react_characters":"一回合一次。当对方使用发出攻击指令时，我方翻出牌堆第一张牌，如果是0级怪兽可以直接召唤并接受攻击。如果是预言卡，可直接使用。如果无法召唤或使用，则丢弃。"}|[]|pictures/clevers.png
 阴阳真人|0|虚|【人类种】中二的修行之人。|3|3|0|{"normal_characters":"操作阶段可额外使用一张预言卡。","react_characters":"当对方在我方回合使用预言卡时，将<天借真力>从牌堆或弃牌堆加入手牌。"}|[{"skill_name":"八门遁甲","number_power":1,"skill_text":"将对方场上一张卡片返回对方手牌。"}]|pictures/yin_yang.png
 重锤骑士|1|金|【兽人种】温和的兽人，喜欢和人类生活在一起。|7|9|0|{}|[]|pictures/hard_knight.png
@@ -33,7 +32,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 章鱼女王|0|水|【鱼种】|0|3|0|{"react_characters":"此卡被额外召唤的时，抽两张牌。"}|[{"skill_name":"泡泡孕育","number_power":0,"skill_text":"额外召唤一只怪物"}]|pictures/summoner.png
 沙丁鱼群|0||【鱼种】|0|0|0|{}|[{"skill_name":"营养残留","number_power":0,"skill_text":"此技能一回合可以使用三次。抽一张牌，可以立即覆盖在场上。减去2血。"}]|pictures/sadin_fish.png
 水灵蛇|0|水|【鱼种】|1|0|0|{"normal_characters":"每回合结束阶段获得一点灵力，可以分配到其他怪物上，并+8生命。","react_characters":"此卡被战斗破坏时，对方复活一只怪物。"}|[]|pictures/godfish.png
-舞鱼人|0|水|【鱼人种】|0|3|0|{"normal_characters":"此卡在场上，我方每回合可以使用两张预言卡。或者某一回合使用一次的效果启动两次。"}|[{"skill_name":"舞者之姿","number_power":0,"skill_text":"支付5生命，下次对此卡的攻击无效化。"},{"skill_name":"进攻之舞","number_power":0,"skill_text":"每丢弃一张手牌，此卡此回合攻击力+5（最多三张）"}]|pictures/dance_fish.png
 风灵真君|0|风|【天仙种】|5|3|0|{"react_characters":"当场上有卡牌回到手牌时，此卡攻击+15直到该回合结束。"}|[{"skill_name":"风卷残云","number_power":1,"skill_text":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png
 预言夫人|0|水|【鱼人种】趋利避害的高手。|1|8|0|{"react_characters":"有效果被抽牌触发时，可查看对方一张盖牌或手牌。"}|[]|pictures/prophecy.png
 罗汉金仙|0|金|【天仙种】|0|8|0|{"react_characters":"当场上有卡牌离开场上时，此卡防御力+5直到该回合结束，并获得一个免于效果破坏的护盾（不可叠加）。"}|[]|pictures/gold_budda.png
@@ -74,4 +72,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 邪术师|0|暗|【人类种】天生魅体，但是热衷钻研学术。|3|5|1|{"react_characters":"对方结束布置阶段时，给予对方6点伤害。"}|[]|pictures/dark_magician.png
 雷暴蜂后|1|雷|【昆虫人种】|8|5|1|{}|[{"skill_name":"雷击","number_power":0,"skill_text":"给予对方5点伤害。"}]|pictures/storm_hornet.png
 霜翼甲虫|1|冰|【昆虫种】|3|10|1|{"react_characters":"对方每召唤一张怪物或使用一张预言卡，受到2点伤害。"}|[]|pictures/frost_beetle.png
-爆影精灵|1|暗|【精灵种】|5|4|2|{}|[{"skill_name":"爆破","number_power":1,"skill_text":"丢弃一张手牌，破坏对方场上一张卡牌。"}]|pictures/shadow_burst.png
+舞鱼人|0|水|【鱼人种】|0|3|0|{"normal_characters":"此卡在场上，我方每回合可以使用两张预言卡。"}|[{"skill_name":"防御之舞","number_power":0,"skill_text":"支付5生命，下次对此卡的攻击无效化。"},{"skill_name":"进攻之舞","number_power":0,"skill_text":"每丢弃一张手牌，此卡此回合攻击力+5（最多三张）"}]|pictures/dance_fish.png
+爆影精灵|1|暗|【精灵种】|5|4|2|{}|[{"skill_name":"传洞","number_power":1,"skill_text":"丢弃一张手牌，将对方场上一张卡牌放置到对方牌堆上方。"}]|pictures/shadow_burst.png
+圣女|0|光|【人类种】洁癖，拒绝谈恋爱。|0|3|1.5|{"normal_characters":"我方所有怪物防御力+1。","react_characters":"当我方抽牌阶段开始，如果对方手牌多于我方，额外多抽一张。"}|[{"skill_name":"圣言灭","number_power":1,"skill_text":"丢弃一张手牌，破坏对方场上一张正面表示的预言卡（由对方自己选择）。"},{"skill_name":"神物除","number_power":1,"skill_text":"丢弃一张手牌，破坏对方场上一张怪物卡（由对方自己选择）。"}]|pictures/protector.png
