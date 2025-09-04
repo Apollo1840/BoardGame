@@ -53,7 +53,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 恶魔花女|0|毒|【恶魔种】|2|3|1|{"normal_characters":"此卡在场上，对方所有怪物防御力-3，最低到0。"}|[{"skill_name":"毒素喷溅","number_power":1,"skill_text":"破坏对方场上所有防御力为0的怪物。"}]|pictures/devil_flower.png
 蛇仙|0|毒|【天仙种】|5|3|0.5|{"normal_characters":"此卡造成的战斗伤害翻倍。"}|[{"skill_name":"炼化蛇丹","number_power":1,"skill_text":"战斗破坏对方怪物时，抽一张牌。"}]|pictures/snake_girl.png
 虎金大哥|0||【鱼人种】|4|4|0.5|{"normal_characters":"此卡造成的战斗伤害翻1.5倍（向上取整）"}|[{"skill_name":"虎鲸拳","number_power":1,"skill_text":"攻击力x2"}]|pictures/hujin.png
-哥布林王|2|木|【兽人种】这大概就是你能遇到的最强哥布林了。|9|6|1|{"normal_characters":"此卡在场上的场合，我方场上其他名字中有<哥布林>的怪物不会被战斗破坏。"}|[{"skill_name":"掠夺","number_power":1,"skill_text":"战斗破坏对方怪物时，我方抽（我方场上怪物数量-1）张牌。"}]|pictures/goblin_king.png
 骨刺魔女|1||【恶魔族】|10|4|0.5|{}|[{"skill_name":"刺骨穿心","number_power":1,"skill_text":"此卡攻击破坏对方怪兽时，给予对方等同该怪兽防御力的伤害。此伤害视作战斗伤害。此卡防御力+3直到对方回合结束。"}]|pictures/skeleton_girl.png
 瑶光血仙|1|光|【天仙种】|10|3|1|{"normal_characters":"此卡造成战斗伤害时，我方恢复同等数值。"}|[]|pictures/blood_god.png
 护法童子|1|虚|【天仙种】|6|3|1|{"normal_characters":"在我方回合，此卡防御力会加到攻击力上，并归零。在对方回合恢复。"}|[{"skill_name":"护法阵","number_power":0,"skill_text":"我方全场怪物获得一次不被战斗破坏的保护增益（不可叠加）。"},{"skill_name":"挑衅","number_power":0,"skill_text":"轮流指定对方场上怪物对我方怪物发动攻击，攻击造成的战斗伤害由对方承担。"}]|pictures/childgod2.png
@@ -77,3 +76,4 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 谋士集团|0||【人类种】三个人总是吵架，但形影不离。|0|0|2.5|{"react_characters":"（一回合一次）当对方使用发出攻击指令时：我方翻出牌堆第一张牌。如果是0级怪兽可以直接召唤并接受攻击；如果是预言卡，可直接使用。如果无法召唤或使用，则丢弃。"}|[]|pictures/clevers.png
 风灵真君|0|风|【天仙种】|5|3|0|{"react_characters":"当场上有卡牌回到手牌时：此卡攻击+15直到该回合结束。"}|[{"skill_name":"风卷残云","number_power":1,"skill_text":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png
 飓风魔鱼|1|风|【鱼种】|5|4|2|{}|[{"skill_name":"风吸","number_power":0,"skill_text":"选择对方场上一只怪物卡，回到对方手牌。并获得该怪物所有灵力。"}]|pictures/cyclone.png
+哥布林王|2|木|【兽人种】这大概就是你能遇到的最强哥布林了。|9|6|1|{"normal_characters":"我方场上其他名字中有<哥布林>的怪物不会被战斗破坏。"}|[{"skill_name":"掠夺","number_power":1,"skill_text":"此卡战斗破坏对方怪物时，我方抽（我方场上怪物数量-1）张牌。"}]|pictures/goblin_king.png
