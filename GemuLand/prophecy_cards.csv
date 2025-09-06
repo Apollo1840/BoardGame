@@ -47,7 +47,6 @@ card_title|introduction|effect|responsive_effect|image
 嗜血血脉||选择一只怪物，本回合下次攻击力+15。攻击后，我方生命值-5。||pictures/blood_power.png
 反击号角|预言家在绝妙的时刻吹响了胜利的号角。|我方场上所有怪兽卡本回合受到的攻击力或防御力加成翻倍。|当对方发起攻击时：本回合我方场上所有怪兽卡防御力+5。|pictures/counterattack_horn.png
 瞬仙步||指定我方场上一只怪物，该怪物此回合可以额外攻击两次。|当我方发起攻击时：另一只怪物此回合下次攻击力+10。|pictures/speedup.png
-蟹尊将军钳|【永续/装备】|攻击+3，防御+2|当我方生命受到损伤时：装备怪兽+1灵力。|pictures/krebs_weapon.png
 新的巢穴||丢弃所有手牌，连续抽牌并展示，抽到2张怪物牌为止。||pictures/new_cave.png
 圣光保护|【永续】|我方所有怪物防御力+3。||pictures/protection.png
 阵前演讲||本回合我方全体怪物攻击力+5。||pictures/fight_speech.png
@@ -55,15 +54,28 @@ card_title|introduction|effect|responsive_effect|image
 一场箭雨||我方场上每存在一只怪物，给对方造成5点伤害。||pictures/arrows.png
 灵光乍现||灵力+2，随机分配在我方怪物上。||pictures/spirit_shine.png
 严肃预言||可以额外使用一张自上个我方回合就覆盖的（非装备，非永续）预言卡，该预言卡效果起效两次。||pictures/serious_prophecy.png
-阴暗世仇|【永续】预言家说，看吧，这就是你们的世仇。||当我方某种族怪物（X种）被其他种族怪物（Y种）战斗破坏时，此卡才可以发动，并将永久存在在场上。当我方X种怪物，在与Y种怪物战斗时：攻击+5。|pictures/generation_hate.png
 雷劫圣林|【永续】||当我方进行高级怪物召唤后：随机破坏对方场上一张正面表示的卡。|pictures/thunder_forest.png
 大海源流||选择一只0级【鱼种】（或【鱼人种】，或（水）属性）怪物，下次攻击攻击力 x 3。||pictures/stream.png
 灵枢圣剑|【永续/装备】|装备怪物攻击+5，防御+5。每回合结束阶段，我方场上消耗一点灵力，否则此卡被破坏。||pictures/spring_altar.png
 万灵归宗||对方与我方场上所有灵力汇聚到我方场上一只怪物上。||pictures/sprint_return.png
 恶幻权杖|【永续/装备】|装备怪物获得技能：【致幻】获得对方一只怪物的控制权一回合。（该被控制怪物如果满足直接攻击玩家条件，可以攻击玩家）||pictures/hollow.png
 古灵巨炮|【永续】|（一回合一次）去除我方场上两点灵力，破坏对方场上一张卡。之后此卡灵力+1。||pictures/forest_cannon.png
-法球反弹|||对方发起攻击时：攻击无效，被攻击怪物消耗一点灵力，给予对方14点伤害。|pictures/rebound.png
-暗毒沼原|【永续】|每回合我方回合结束给对方造成5点伤害。||pictures/veilfen.png
-虚镜之返|||我方受到效果伤害时：无效其伤害，并给予对方同等伤害。|pictures/magic_mirrow.png
 灵劫天召||我方受到10点伤害，对方受到5点伤害，我方场上一只怪物灵力+3。|当对方一次性使用2点以上灵力时：对方受到20伤害，我方受到5点伤害。|pictures/sky_prophecy.png
-追击法球|||对方被攻击指定的怪物没有被战斗破坏时：（如果我方怪物攻击力高于对方目标怪物原本防御力）破坏该怪物，重新计算战斗伤害（视作效果伤害），并获得其灵力。|pictures/targeted.png
+灵鹿冲击||去除我方场上一点灵力，视作一只攻击为15，防御为0的怪物，向对方发起攻击。（如果对方场上没有怪物或怪物蛋，可以发起直接攻击）||pictures/deer.png
+魔树榨取||破坏我方场上一只怪物。选择我方场上另一只怪物攻击力+5，灵力 + （1 + 被指定破坏怪物的灵力）。||pictures/tree_absorb.png
+仙药草坡|【永续/场景】||当我方受到效果伤害时：如果<5，则消除伤害并获得一点灵力到此卡上。如果>5，则伤害 - 5|pictures/nice_drug.png
+英雄大道|||当我方抽到怪物卡时：受到5点伤害，直接召唤它。此回合它不受对方卡片效果影响。|pictures/hero_honor.png
+追击法球|||当对方被攻击指定的怪物没有被战斗破坏时：（如果我方怪物攻击力高于对方目标怪物原本防御力）破坏该怪物，重新计算战斗伤害（视作效果伤害），并获得其灵力。|pictures/targeted.png
+虚镜之返|||当我方受到效果伤害时：无效其伤害，并给予对方同等伤害。|pictures/magic_mirrow.png
+蟹尊将军钳|【永续/装备】|攻击+3，防御+2|当我方受到伤害时：装备怪兽+1灵力。|pictures/krebs_weapon.png
+法球反弹|||当对方发起攻击时：攻击无效，被攻击怪物消耗一点灵力，给予对方14点伤害。|pictures/rebound.png
+卧薪尝胆|||当我方受到战斗伤害时：丢弃X张手牌，抽（X+2）张手牌。|pictures/oath.png
+心魔深渊|||当我方给对方带来伤害后：此回合对方受到的所有效果伤害x2。|pictures/abyss.png
+暗毒沼原|【永续/场景】||当我方回合结束时：给对方造成5点伤害。|pictures/veilfen.png
+阴暗世仇|【永续】预言家说，看吧，这就是你们的世仇。|条件：当上回合，我方某种族怪物（X种）被其他种族怪物（Y种）战斗破坏时，此卡才可以发动。|当我方X种怪物，在与Y种怪物战斗时：攻击+5。|pictures/generation_hate.png
+灵脉激活|||当我方场上一只怪物获得灵力时：该怪物下两次攻击攻击+2，此回合可以额外攻击一次，并且可以额外使用技能一次。|pictures/activate.png
+幽迷幻香|||当我方使用灵力后：对方一只怪物永久失去所有技能，属性和效果。|pictures/smell.png
+末法终局||我方所有怪物灵力+1。之后所有怪物扣去所有灵力，攻击力+（各自灵力x5)。||pictures/end_magic.png
+翡翠瞬光|||当对方场上有卡牌翻面时：无效其效果并破坏该卡牌。|pictures/green_laser.png
+天璇灵光|【永续/装备】|装备怪物每回合结束后灵力+1。如果对方场上没有盖牌，则再+1。||pictures/rainbow_protect.png
+精致法书||去除场上一点灵力，此卡和弃牌堆某张预言卡替换，并即刻使用。||pictures/magic_codex.png
