@@ -5,21 +5,12 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 大嘴哥布林|1||【兽人种】抢夺了族人的食物而长大的哥布林，寿命很短。|7|3|0|{}|[{"skill_name":"召唤","number_power":0,"skill_text":"特殊召唤一只0级兽人种怪物到我方场上。"},{"skill_name":"强袭","number_power":1,"skill_text":"【攻击技能】此卡攻击造成的战斗伤害 + （我方场上怪兽数量）"}]|pictures/big_goblin.png
 刺客哥布林|0|金|【兽人种】虽然但是，在大白天会不会太显眼了一点。|2|0|0|{"normal_characters":"当我方场上有其他怪兽时，无法指定为被攻击的对象。攻击力+我方场上的怪兽数量x2。"}|[]|pictures/assassin_goblin.png
 哥布林萨满|1|木|【兽人种】没有什么智慧，都是装的。|0|2|0|{}|[{"skill_name":"哥布林幻影","number_power":2,"skill_text":"从手牌特殊召唤一只怪物。该怪物无法发出攻击指令，对方回合结束后从任意处都要回到我方手牌。"},{"skill_name":"神圣祝福","number_power":1,"skill_text":"操作阶段开始使用，破坏一只怪物，回合结束。直到对方回合结束我方怪物都不会被战斗破坏，也不会被对方预言破坏。"},{"skill_name":"灵力吸收","number_power":0,"skill_text":"吸收我方场上任意数量的灵力。或者将此卡灵力全部分配给另一只怪兽。"}]|pictures/goblin_sama.png
-坐骑狼|1||【动物种】有于智商比较低，所以可以乘骑一会儿的狼。|3|5|0|{"react_characters":"我方怪物发动攻击时，此卡可以协同攻击。该怪物攻击力+此卡攻击力。","normal_characters":"对方场上没有怪物时，攻击力+4"}|[]|pictures/ride_wolf.png
 哥布林厨师长|0||【兽人种】孩子，该回家吃饭了。|0|3|0|{}|[{"skill_name":"佳肴","number_power":1,"skill_text":"我方场上所有除自己外兽人族，攻击+2。"},{"skill_name":"躲锅里","number_power":0,"skill_text":"此回合不攻击，防御力+4直至对方回合结束。"}]|pictures/goblin_chef.png
-白化哥布林|0||【兽人种】哥布林内部也有不受待见的。|3|2|0|{"normal_characters":"布置阶段时可以将此卡放置或移动到预言卡区域，并视作怪物卡。当我方场上有其他怪物时，对方不能指定此卡为攻击对象。"}|[{"skill_name":"祝福","number_power":1,"skill_text":"将攻击力加到另一个怪物身上。该怪物此回合可以额外攻击一次。"}]|pictures/white_goblin.png
 哥布林圣壶|0||【器具种】哥布林这个肮脏的种族竟然有如此圣器。|0|5|0|{"normal_characters":"一回合一次，可以支付20点生命值，将两只怪物从弃牌堆加入手牌。"}|[{"skill_name":"圣育","number_power":0,"skill_text":"丢弃一张手牌，额外召唤一只1级以下名字中带有【哥布林】的怪物。该怪物此回合不能攻击。"},{"skill_name":"族诞","number_power":1,"skill_text":"丢弃两张手牌，重新进入布置阶段。且召唤次数不受限制。"},{"skill_name":"种运","number_power":2,"skill_text":"丢弃三张手牌，破坏对方场上一只怪物，一张预言，一张手牌。"}]|pictures/goblin_vase.png
 少年勇士|0|金|【人类种】意气风发的少年勇士。|6|4|0|{}|[]|pictures/young_fighter.png
 阴阳真人|0|虚|【人类种】中二的修行之人。|3|3|0|{"normal_characters":"操作阶段可额外使用一张预言卡。","react_characters":"当对方在我方回合使用预言卡时，将<天借真力>从牌堆或弃牌堆加入手牌。"}|[{"skill_name":"八门遁甲","number_power":1,"skill_text":"将对方场上一张卡片返回对方手牌。"}]|pictures/yin_yang.png
 重锤骑士|1|金|【兽人种】温和的兽人，喜欢和人类生活在一起。|7|9|0|{}|[]|pictures/hard_knight.png
-敏捷女猎人|1|金|【人类种】学习了变化之术，可以变猫。|3|5|0|{"normal_characters":"此卡在场上，我方受到的所有伤害-1。"}|[{"skill_name":"隐蔽气息","number_power":1,"skill_text":"防御力+6直到对方回合结束。"},{"skill_name":"偷袭","number_power":1,"skill_text":"直接攻击对方玩家。并查看对方1张手牌。"}]|pictures/female_killer.png
-水晶球灵|1|雷|【灵体种】可以化成各种猫型态。|2|4|0|{"normal_characters":"对方手牌如果比我方多，则我方每使用一次预言卡，则可查看对方一张手牌。","react_characters":"当有怪物被战斗破坏后，查看我方牌堆最上方的牌。"}|[{"skill_name":"出灵","number_power":0,"skill_text":"从弃牌堆随机，或者从牌堆上方抽取一张牌作为此卡的灵力。"},{"skill_name":"转灵","number_power":0,"skill_text":"重新分配我方场上4点以下灵力。"}]|pictures/ball_magician.png
-女武师|1||【人类种】天生怪力的哑巴。|6|5|0|{"normal_characters":"在对方回合防御力+3"}|[{"skill_name":"高速拳法","number_power":0,"skill_text":"【攻击技能】攻击+3"},{"skill_name":"一蛇绝杀","number_power":4,"skill_text":"【攻击技能】攻击+10"}]|pictures/girl_boxer.png
-法盾师|1|虚|【人类种】最大的特点是但小。|0|2|0|{"react_characters":"丢弃一张预言卡，无效化对方一次效果释放。"}|[{"skill_name":"法盾","number_power":0,"skill_text":"我方一只怪物防御+5，直至对方回合结束。"},{"skill_name":"加涅尔守护","number_power":1,"skill_text":"无效化下回合三次对方攻击。"},{"skill_name":"灵力转移","number_power":0,"skill_text":"重新分配我方场上6点以下灵力。"}]|pictures/magic_shield.png
-青山剑仙|1|金|【灵体种】本体是剑，剑仙是青山神剑的器灵。|6|0|0|{"normal_characters":"此卡无法被灵力更低的怪物攻击选中。","react_characters":"（一回合一次）当受到攻击力或防御力增益的时候，从弃牌堆随机获得一张预言卡。"}|[{"skill_name":"剑气决","number_power":0,"skill_text":"我方给对方造成非战斗伤害的回合，抽两张牌，并放回一张手牌到牌堆上方。"},{"skill_name":"灵升诀","number_power":1,"skill_text":"将我方场上一只怪兽放回手牌，对方暂时不能改变手牌顺序，我方抽取一张加入手牌。"}]|pictures/sword_god.png
-阴阳女童|0||【人类种】腹黑小女孩，据说是能掌握混沌之力的天才。|2|4|0|{"react_characters":"当我方造成非攻击伤害时，追加1点伤害。"}|[{"skill_name":"天地异相","number_power":1,"skill_text":"此回合我方造成的战斗伤害翻倍。"},{"skill_name":"嘲讽吸收","number_power":0,"skill_text":"指定场上一只怪物对自己发出额外攻击，之后吸收其一点灵力。"},{"skill_name":"鼓励","number_power":2,"skill_text":"我方场上一只怪兽可以再使用一次技能。"}]|pictures/yingyang_baby.png
 贪婪壶灵|0|金|【灵体种】年龄非常大的器灵。|1|1|0|{"normal_characters":"不会被战斗破坏。","react_characters":"当对方在抽牌阶段外抽牌时，我方同步抽相同张数。"}|[]|pictures/greedy.png
-小翼虎魔|0|暗|【魔灵种】喜欢在风中讲鬼故事。|3|3|0|{"react_characters":"当对方给予我方非战斗伤害时，我可查看对方三张手牌。"}|[{"skill_name":"翼盾","number_power":0,"skill_text":"直到下次对方回合结束，此卡获得一次被卡片效果破坏免疫。"},{"skill_name":"虎天冲","number_power":1,"skill_text":"此卡这回合不能攻击，破坏对方场上一张永续预言卡。"}]|pictures/small_fly_tiger.png
 双胞胎哥布林|0||【兽人种】从出生就形影不离的两只哥布林|2|2|0|{"normal_characters":"在场上视为两只怪物。一回合被攻击破坏两次或被卡片破坏两次才会被破坏。"}|[{"skill_name":"双重攻击","number_power":1,"skill_text":"此回合可以攻击两次。"}]|pictures/double_goblin.png
 刚铎幼龙|0|火|【龙种】|10|6|0|{"normal_characters":"破坏我方场上1张怪物，或是丢弃2张手牌，才可采用普通方式召唤此卡。每回合结束阶段给我方带来5点伤害。"}|[]|pictures/little_dragon.png
 天使卫兵|0|光|【天使种】|3|5|0|{}|[{"skill_name":"圣罚","number_power":0,"skill_text":"【攻击技能】被指定攻击的怪物无法发动技能直到对方回合结束。"},{"skill_name":"天赐","number_power":1,"skill_text":"声明对方一张手牌，如果命中，获得该手牌。"}]|pictures/angle_guard.png
@@ -44,8 +35,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 巨蟹骑士|1|火|【鱼人种】|5|6|0|{"react_characters":"收到灵力时，防御力+3直到对方回合结束。或再丢弃一张手牌，攻击力+3直到回合结束。"}|[{"skill_name":"蟹黄宝","number_power":0,"skill_text":"支付5点生命值，抽两张牌，丢弃一张手牌。"},{"skill_name":"烈焰蟹击","number_power":3,"skill_text":"攻击力+5直到回合结束，战斗伤害翻倍。"}]|pictures/krebs.png
 龙虾骑士|1|水|【鱼人种】|6|5|0|{"normal_characters":"此卡攻击力+最高场上其他卡片攻击力加成。"}|[{"skill_name":"虾线冲击","number_power":0,"skill_text":"支付5点生命，破坏对方场上一张覆盖的预言卡。并获得一点灵力，可随意分配。"},{"skill_name":"突刺","number_power":1,"skill_text":"【攻击技能】如果此卡攻击力大与对方两只怪兽防御力的总和，可以一起破坏，并计算战斗伤害。"}]|pictures/lobster.png
 幽夜猫|2|冰|【恶魔种】恶魔地界的宠物，很难在其他地方看到。|9|5|1|{"normal_characters":"此卡给对方造成伤害后，我方抽一张牌。"}|[{"skill_name":"寒霜吐息","number_power":0,"skill_text":"使对方一只怪兽本回合防御力-5。"},{"skill_name":"折射冰晶","number_power":1,"skill_text":"(当我方生命值更低才可使用) 此回合使用的某张预言卡的效果可以再发挥一次。"}]|pictures/night_cat.png
-超级彩虹桉|1|木|【植物种】|8|6|0.5|{"normal_characters":"每点携带灵力给自身+1攻击力，+1防御力。"}|[]|pictures/rainbow_tree.png
-树枝女|0|木|【植物种】|2|3|1|{"normal_characters":"我方每使用一张预言卡，此卡获得一点灵力。"}|[{"skill_name":"传输灵力","number_power":0,"skill_text":"将此卡至多2点灵力转移到别的怪物卡上。"}]|pictures/woodwoman.png
 龙王三公主|2|水|【鱼人种】能谋善战，未来的女龙王。|10|8|1|{"normal_characters":"（一回合一次）可以无效化对此卡的一次攻击，或者一次效果。"}|[]|pictures/dragon_princess.png
 江湖侠客|1|金|【人类种】女装大佬，枪法了得。|7|6|1|{"normal_characters":"（一回合一次）将对方对此卡的攻击无效化。"}|[]|pictures/female_lancher.png
 天使歌姬|0|风|【天使种】|5|2|1.2|{"react_characters":"（一回合一次）对方发动攻击时：该攻击无效化。"}|[]|pictures/bird_singer.png
@@ -65,7 +54,6 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 精灵短枪兵|1|火|【精灵种】精灵种的武器也迎来了技术的升级。|6|7|1|{"react_characters":"（一回合一次）此卡被攻击时，可以通过移除一个灵力来获得防御力+5，直到回合结束。"}|[{"skill_name":"精准射击","number_power":0,"skill_text":"【攻击技能】此次攻击力+5，但此攻击造成玩家伤害为0。"}]|pictures/elf_shooter.png
 战士哥布林|0||【兽人种】有的哥布林似乎身经百战，但实际依然没什么杀伤力。|3|2|0.5|{"normal_characters":"场上有【兽人种】怪兽时，可以额外召唤此卡。以这样的方式召唤的回合此卡不能攻击。","react_characters":"被防御力高于此卡的怪物攻击时，防御+1"}|[{"skill_name":"到处切磋","number_power":0,"skill_text":"如果我方场上有攻击力高于此卡的怪物，则此回合此卡攻击+1；如果我方场上没有攻击力高于此卡的怪物，则抽一张牌。"}]|pictures/fighter_goblin.png
 无限怨灵|0|虚|【灵体种】|5|0|1|{"normal_characters":"此卡进入弃牌堆后，直接加入我方手牌。"}|[{"skill_name":"连续怨刃","number_power":1,"skill_text":"（一回合最多使用三次）【攻击技能】此攻击不计入攻击次数"}]|pictures/wraith.png
-哥布林|0||【兽人种】脆弱的怪物，谁都可以踩两脚。|2|0|0|{"react_characters":"此卡被破坏后，直接加入我方手牌，且我方再抽一张牌。"}|[]|pictures/goblin.png
 邪术师|0|暗|【人类种】天生魅体，但是热衷钻研学术。|3|5|1|{"react_characters":"对方结束布置阶段时，给予对方6点伤害。"}|[]|pictures/dark_magician.png
 雷暴蜂后|1|雷|【昆虫人种】|8|5|1|{}|[{"skill_name":"雷击","number_power":0,"skill_text":"给予对方5点伤害。"}]|pictures/storm_hornet.png
 霜翼甲虫|1|冰|【昆虫种】|3|10|1|{"react_characters":"对方每召唤一张怪物或使用一张预言卡，受到2点伤害。"}|[]|pictures/frost_beetle.png
@@ -77,3 +65,17 @@ card_title|level|monster_type|description|attack|defence|magic|characters|skills
 风灵真君|0|风|【天仙种】|5|3|0|{"react_characters":"当场上有卡牌回到手牌时：此卡攻击+15直到该回合结束。"}|[{"skill_name":"风卷残云","number_power":1,"skill_text":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png
 飓风魔鱼|1|风|【鱼种】|5|4|2|{}|[{"skill_name":"风吸","number_power":0,"skill_text":"选择对方场上一只怪物卡，回到对方手牌。并获得该怪物所有灵力。"}]|pictures/cyclone.png
 哥布林王|2|木|【兽人种】这大概就是你能遇到的最强哥布林了。|9|6|1|{"normal_characters":"我方场上其他名字中有<哥布林>的怪物不会被战斗破坏。"}|[{"skill_name":"掠夺","number_power":1,"skill_text":"此卡战斗破坏对方怪物时，我方抽（我方场上怪物数量-1）张牌。"}]|pictures/goblin_king.png
+超级彩虹桉|1|木|【植物人种】|8|6|0.5|{"normal_characters":"每点携带灵力给自身+1攻击力，+1防御力。"}|[]|pictures/rainbow_tree.png
+森林仙子|0|木|【植物人种】|2|6|1|{}|[{"skill_name":"充能","number_power":0,"skill_text":"灵力+1"}]|pictures/coreblossom.png
+白化哥布林|0|虚|【兽人种】哥布林内部也有不受待见的。|3|2|0.5|{"normal_characters":"布置阶段时可以将此卡放置（或移动）到预言卡区域，并视作怪物卡。当我方场上有其他怪物时，对方不能指定此卡为攻击对象。"}|[{"skill_name":"祝福","number_power":1,"skill_text":"将攻击力加到另一个怪物身上。该怪物此回合可以额外攻击一次。"},{"skill_name":"白盾","number_power":2,"skill_text":"场上一只怪物防御力+10，直到对方回合结束。"}]|pictures/white_goblin.png
+哥布林|0|土|【兽人种】脆弱的怪物，谁都可以踩两脚。|2|0|0|{"react_characters":"此卡被破坏后，直接加入我方手牌，且我方再抽一张牌。"}|[]|pictures/goblin.png
+岩蚁卫|0|岩|【昆虫人种】|3|5|0|{"react_characters":"当我方怪兽被攻击时：此卡可以协同防御。被协同防御的怪物防御力+此卡防御力。协同防御后，此卡该回合防御力归0。"}|[{"skill_name":"亢奋","number_power":1,"skill_text":"此卡进入【亢奋】状态。被战斗破坏时，给予对方10点伤害。"}]|pictures/antguard.png
+坐骑狼|1|土|【动物种】有于智商比较低，所以可以乘骑一会儿的狼。|5|8|0.5|{"react_characters":"我方怪物发动攻击时：此卡可以协同攻击。该怪物攻击力+此卡攻击力。（协同攻击算攻击次数）","normal_characters":"对方场上没有怪物时，攻击力+3"}|[]|pictures/ride_wolf.png
+树枝女|0|木|【植物人种】|2|3|1|{"react_characters":"我方使用预言卡时：此卡灵力+1。"}|[{"skill_name":"传输灵力","number_power":0,"skill_text":"将此卡至多2点灵力转移到别的怪物卡上。"}]|pictures/woodwoman.png
+水晶球灵|1|雷|【灵体种】可以化成各种猫型态。|4|5|1|{"react_characters":"当有怪物被战斗破坏后：查看我方牌堆最上方的牌。"}|[{"skill_name":"出灵","number_power":0,"skill_text":"从弃牌堆选择，或者从牌堆上方抽取一张牌作为此卡的灵力。"},{"skill_name":"转灵","number_power":0,"skill_text":"重新分配我方场上5点及其以下灵力。"}]|pictures/ball_magician.png
+女武师|1||【人类种】天生怪力的哑巴。|5|4|1|{"normal_characters":"在对方回合防御力+3"}|[{"skill_name":"高速拳法","number_power":0,"skill_text":"【攻击技能】攻击+3"},{"skill_name":"一蛇绝杀","number_power":4,"skill_text":"【攻击技能】攻击+20"}]|pictures/girl_boxer.png
+青山剑仙|1|金|【灵体种】本体是剑，剑仙是青山神剑的器灵。|9|0|1|{"normal_characters":"此卡无法被灵力更低的怪物攻击选中。","react_characters":"（一回合一次）当受到攻击力或防御力增益的时候，从弃牌堆随机获得一张预言卡。"}|[{"skill_name":"凝气决","number_power":0,"skill_text":"（如果此回合我方给对方造成非战斗伤害）抽两张牌，并放回一张手牌到牌堆上方。"},{"skill_name":"灵升诀","number_power":1,"skill_text":"将我方场上一只怪兽放回手牌。对方暂时不能改变手牌顺序，我方抽取一张加入手牌。"}]|pictures/sword_god.png
+阴阳女童|0||【人类种】腹黑小女孩，据说是能掌握混沌之力的天才。|1|3|1|{"react_characters":"当我方造成非攻击伤害时，追加5点伤害。"}|[{"skill_name":"天地异相","number_power":0,"skill_text":"此回合我方造成的战斗伤害翻倍。"},{"skill_name":"嘲讽吸收","number_power":0,"skill_text":"指定场上一只怪物对自己发出额外攻击，之后吸收其一点灵力。"},{"skill_name":"鼓励","number_power":1,"skill_text":"我方场上一只怪兽可以再使用一次技能。"}]|pictures/yingyang_baby.png
+法盾师|1|虚|【人类种】最大的特点是但小。|0|9|1|{"react_characters":"对方发动怪兽技能或预言卡效果：丢弃一张预言卡，无效化该效果释放。"}|[{"skill_name":"法盾","number_power":0,"skill_text":"我方一只怪物防御+5，直至对方回合结束。"},{"skill_name":"灵力转移","number_power":0,"skill_text":"重新分配此卡身上任意灵力。"},{"skill_name":"加涅尔守护","number_power":1,"skill_text":"无效化下回合对方两次攻击。"}]|pictures/magic_shield.png
+敏捷女猎|1|金|【人类种】学习了变化之术，可以变猫。|4|5|1|{"normal_characters":"此卡在场上，我方受到的所有伤害-2。"}|[{"skill_name":"隐蔽气息","number_power":1,"skill_text":"防御力+6直到对方回合结束。"},{"skill_name":"偷袭","number_power":1,"skill_text":"直接攻击对方玩家。并查看对方1张手牌。"}]|pictures/female_killer.png
+小翼虎魔|0|暗|【魔灵种】喜欢在风中讲鬼故事。|3|3|0|{"react_characters":"当对方给予我方非战斗伤害时：我可查看对方三张手牌。"}|[{"skill_name":"翼盾","number_power":0,"skill_text":"直到对方回合结束，此卡获得一次被卡片效果破坏免疫。"},{"skill_name":"虎哮天冲","number_power":1,"skill_text":"此卡这回合不能攻击，破坏对方场上一张永续预言卡。"}]|pictures/small_fly_tiger.png

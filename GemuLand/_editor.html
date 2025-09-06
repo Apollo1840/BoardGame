@@ -193,8 +193,14 @@
       const file = await handle.getFile();
       const text = await file.text();
       const rows = parsePipeCsv(text);
-      // 只有在首行严格等于 header 时才移除
-      if (rows.length && isHeaderRow(rows[0], CONFIG[type].header)) rows.shift();
+      // 新增：严格校验 header
+      if (!rows.length || !isHeaderRow(rows[0], CONFIG[type].header)) {
+        alert('文件头不匹配，可能不是正确的'+(type==='prophecy'?'预言':'怪兽')+'卡牌CSV文件！');
+        state.handles[type] = null;
+        state.filenames[type] = '';
+        return;
+      }
+      rows.shift();
       state.cards[type] = rows.map(r=>rowToCard(type,r));
       render();
     }catch(e){
