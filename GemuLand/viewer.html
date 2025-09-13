@@ -167,6 +167,15 @@
             .card.prophecy { background:#e9f1fb !important; }
         }
 
+        /* English mode: smaller attribute text */
+        body.en-mode .attribute-box .box-content {
+            font-size: 8px !important;
+        }
+        /* English mode: smaller skill text if 3+ skills */
+        body.en-mode .card.monster .content-box.skill-small .skill-desc {
+            font-size: 8px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -178,6 +187,7 @@
     <input id="card-count" type="number" min="1" value="9" style="width:100%;margin-top:4px;">
   </div>
   <button id="btn-print" class="btn btn-success" style="width:100%;">打印/导出 PDF</button>
+  <button id="btn-lang" class="btn btn-secondary mb-2" style="width:100%;">English Mode</button>
   <div style="flex:1"></div>
   <div style="font-size:12px;color:#aaa;text-align:center;">© BoardGame 工具</div>
 </div>
@@ -185,6 +195,8 @@
   <div id="card-container"></div>
 </div>
 <script>
+    let lang = 'zh'; // 'zh' or 'en'
+
     /* ---------- 工具 ---------- */
     // Robust pipe-splitting (copied from _editor.html)
     function parsePipeCsvLine(line) {
@@ -219,12 +231,10 @@
     const safeParse = (str, def={}) => { try{ return JSON.parse(fixJsonQuotes(str)); } catch { return def; } };
 
     /* ---------- 预言卡 ---------- */
-    function createProphecyCard(cols){
+    function createProphecyCard(cols, langOverride) {
         const [title,intro,effect,responsive_effect='',image] =
         cols.length===4 ? [cols[0],cols[1],cols[2],'',cols[3]] : cols;
-
         const card = document.createElement('div'); card.className='card prophecy';
-        // Set blurred background image via CSS variable
         if(image){
             card.style.setProperty('--prophecy-bg', `url('${image}')`);
         } else {
@@ -234,29 +244,27 @@
         `<div class="card-title"><span class="name">${title}</span></div>
          <div class="card-image-container"><img src="${image}"></div>`;
         const area = document.createElement('div'); area.className='card-content';
-
-        /* 介绍：无标题、无边框 */
+        // English/Chinese labels
+        const l = (langOverride||lang);
+        const labelEffect = l==='en' ? 'Effect' : '效果';
+        const labelResponsive = l==='en' ? 'ResEkt' : '响应效果';
         if(intro){
             area.innerHTML +=
             `<div class="content-box attribute-box">
                <div class="box-content">${intro}</div>
              </div>`;
         }
-
-        /* 效果：仅当非空时渲染 */
         if(effect){
             area.innerHTML +=
             `<div class="content-box">
-               <div class="box-title">效果</div>
+               <div class="box-title">${labelEffect}</div>
                <div class="box-content">${effect}</div>
              </div>`;
         }
-
-        /* 响应效果：同样按需渲染 */
         if(responsive_effect){
             area.innerHTML +=
             `<div class="content-box responsive-effect">
-               <div class="box-title">响应效果</div>
+               <div class="box-title">${labelResponsive}</div>
                <div class="box-content">${responsive_effect}</div>
              </div>`;
         }
@@ -271,79 +279,76 @@
     }
 
     /* ---------- 怪兽卡 ---------- */
-    function createMonsterCard([title,level,type,desc,atk,def,charStr,skillStr,image]){
-        // 新增 magic 字段，修正参数顺序
-        // [title,level,type,desc,atk,def,magic,charStr,skillStr,image]
+    // Patch createMonsterCard to add 'skill-small' class if 3+ skills and lang==='en'
+    function createMonsterCard([title,level,type,desc,atk,def,magic,charStr,skillStr,image], langOverride) {
         const [title1,level1,type1,desc1,atk1,def1,magic1,charStr1,skillStr1,image1] = arguments[0];
-            const attrs = safeParse(charStr1, {});
-                let skills = safeParse(skillStr1, []);
-                if (!Array.isArray(skills)) skills = [];
-                // Map to new keys if needed (for robustness)
-                skills = skills.map(sk => ({
-                        name: sk.name,
-                        energy_cost: sk.energy_cost,
-                        effect: sk.effect
-                }));
-                const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
-
-                const card = document.createElement('div'); card.className='card monster';
-                card.innerHTML =
-                `<div class="card-title">
-                     <span class="level">${lvlIcons}</span>
-                     <span class="name">${title1}</span>
-                     <span class="type">${type1}</span>
-                 </div>
-                 <div class="card-image-container"><img src="${image1}"></div>`;
-
-                const area = document.createElement('div'); area.className='card-content';
-
-                if(desc1){
-                        area.innerHTML +=
-                        `<div class="content-box attribute-box">
-                             <div class="box-content">${desc1}</div>
-                         </div>`;
-                }
-
-                // Support both old and new keys for attributes
-            let normalChar = attrs.normal_attribute || '';
-            let reactChar = attrs.responsive_attribute || '';
-                if (normalChar) {
-                        area.innerHTML +=
-                                `<div class="content-box attribute-box normal-attr">
-                                     <div class="box-title">通常属性</div>
-                                     <div class="box-content">${normalChar}</div>
-                                 </div>`;
-                }
-                if (reactChar) {
-                        area.innerHTML +=
-                                `<div class="content-box attribute-box reaction-attr">
-                                     <div class="box-title">反应属性</div>
-                                     <div class="box-content">${reactChar}</div>
-                                 </div>`;
-                }
-
-                if(Array.isArray(skills)){
-                        skills.forEach(sk=>{
-                                area.innerHTML +=
-                                `<div class="content-box">
-                                     <div class="skill-box">
-                                         <div>
-                                             <div class="skill-name">${sk.name||''}</div>
-                                             <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
-                                         </div>
-                                         <div class="skill-desc">${sk.effect||''}</div>
-                                     </div>
-                                 </div>`;
-                        });
-                }
-
+        const attrs = safeParse(charStr1, {});
+        let skills = safeParse(skillStr1, []);
+        if (!Array.isArray(skills)) skills = [];
+        skills = skills.map(sk => ({
+            name: sk.name,
+            energy_cost: sk.energy_cost,
+            effect: sk.effect
+        }));
+        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
+        const l = (langOverride||lang);
+        const labelNormal = l==='en' ? 'NorAttr' : '通常属性';
+        const labelReact = l==='en' ? 'RespAttr' : '反应属性';
+        const labelAtk = l==='en' ? 'ATK' : '攻击';
+        const labelDef = l==='en' ? 'DEF' : '防御';
+        const card = document.createElement('div'); card.className='card monster';
+        card.innerHTML =
+        `<div class="card-title">
+             <span class="level">${lvlIcons}</span>
+             <span class="name">${title1}</span>
+             <span class="type">${type1}</span>
+         </div>
+         <div class="card-image-container"><img src="${image1}"></div>`;
+        const area = document.createElement('div'); area.className='card-content';
+        if(desc1){
+            area.innerHTML +=
+            `<div class="content-box attribute-box">
+                 <div class="box-content">${desc1}</div>
+             </div>`;
+        }
+        let normalChar = attrs.normal_attribute || '';
+        let reactChar = attrs.responsive_attribute || '';
+        if (normalChar) {
+            area.innerHTML +=
+                `<div class="content-box attribute-box normal-attr">
+                     <div class="box-title">${labelNormal}</div>
+                     <div class="box-content">${normalChar}</div>
+                 </div>`;
+        }
+        if (reactChar) {
+            area.innerHTML +=
+                `<div class="content-box attribute-box reaction-attr">
+                     <div class="box-title">${labelReact}</div>
+                     <div class="box-content">${reactChar}</div>
+                 </div>`;
+        }
+        // Add skill-small class if 3+ skills and lang is en
+        let skillBoxClass = (l==='en' && skills.length>=3) ? 'content-box skill-small' : 'content-box';
+        if(Array.isArray(skills)){
+            skills.forEach(sk=>{
+                area.innerHTML +=
+                `<div class="${skillBoxClass}">
+                     <div class="skill-box">
+                         <div>
+                             <div class="skill-name">${sk.name||''}</div>
+                             <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
+                         </div>
+                         <div class="skill-desc">${sk.effect||''}</div>
+                     </div>
+                 </div>`;
+            });
+        }
         shrinkToFit(area);
         card.append(area);
-
         card.innerHTML +=
         `<div class="stats">
-           <div class="atk">攻击: ${atk1}</div>
-           <div class="def">防御: ${def1}</div>
+           <div class="atk">${labelAtk}: ${atk1}</div>
+           <div class="def">${labelDef}: ${def1}</div>
          </div>`;
         return card;
     }
@@ -389,15 +394,25 @@
             const base = window.location.pathname.replace(/\/[^/]*$/, '/');
             return base + filename;
         }
-        allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards.csv'));
-        allMonsterRows = await loadCSV(getCsvUrl('monster_cards.csv'));
+        if(lang==='en'){
+            allProphecyRows = await loadCSV('prophecy_cards_en.csv');
+            allMonsterRows = await loadCSV('monster_cards_en.csv');
+        }else{
+            allProphecyRows = await loadCSV('prophecy_cards.csv');
+            allMonsterRows = await loadCSV('monster_cards.csv');
+        }
         renderAllCards();
+    }
+
+    function setLangClass() {
+        document.body.classList.toggle('en-mode', lang==='en');
     }
 
     /* ---------- 主入口 ---------- */
     document.addEventListener('DOMContentLoaded', () => {
         // Initial load
         reloadCSVsAndRender();
+        setLangClass();
 
         // Refresh button
         document.getElementById('btn-refresh').onclick = reloadCSVsAndRender;
@@ -424,6 +439,15 @@
                     document.getElementById('main-content').style.marginLeft = '240px';
                 }, 100);
             }, 50);
+        };
+
+        // Language switch button
+        const btnLang = document.getElementById('btn-lang');
+        btnLang.onclick = function() {
+            lang = (lang==='zh') ? 'en' : 'zh';
+            btnLang.textContent = lang==='en' ? '中文模式' : 'English Mode';
+            reloadCSVsAndRender();
+            setLangClass();
         };
     });
 
