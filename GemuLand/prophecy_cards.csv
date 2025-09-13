@@ -50,7 +50,6 @@ card_title|introduction|effect|responsive_effect|image
 新的巢穴||丢弃所有手牌，连续抽牌并展示，抽到2张怪物牌为止。||pictures/new_cave.png
 圣光保护|【永续】|我方所有怪物防御力+3。||pictures/protection.png
 阵前演讲||本回合我方全体怪物攻击力+5。||pictures/fight_speech.png
-嗜血指令||指定一只怪物攻击力+5，此回合它造成的战斗伤害翻倍。||pictures/blood_kill.png
 一场箭雨||我方场上每存在一只怪物，给对方造成5点伤害。||pictures/arrows.png
 灵光乍现||灵力+2，随机分配在我方怪物上。||pictures/spirit_shine.png
 严肃预言||可以额外使用一张自上个我方回合就覆盖的（非装备，非永续）预言卡，该预言卡效果起效两次。||pictures/serious_prophecy.png
@@ -59,7 +58,6 @@ card_title|introduction|effect|responsive_effect|image
 灵枢圣剑|【永续/装备】|装备怪物攻击+5，防御+5。每回合结束阶段，我方场上消耗一点灵力，否则此卡被破坏。||pictures/spring_altar.png
 万灵归宗||对方与我方场上所有灵力汇聚到我方场上一只怪物上。||pictures/sprint_return.png
 恶幻权杖|【永续/装备】|装备怪物获得技能：【致幻】获得对方一只怪物的控制权一回合。（该被控制怪物如果满足直接攻击玩家条件，可以攻击玩家）||pictures/hollow.png
-古灵巨炮|【永续】|（一回合一次）去除我方场上两点灵力，破坏对方场上一张卡。之后此卡灵力+1。||pictures/forest_cannon.png
 灵劫天召||我方受到10点伤害，对方受到5点伤害，我方场上一只怪物灵力+3。|当对方一次性使用2点以上灵力时：对方受到20伤害，我方受到5点伤害。|pictures/sky_prophecy.png
 灵鹿冲击||去除我方场上一点灵力，视作一只攻击为15，防御为0的怪物，向对方发起攻击。（如果对方场上没有怪物或怪物蛋，可以发起直接攻击）||pictures/deer.png
 魔树榨取||破坏我方场上一只怪物。选择我方场上另一只怪物攻击力+5，灵力 + （1 + 被指定破坏怪物的灵力）。||pictures/tree_absorb.png
@@ -79,3 +77,8 @@ card_title|introduction|effect|responsive_effect|image
 翡翠瞬光|||当对方场上有卡牌翻面时：无效其效果并破坏该卡牌。|pictures/green_laser.png
 天璇灵光|【永续/装备】|装备怪物每回合结束后灵力+1。如果对方场上没有盖牌，则再+1。||pictures/rainbow_protect.png
 精致法书||去除场上一点灵力，此卡和弃牌堆某张预言卡替换，并即刻使用。||pictures/magic_codex.png
+古灵巨炮|【永续】|（一回合一次）去除我方场上（除了此卡上的）两点灵力，破坏对方场上一张卡。之后此卡灵力+1。||pictures/forest_cannon.png
+嗜血指令||指定一只怪物攻击力+3，此回合它造成的战斗伤害翻倍。||pictures/blood_kill.png
+森祝绿剑||选择我方场上一只怪物，其灵力+1，下次攻击攻击力+5。该次攻击后，对方受到同等战斗伤害（视为效果伤害），然后对方抽2张牌。||pictures/forest_sword.png
+食人花陷阱|||当对方发起攻击时：支付一点灵力，攻击无效化；并破坏其发起攻击的怪物；成功破坏后，我方恢复3点信仰。|pictures/piranha.png
+奇藤幻影|||当我方场上有怪物被效果破坏时：该怪物的灵力不被吸收，而是附着在此卡上。此卡将暂时长存。该回合结束后，直接召唤该怪物到我方场上，归还灵力，并额外+1灵力，此卡被破坏，也作为该怪物灵力附着。|pictures/goost_plant.png
