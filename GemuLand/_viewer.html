@@ -187,20 +187,135 @@
             font-size: 8px !important;
         }
 
+        #lang-switch span {
+          user-select: none;
+          border: 1px solid #3b82f6;
+          margin: 0;
+        }
+        #lang-switch .active {
+          background: #3b82f6 !important;
+          color: #fff !important;
+        }
+        #lang-switch span:not(.active) {
+          background: #23272f !important;
+          color: #fff !important;
+        }
+
+        /* Sidebar styles */
+        #sidebar-panel {
+          border-top-right-radius: 0 !important;
+          border-bottom-right-radius: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: 2px 0 12px rgba(0,0,0,0.12);
+          padding: 28px 18px 18px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          background: #23272f;
+          color: #fff;
+          z-index: 100;
+          position: fixed;
+          left: 0;
+          top: 0;
+          height: 100vh;
+          width: 240px;
+        }
+        #sidebar-panel label[for="card-count"] {
+          margin-bottom: 2px;
+          font-size: 14px;
+          font-weight: 500;
+          display: block;
+        }
+        #sidebar-panel input[type="number"] {
+          width: 100%;
+          margin-bottom: 4px;
+          border-radius: 4px;
+          border: 1px solid #444;
+          padding: 4px 8px;
+          background: #181b20;
+          color: #fff;
+          outline: none;
+          font-size: 15px;
+          box-sizing: border-box;
+        }
+        #sidebar-panel .btn {
+          width: 100%;
+          border-radius: 4px;
+          font-size: 15px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-bottom: 0;
+          margin-top: 0;
+          box-sizing: border-box;
+          padding: 8px 0;
+        }
+        #sidebar-panel .btn + .btn {
+          margin-top: 8px;
+        }
+        #sidebar-panel .section {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        #sidebar-panel .section + .section {
+          margin-top: 8px;
+        }
+        #sidebar-panel .helper-text {
+          font-size: 12px;
+          color: #aaa;
+          margin-bottom: 2px;
+        }
+        #sidebar-panel .divider {
+          border-bottom: 1px solid #444;
+          margin: 10px 0;
+        }
+        #sidebar-panel #lang-switch {
+          margin-top: 4px;
+        }
+        #sidebar-panel .section-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
-<div id="sidebar-panel" style="position:fixed;left:0;top:0;height:100vh;width:220px;background:#222;color:#fff;z-index:100;box-shadow:2px 0 8px rgba(0,0,0,0.08);padding:24px 16px 16px 16px;display:flex;flex-direction:column;gap:18px;">
-  <h4 style="margin:0 0 12px 0;font-size:18px;">控制面板</h4>
-  <button id="btn-refresh" class="btn btn-primary mb-2" style="width:100%;">刷新卡牌</button>
-  <div class="mb-2">
-    <label for="card-count" style="font-size:14px;">显示卡牌数量</label>
-    <input id="card-count" type="number" min="1" value="9" style="width:100%;margin-top:4px;">
+<div id="sidebar-panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 18px 0;">
+    <h4 style="font-size:20px;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0;">
+      <span style="font-size:22px;">🃏</span> 控制面板
+    </h4>
   </div>
-  <button id="btn-print" class="btn btn-success" style="width:100%;">打印/导出 PDF</button>
-  <button id="btn-lang" class="btn btn-secondary mb-2" style="width:100%;">English Mode</button>
+  <div class="divider"></div>
+  <div class="section">
+    <div class="section-row">
+      <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
+      <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:70px;min-width:40px;">
+      <button id="btn-refresh" class="btn btn-primary mb-2" style="background:#23272f;border:none;border-radius:6px;padding:4px 8px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;min-height:0;box-shadow:none;width:auto;height:32px;">
+        <span>🔄</span>
+      </button>
+    </div>
+    <span class="helper-text">可调整显示的卡牌对数</span>
+  </div>
+  <div class="divider"></div>
+  <div class="section">
+    <button id="btn-print" class="btn btn-success"><span>🖨️</span> 打印/导出 PDF</button>
+    <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
+      <span style="font-size:14px;">语言</span>
+      <div id="lang-switch" style="display:flex;align-items:center;gap:0;">
+        <span id="lang-cn" style="font-size:14px;padding:2px 10px;border-radius:6px 0 0 6px;background:#3b82f6;color:#fff;cursor:pointer;transition:background 0.2s;">中文</span>
+        <span id="lang-en" style="font-size:14px;padding:2px 10px;border-radius:0 6px 6px 0;background:#23272f;color:#fff;cursor:pointer;transition:background 0.2s;">English</span>
+      </div>
+    </div>
+  </div>
   <div style="flex:1"></div>
-  <div style="font-size:12px;color:#aaa;text-align:center;">© BoardGame 工具</div>
+  <div style="font-size:13px;color:#aaa;text-align:center;letter-spacing:1px;">© BoardGame 工具</div>
 </div>
 <div id="main-content" style="margin-left:240px;">
   <div id="card-container"></div>
@@ -258,7 +373,7 @@
         // English/Chinese labels
         const l = (langOverride||lang);
         const labelEffect = l==='en' ? 'Effect' : '效果';
-        const labelResponsive = l==='en' ? 'ResEkt' : '响应效果';
+        const labelResponsive = l==='en' ? 'RespEkt' : '响应效果';
         if(intro){
             area.innerHTML +=
             `<div class="content-box attribute-box">
@@ -303,7 +418,7 @@
         }));
         const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
         const l = (langOverride||lang);
-        const labelNormal = l==='en' ? 'NorAttr' : '通常属性';
+        const labelNormal = l==='en' ? 'Attr' : '通常属性';
         const labelReact = l==='en' ? 'RespAttr' : '反应属性';
         const labelAtk = l==='en' ? 'ATK' : '攻击';
         const labelDef = l==='en' ? 'DEF' : '防御';
@@ -446,13 +561,27 @@
             }, 50);
         };
 
-        // Language switch button
-        const btnLang = document.getElementById('btn-lang');
-        btnLang.onclick = function() {
-            lang = (lang==='zh') ? 'en' : 'zh';
-            btnLang.textContent = lang==='en' ? '中文模式' : 'English Mode';
-            reloadCSVsAndRender();
-            setLangClass();
+        // Language switch logic
+        function updateLangSwitch() {
+            document.getElementById('lang-cn').classList.toggle('active', lang === 'zh');
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+        }
+        updateLangSwitch();
+        document.getElementById('lang-cn').onclick = function() {
+            if(lang !== 'zh') {
+                lang = 'zh';
+                reloadCSVsAndRender();
+                setLangClass();
+                updateLangSwitch();
+            }
+        };
+        document.getElementById('lang-en').onclick = function() {
+            if(lang !== 'en') {
+                lang = 'en';
+                reloadCSVsAndRender();
+                setLangClass();
+                updateLangSwitch();
+            }
         };
     });
 
