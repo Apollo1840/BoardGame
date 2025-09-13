@@ -186,6 +186,24 @@
 </div>
 <script>
     /* ---------- 工具 ---------- */
+    // Robust pipe-splitting (copied from _editor.html)
+    function parsePipeCsvLine(line) {
+        const out = [];
+        let cur = '';
+        for (let i=0; i<line.length; i++) {
+            const ch = line[i];
+            if (ch === '\\') {
+                const next = line[i+1];
+                if (next === '|') { cur += '|'; i++; continue; }
+                if (next === '\\') { cur += '\\'; i++; continue; }
+                cur += '\\'; continue;
+            }
+            if (ch === '|') { out.push(cur); cur=''; continue; }
+            cur += ch;
+        }
+        out.push(cur);
+        return out;
+    }
     async function loadCSV(path){
         const txt = await (await fetch(path)).text();
         return txt.split('\n').slice(1).filter(r=>r.trim());
@@ -257,55 +275,67 @@
         // 新增 magic 字段，修正参数顺序
         // [title,level,type,desc,atk,def,magic,charStr,skillStr,image]
         const [title1,level1,type1,desc1,atk1,def1,magic1,charStr1,skillStr1,image1] = arguments[0];
-        const chars = safeParse(charStr1, {}), skills = safeParse(skillStr1, []);
-        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
+            const attrs = safeParse(charStr1, {});
+                let skills = safeParse(skillStr1, []);
+                if (!Array.isArray(skills)) skills = [];
+                // Map to new keys if needed (for robustness)
+                skills = skills.map(sk => ({
+                        name: sk.name,
+                        energy_cost: sk.energy_cost,
+                        effect: sk.effect
+                }));
+                const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
 
-        const card = document.createElement('div'); card.className='card monster';
-        card.innerHTML =
-        `<div class="card-title">
-           <span class="level">${lvlIcons}</span>
-           <span class="name">${title1}</span>
-           <span class="type">${type1}</span>
-         </div>
-         <div class="card-image-container"><img src="${image1}"></div>`;
+                const card = document.createElement('div'); card.className='card monster';
+                card.innerHTML =
+                `<div class="card-title">
+                     <span class="level">${lvlIcons}</span>
+                     <span class="name">${title1}</span>
+                     <span class="type">${type1}</span>
+                 </div>
+                 <div class="card-image-container"><img src="${image1}"></div>`;
 
-        const area = document.createElement('div'); area.className='card-content';
+                const area = document.createElement('div'); area.className='card-content';
 
-        if(desc1){
-            area.innerHTML +=
-            `<div class="content-box attribute-box">
-               <div class="box-content">${desc1}</div>
-             </div>`;
-        }
+                if(desc1){
+                        area.innerHTML +=
+                        `<div class="content-box attribute-box">
+                             <div class="box-content">${desc1}</div>
+                         </div>`;
+                }
 
-        const attrMap={normal_characters:'通常属性',react_characters:'反应属性'};
-        Object.entries(chars).forEach(([k, v]) => {
-            if (attrMap[k]) {
-                let extraCls = '';
-                if (k === 'react_characters') extraCls = ' reaction-attr';
-                if (k === 'normal_characters') extraCls = ' normal-attr';
-                area.innerHTML +=
-                    `<div class="content-box attribute-box${extraCls}">
-                       <div class="box-title">${attrMap[k]}</div>
-                       <div class="box-content">${v}</div>
-                     </div>`;
-            }
-        });
+                // Support both old and new keys for attributes
+            let normalChar = attrs.normal_attribute || '';
+            let reactChar = attrs.responsive_attribute || '';
+                if (normalChar) {
+                        area.innerHTML +=
+                                `<div class="content-box attribute-box normal-attr">
+                                     <div class="box-title">通常属性</div>
+                                     <div class="box-content">${normalChar}</div>
+                                 </div>`;
+                }
+                if (reactChar) {
+                        area.innerHTML +=
+                                `<div class="content-box attribute-box reaction-attr">
+                                     <div class="box-title">反应属性</div>
+                                     <div class="box-content">${reactChar}</div>
+                                 </div>`;
+                }
 
-        if(Array.isArray(skills)){
-            skills.forEach(sk=>{
-                area.innerHTML +=
-                `<div class="content-box">
-                   <div class="skill-box">
-                     <div>
-                       <div class="skill-name">${sk.skill_name}</div>
-                       <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.number_power)}</div>
-                     </div>
-                     <div class="skill-desc">${sk.skill_text}</div>
-                   </div>
-                 </div>`;
-            });
-        }
+                if(Array.isArray(skills)){
+                        skills.forEach(sk=>{
+                                area.innerHTML +=
+                                `<div class="content-box">
+                                     <div class="skill-box">
+                                         <div>
+                                             <div class="skill-name">${sk.name||''}</div>
+                                             <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
+                                         </div>
+                                         <div class="skill-desc">${sk.effect||''}</div>
+                                     </div>
+                                 </div>`;
+                        });
+                }
 
         shrinkToFit(area);
         card.append(area);
@@ -344,10 +374,10 @@
         const maxLen = Math.max(prophecyRows.length, monsterRows.length);
         for (let i = 0; i < maxLen; i++) {
             if (i < prophecyRows.length) {
-                ctr.append(createProphecyCard(prophecyRows[i].split('|')));
+                ctr.append(createProphecyCard(parsePipeCsvLine(prophecyRows[i])));
             }
             if (i < monsterRows.length) {
-                ctr.append(createMonsterCard(monsterRows[i].split('|')));
+                ctr.append(createMonsterCard(parsePipeCsvLine(monsterRows[i])));
             }
         }
     }
