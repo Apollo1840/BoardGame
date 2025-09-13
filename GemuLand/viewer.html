@@ -7,14 +7,14 @@
         /* 打印保真 */
         img, .content-box, .card-title { print-color-adjust: exact; }
         body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-        #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:center; }
+        #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:left; align-items:start; justify-content:start; align-content:start; }
 
         /* 卡牌基座 */
         .card {
             position: relative;
             width: 63mm;
             height: 88mm;
-            border: 1.5px solid #000;
+            border: 2px solid #000;
             border-radius: 8px;
             overflow: hidden;
             page-break-inside: avoid;
@@ -160,9 +160,20 @@
         }
 
         @media print {
-            body{background:none;margin:0;padding:0;}   /* 原来已有 padding:0，这里同时把 margin 也归零 */
-            #card-container{gap:5px;}
-            .card{box-shadow:none;}
+            body{background:none;margin:0;padding:0;}
+            #main-content {
+                width: calc(3 * 63mm + 2 * 2px) !important; /* 3 columns, 2 gaps */
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+            }
+            #card-container{
+                display: grid !important;
+                grid-template-columns: repeat(3, 63mm) !important;
+                gap: 2px !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+            }
+            .card{box-sizing: border-box !important; box-shadow:none;}
             .card.monster  { background:#ffffff !important; }
             .card.prophecy { background:#e9f1fb !important; }
         }
