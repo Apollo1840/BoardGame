@@ -1,4 +1,4 @@
-card_title|level|monster_type|description|attack|defence|magic|characters|skills|image
+card_title|level|monster_type|description|attack|defence|magic|attributes|skills|image
 Spartan Warrior|0|Earth|[Human-kind] In this monster-filled Gemu world, humans are counted as monsters too.|5|5|0|{}|[{"name":"Desperate Strike","energy_cost":1,"effect":"Your next attack this turn gets +1 ATK."}]|pictures/spartan_samurai.png
 Wolf Giant|1|Wood|[Orc-kind] A massive werewolf dwelling in the greatwood; the largest reach 20 meters.|7|6|0|{"responsive_attribute":"When flip-summoned: you may immediately have one of your monsters attack. If that attack destroys a monster, also inflict equal damage to the opponent."}|[{"name":"Wolf Howl","energy_cost":0,"effect":"You may additionally summon a monster with Wolf in its name, or play a Prophecy with Wolf in its name."},{"name":"Forest Smash","energy_cost":2,"effect":"This card may attack each enemy monster in order this turn, until this card is destroyed."}]|pictures/wolf_gaint.png
 Brickwork Golem|2|Rock|[Golem-kind] A golem formed from a ruined castle.|10|10|0|{}|[]|pictures/castle_man.png

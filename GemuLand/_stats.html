@@ -192,8 +192,15 @@
       attack: nint(atk),
       defence: nint(def),
       magic: parseFloat(magic),
-      characters: (()=>{ try{return JSON.parse(charStr);}catch{return {};} })(),
-      skills: (()=>{ try{return JSON.parse(skillStr);}catch{return [];} })(),
+  attributes: (()=>{ try{return JSON.parse(charStr);}catch{return {};} })(),
+      skills: (()=>{ try{
+        const arr = JSON.parse(skillStr);
+        return Array.isArray(arr) ? arr.map(sk => ({
+          name: sk.name,
+          energy_cost: sk.energy_cost,
+          effect: sk.effect
+        })) : [];
+      }catch{return [];} })(),
       image: image || (ename?`pictures/${ename}.png`:'')
     };
   };
