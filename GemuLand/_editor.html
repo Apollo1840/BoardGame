@@ -22,12 +22,12 @@
   const CONFIG = {
     prophecy: {
       defaultName: 'prophecy_cards.csv',
-      header: ['card_title','introduction','effect','responsive_effect','image']
+      header: ['card_id','card_title','introduction','effect','responsive_effect','image','last_update_datetime']
     },
     monster: {
       defaultName: 'monster_cards.csv',
-  header: ['card_title','level','monster_type','description',
-       'attack','defence','magic','attributes','skills','image']
+      header: ['card_id','card_title','level','monster_type','description',
+        'attack','defence','magic','attributes','skills','image','last_update_datetime']
     }
   };
   const DISPLAY = {
@@ -62,10 +62,14 @@
     return String(s??'').replace(/[&<>"']/g, m=>(
       {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
   }
-  function isHeaderRow(row, header){
-    if (!Array.isArray(row) || row.length !== header.length) return false;
-    for (let i=0;i<header.length;i++) if (row[i] !== header[i]) return false;
-    return true;
+  // Robust header check: allow extra columns at start/end, but required columns must be present and in order
+  function isHeaderRow(row, header) {
+    if (!Array.isArray(row) || row.length < header.length) return false;
+    let idx = 0;
+    for (let i = 0; i < row.length && idx < header.length; i++) {
+      if (row[i] === header[idx]) idx++;
+    }
+    return idx === header.length;
   }
 
   /************ 轻量 CSV 解析（| 分隔 + 反斜杠转义） ************/
@@ -107,63 +111,79 @@
   }
 
   /******** 行 ↔︎ 对象 ********/
-  function rowToCard(type,row){
-    if(type==='prophecy'){
-      const [t,intro,effect,responsive_effect='',image] =
-        row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row;
-      const title = decodeText(t || '');
+  // Map row to card object using header row for robust mapping
+  function rowToCard(type, row, header) {
+    // header: array of column names, row: array of values
+    let colMap = {};
+    if (header && Array.isArray(header)) {
+      for (let i = 0; i < header.length; i++) {
+        colMap[header[i]] = row[i];
+      }
+    } else {
+      // fallback: use config header
+      const h = CONFIG[type].header;
+      for (let i = 0; i < h.length; i++) {
+        colMap[h[i]] = row[i];
+      }
+    }
+    if (type === 'prophecy') {
+      const title = decodeText(colMap.card_title || '');
       const enameFromTitle = title ? slugify(title) : '';
-      const ename = file2ename(image) || enameFromTitle;
+      const ename = file2ename(colMap.image) || enameFromTitle;
       return {
+        card_id: colMap.card_id || '',
+        last_update_datetime: colMap.last_update_datetime || '',
         title,
         ename,
-        intro: decodeText(intro||''),
-        effect: decodeText(effect||''),
-        responsive_effect: decodeText(responsive_effect||''),
-        image: image || (ename ? `pictures/${ename}.png` : '')
+        intro: decodeText(colMap.introduction || ''),
+        effect: decodeText(colMap.effect || ''),
+        responsive_effect: decodeText(colMap.responsive_effect || ''),
+        image: colMap.image || (ename ? `pictures/${ename}.png` : '')
       };
     }
-    // 10 columns: t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image
-    const [t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image] = row;
-    const title = decodeText(t || '');
+    // monster
+    const title = decodeText(colMap.card_title || '');
     const enameFromTitle = title ? slugify(title) : '';
-    const ename = file2ename(image) || enameFromTitle;
-    // 修正：CSV 里用单引号包裹的 JSON 需转为双引号
+    const ename = file2ename(colMap.image) || enameFromTitle;
     function fixJsonQuotes(str) {
       if (!str) return str;
-      // 只在外层是单引号时替换
       if (str.trim().startsWith("'{") || str.trim().startsWith("'[") ) {
-        // 去除外层单引号
         str = str.trim().replace(/^'/, '').replace(/'$/, '');
       }
-      // 替换所有单引号为双引号（不在字符串内部的情况）
-      // 更安全的做法是只替换键和字符串值的引号
-      // 这里只做简单替换，假设没有嵌套单引号
       return str.replace(/'/g, '"');
     }
-    let attributes = safeParse(fixJsonQuotes(String(charStr??'').replace(/\|/g,'|')), {});
-    // Only accept normal_attribute and responsive_attribute
+    let attributes = safeParse(fixJsonQuotes(String(colMap.attributes ?? '').replace(/\|/g, '|')), {});
     let filteredAttrs = {};
     if (attributes.normal_attribute) filteredAttrs.normal_attribute = attributes.normal_attribute;
     if (attributes.responsive_attribute) filteredAttrs.responsive_attribute = attributes.responsive_attribute;
     return {
+      card_id: colMap.card_id || '',
+      last_update_datetime: colMap.last_update_datetime || '',
       title,
       ename,
-      level: Number.isFinite(+lvl) ? +lvl : 0,
-      monster_type: decodeText(typ || ''),
-      description: decodeText(desc || ''),
-      attack: Number.isFinite(+atk) ? +atk : 0,
-      defence: Number.isFinite(+def) ? +def : 0,
-      magic: isNaN(parseFloat(magic)) ? 0 : parseFloat(magic),
+      level: Number.isFinite(+colMap.level) ? +colMap.level : 0,
+      monster_type: decodeText(colMap.monster_type || ''),
+      description: decodeText(colMap.description || ''),
+      attack: Number.isFinite(+colMap.attack) ? +colMap.attack : 0,
+      defence: Number.isFinite(+colMap.defence) ? +colMap.defence : 0,
+      magic: isNaN(parseFloat(colMap.magic)) ? 0 : parseFloat(colMap.magic),
       attributes: filteredAttrs,
-      skills:     safeParse(fixJsonQuotes(String(skillStr??'').replace(/\|/g,'|')), []),
-      image: image || (ename ? `pictures/${ename}.png` : '')
+      skills: safeParse(fixJsonQuotes(String(colMap.skills ?? '').replace(/\|/g, '|')), []),
+      image: colMap.image || (ename ? `pictures/${ename}.png` : '')
     };
   }
-  function cardToRow(type,c){
+  function cardToRow(type, c) {
     const esc = v => encodeField(v);
-    if (type==='prophecy'){
-      return [esc(c.title), esc(c.intro), esc(c.effect), esc(c.responsive_effect), c.image];
+    if (type === 'prophecy') {
+      return [
+        c.card_id || '',
+        esc(c.title),
+        esc(c.intro),
+        esc(c.effect),
+        esc(c.responsive_effect),
+        c.image,
+        c.last_update_datetime || ''
+      ];
     }
     // Only write normal_attribute and responsive_attribute
     let attrs = c.attributes || {};
@@ -177,6 +197,7 @@
       effect: s.effect||''
     }));
     return [
+      c.card_id || '',
       esc(c.title),
       c.level,
       esc(c.monster_type),
@@ -186,7 +207,8 @@
       c.magic,
       encodeField(JSON.stringify(outAttrs)),
       encodeField(JSON.stringify(skillsArr)),
-      c.image
+      c.image,
+      c.last_update_datetime || ''
     ];
   }
 
@@ -214,9 +236,12 @@
         state.filenames[type] = '';
         return;
       }
-      rows.shift();
-      state.cards[type] = rows.map(r=>rowToCard(type,r));
-      render();
+  // Store header for this type
+  state.header = state.header || {};
+  state.header[type] = rows[0];
+  rows.shift();
+  state.cards[type] = rows.map(r=>rowToCard(type, r, state.header[type]));
+  render();
     }catch(e){
       if (e?.name !== 'AbortError') console.error('打开 CSV 失败：\n', e);
     }
@@ -320,6 +345,7 @@
       $('#btn-add').onclick = ()=>openForm(null);
       return;
     }
+    // Only show columns in DISPLAY[type], never show card_id or last_update_datetime
     const keys = DISPLAY[type];
     let html = `
       <div class="card-table">
@@ -329,9 +355,31 @@
             <th style="width:120px;">操作</th>
           </tr></thead><tbody>`;
 
+    // Map DISPLAY keys to correct card object properties (handle legacy and new field names)
+    function getCellValue(card, key, type) {
+      // Map DISPLAY keys to card object fields
+      if (type === 'prophecy') {
+        if (key === 'title') return card.title ?? card.card_title ?? '';
+        if (key === 'ename') return card.ename ?? '';
+        if (key === 'intro') return card.intro ?? card.introduction ?? '';
+        if (key === 'effect') return card.effect ?? '';
+        if (key === 'responsive_effect') return card.responsive_effect ?? '';
+      } else if (type === 'monster') {
+        if (key === 'title') return card.title ?? card.card_title ?? '';
+        if (key === 'ename') return card.ename ?? '';
+        if (key === 'level') return card.level ?? '';
+        if (key === 'monster_type') return card.monster_type ?? '';
+        if (key === 'description') return card.description ?? '';
+        if (key === 'attack') return card.attack ?? '';
+        if (key === 'defence') return card.defence ?? '';
+        if (key === 'magic') return card.magic ?? '';
+      }
+      return '';
+    }
+
     list.forEach((c,i)=>{
       html += '<tr>';
-      keys.forEach(k=> html+=`<td>${escapeHtml(c[k])}</td>`);
+      keys.forEach(k=> html+=`<td>${escapeHtml(getCellValue(c, k, type))}</td>`);
       html += `<td class="text-nowrap">
         <button class="btn btn-warning btn-sm me-1" data-edit="${i}">编辑</button>
         <button class="btn btn-danger  btn-sm" data-del="${i}">删</button>
@@ -396,13 +444,41 @@
       if(!card.ename) card.ename = slugify(card.title);
       card.image = card.image || (card.ename ? `pictures/${card.ename}.png` : '');
 
+      // Prevent saving if there are zero cards (for idxStr uniqueness)
+      if (!Array.isArray(state.cards[type]) || state.cards[type].length === 0) {
+        alert('当前卡组为空，无法保存新卡。请先添加至少一张卡牌。');
+        return;
+      }
+
       if(editing){
+        // Preserve original card_id, only update last_update_datetime
+        const orig = state.cards[type][idx];
+        card.card_id = orig.card_id || card.card_id;
+        card.last_update_datetime = new Date().toISOString().replace('T',' ').substring(0,19);
         const arr = state.cards[type].slice();
-        // 关键：用下标删老卡，再 push 到末尾（保证“移动到最后”）
         arr.splice(idx, 1);
         arr.push(card);
         state.cards[type] = arr;
       }else{
+        // 生成 card_id: YYYYMMDD-xxxxx-xxxxxxxx
+        const today = new Date();
+        const dateStr = today.getFullYear().toString() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+        // Find max idxStr for today
+        let maxIdx = 0;
+        const re = new RegExp(`^${dateStr}-(\\d{5})-`);
+        for (const c of state.cards[type]) {
+          if (c.card_id && typeof c.card_id === 'string') {
+            const m = c.card_id.match(re);
+            if (m) {
+              const n = parseInt(m[1], 10);
+              if (n > maxIdx) maxIdx = n;
+            }
+          }
+        }
+        const idxStr = String(maxIdx + 1).padStart(5,'0');
+        const randStr = Math.random().toString(16).slice(2,10);
+        card.card_id = `${dateStr}-${idxStr}-${randStr}`;
+        card.last_update_datetime = new Date().toISOString().replace('T',' ').substring(0,19);
         state.cards[type] = (state.cards[type]||[]).concat(card);
       }
       modal.remove(); renderTable();

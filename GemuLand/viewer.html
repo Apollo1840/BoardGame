@@ -325,6 +325,7 @@
 
     /* ---------- 工具 ---------- */
     // Robust pipe-splitting (copied from _editor.html)
+    // Robust pipe-splitting, returns array of fields
     function parsePipeCsvLine(line) {
         const out = [];
         let cur = '';
@@ -342,9 +343,28 @@
         out.push(cur);
         return out;
     }
-    async function loadCSV(path){
+
+    // Parse CSV header line into array of field names
+    function parseCsvHeader(line) {
+        return parsePipeCsvLine(line);
+    }
+
+    // Map a CSV row (array) to an object using header fields
+    function mapCsvRowToObj(headerArr, rowArr) {
+        const obj = {};
+        for (let i = 0; i < headerArr.length; i++) {
+            obj[headerArr[i]] = rowArr[i] !== undefined ? rowArr[i] : '';
+        }
+        return obj;
+    }
+    // Loads CSV, returns {headerArr, rowsArr} where rowsArr is array of row arrays
+    async function loadCSVWithHeader(path) {
         const txt = await (await fetch(path)).text();
-        return txt.split('\n').slice(1).filter(r=>r.trim());
+        const lines = txt.split('\n').filter(r=>r.trim());
+        if (lines.length === 0) return {headerArr: [], rowsArr: []};
+        const headerArr = parseCsvHeader(lines[0]);
+        const rowsArr = lines.slice(1).map(parsePipeCsvLine);
+        return {headerArr, rowsArr};
     }
     // 修正：支持单引号 JSON
     function fixJsonQuotes(str) {
@@ -357,41 +377,48 @@
     const safeParse = (str, def={}) => { try{ return JSON.parse(fixJsonQuotes(str)); } catch { return def; } };
 
     /* ---------- 预言卡 ---------- */
-    function createProphecyCard(cols, langOverride) {
-        const [title,intro,effect,responsive_effect='',image] =
-        cols.length===4 ? [cols[0],cols[1],cols[2],'',cols[3]] : cols;
+    // Robust: Accepts rowObj (field mapping) or array (legacy)
+    function createProphecyCard(row, langOverride) {
+        let obj;
+        if (Array.isArray(row)) {
+            // Legacy: fallback to old order
+            const [title,intro,effect,responsive_effect='',image] = row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row;
+            obj = {card_title:title, introduction:intro, effect, responsive_effect, image};
+        } else {
+            obj = row;
+        }
         const card = document.createElement('div'); card.className='card prophecy';
-        if(image){
-            card.style.setProperty('--prophecy-bg', `url('${image}')`);
+        if(obj.image){
+            card.style.setProperty('--prophecy-bg', `url('${obj.image}')`);
         } else {
             card.style.removeProperty('--prophecy-bg');
         }
         card.innerHTML =
-        `<div class="card-title"><span class="name">${title}</span></div>
-         <div class="card-image-container"><img src="${image}"></div>`;
+        `<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
+         <div class="card-image-container"><img src="${obj.image||''}"></div>`;
         const area = document.createElement('div'); area.className='card-content';
         // English/Chinese labels
         const l = (langOverride||lang);
         const labelEffect = l==='en' ? 'Effect' : '效果';
         const labelResponsive = l==='en' ? 'RespEkt' : '响应效果';
-        if(intro){
+        if(obj.introduction){
             area.innerHTML +=
             `<div class="content-box attribute-box">
-               <div class="box-content">${intro}</div>
+               <div class="box-content">${obj.introduction}</div>
              </div>`;
         }
-        if(effect){
+        if(obj.effect){
             area.innerHTML +=
             `<div class="content-box">
                <div class="box-title">${labelEffect}</div>
-               <div class="box-content">${effect}</div>
+               <div class="box-content">${obj.effect}</div>
              </div>`;
         }
-        if(responsive_effect){
+        if(obj.responsive_effect){
             area.innerHTML +=
             `<div class="content-box responsive-effect">
                <div class="box-title">${labelResponsive}</div>
-               <div class="box-content">${responsive_effect}</div>
+               <div class="box-content">${obj.responsive_effect}</div>
              </div>`;
         }
 
@@ -399,24 +426,35 @@
         card.append(area);
         // Set the background image for the pseudo-element (in case of async rendering)
         setTimeout(()=>{
-            card.style.setProperty('--prophecy-bg', image ? `url('${image}')` : 'none');
+            card.style.setProperty('--prophecy-bg', obj.image ? `url('${obj.image}')` : 'none');
         }, 0);
         return card;
     }
 
     /* ---------- 怪兽卡 ---------- */
     // Patch createMonsterCard to add 'skill-small' class if 3+ skills and lang==='en'
-    function createMonsterCard([title,level,type,desc,atk,def,magic,charStr,skillStr,image], langOverride) {
-        const [title1,level1,type1,desc1,atk1,def1,magic1,charStr1,skillStr1,image1] = arguments[0];
-        const attrs = safeParse(charStr1, {});
-        let skills = safeParse(skillStr1, []);
+    // Robust: Accepts rowObj (field mapping) or array (legacy)
+    function createMonsterCard(row, langOverride) {
+        let obj;
+        if (Array.isArray(row)) {
+            // Legacy: fallback to old order
+            const [title,level,type,desc,atk,def,magic,charStr,skillStr,image] = row;
+            obj = {
+                card_title: title, level, monster_type: type, description: desc, attack: atk, defence: def, magic,
+                attributes: charStr, skills: skillStr, image
+            };
+        } else {
+            obj = row;
+        }
+        const attrs = safeParse(obj.attributes, {});
+        let skills = safeParse(obj.skills, []);
         if (!Array.isArray(skills)) skills = [];
         skills = skills.map(sk => ({
             name: sk.name,
             energy_cost: sk.energy_cost,
             effect: sk.effect
         }));
-        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(level1)));
+        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(obj.level)));
         const l = (langOverride||lang);
         const labelNormal = l==='en' ? 'Attr' : '通常属性';
         const labelReact = l==='en' ? 'RespAttr' : '反应属性';
@@ -426,15 +464,15 @@
         card.innerHTML =
         `<div class="card-title">
              <span class="level">${lvlIcons}</span>
-             <span class="name">${title1}</span>
-             <span class="type">${type1}</span>
+             <span class="name">${obj.card_title||''}</span>
+             <span class="type">${obj.monster_type||''}</span>
          </div>
-         <div class="card-image-container"><img src="${image1}"></div>`;
+         <div class="card-image-container"><img src="${obj.image||''}"></div>`;
         const area = document.createElement('div'); area.className='card-content';
-        if(desc1){
+        if(obj.description){
             area.innerHTML +=
             `<div class="content-box attribute-box">
-                 <div class="box-content">${desc1}</div>
+                 <div class="box-content">${obj.description}</div>
              </div>`;
         }
         let normalChar = attrs.normal_attribute || '';
@@ -473,8 +511,8 @@
         card.append(area);
         card.innerHTML +=
         `<div class="stats">
-           <div class="atk">${labelAtk}: ${atk1}</div>
-           <div class="def">${labelDef}: ${def1}</div>
+           <div class="atk">${labelAtk}: ${obj.attack||''}</div>
+           <div class="def">${labelDef}: ${obj.defence||''}</div>
          </div>`;
         return card;
     }
@@ -487,12 +525,8 @@
         }
     }
 
-    async function loadCSV(path) {
-        const res = await fetch(path, { cache: 'no-store' });
-        const text = await res.text();
-        return text.split('\n').slice(1).filter(r => r.trim());
-    }
-    let allProphecyRows = [], allMonsterRows = [];
+    // --- Robust CSV loading and rendering ---
+    let prophecyHeader = [], monsterHeader = [], allProphecyRows = [], allMonsterRows = [];
     let displayCount = 9;
 
     async function renderAllCards() {
@@ -505,10 +539,10 @@
         const maxLen = Math.max(prophecyRows.length, monsterRows.length);
         for (let i = 0; i < maxLen; i++) {
             if (i < prophecyRows.length) {
-                ctr.append(createProphecyCard(parsePipeCsvLine(prophecyRows[i])));
+                ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, prophecyRows[i])));
             }
             if (i < monsterRows.length) {
-                ctr.append(createMonsterCard(parsePipeCsvLine(monsterRows[i])));
+                ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader, monsterRows[i])));
             }
         }
     }
@@ -520,13 +554,18 @@
             const base = window.location.pathname.replace(/\/[^/]*$/, '/');
             return base + filename;
         }
+        let prophecy, monster;
         if(lang==='en'){
-            allProphecyRows = await loadCSV('prophecy_cards_en.csv');
-            allMonsterRows = await loadCSV('monster_cards_en.csv');
+            prophecy = await loadCSVWithHeader(getCsvUrl('prophecy_cards_en.csv'));
+            monster = await loadCSVWithHeader(getCsvUrl('monster_cards_en.csv'));
         }else{
-            allProphecyRows = await loadCSV('prophecy_cards.csv');
-            allMonsterRows = await loadCSV('monster_cards.csv');
+            prophecy = await loadCSVWithHeader(getCsvUrl('prophecy_cards.csv'));
+            monster = await loadCSVWithHeader(getCsvUrl('monster_cards.csv'));
         }
+        prophecyHeader = prophecy.headerArr;
+        allProphecyRows = prophecy.rowsArr;
+        monsterHeader = monster.headerArr;
+        allMonsterRows = monster.rowsArr;
         renderAllCards();
     }
 
