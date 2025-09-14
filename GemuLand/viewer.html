@@ -321,6 +321,10 @@
   <div id="card-container"></div>
 </div>
 <script>
+    // Decode \n to real newlines
+    function decodeText(s){
+        return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n');
+    }
     let lang = 'zh'; // 'zh' or 'en'
 
     /* ---------- 工具 ---------- */
@@ -353,7 +357,8 @@
     function mapCsvRowToObj(headerArr, rowArr) {
         const obj = {};
         for (let i = 0; i < headerArr.length; i++) {
-            obj[headerArr[i]] = rowArr[i] !== undefined ? rowArr[i] : '';
+            // Always decode text fields
+            obj[headerArr[i]] = rowArr[i] !== undefined ? decodeText(rowArr[i]) : '';
         }
         return obj;
     }

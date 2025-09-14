@@ -661,9 +661,10 @@
     if(type==='prophecy'){
       card.title             = q('title').value.trim();
       card.ename             = q('ename').value.trim();
-      card.intro             = q('intro').value.trim();
-      card.effect            = q('effect').value.trim();
-      card.responsive_effect = q('responsive_effect').value.trim();
+      // Do not trim, preserve newlines
+      card.intro             = q('intro').value;
+      card.effect            = q('effect').value;
+      card.responsive_effect = q('responsive_effect').value;
       return;
     }
     card.title        = q('title').value.trim();
