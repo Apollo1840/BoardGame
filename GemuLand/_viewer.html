@@ -401,26 +401,27 @@
         const l = (langOverride||lang);
         const labelEffect = l==='en' ? 'Effect' : '效果';
         const labelResponsive = l==='en' ? 'RespEkt' : '响应效果';
-        if(obj.introduction){
-            area.innerHTML +=
-            `<div class="content-box attribute-box">
-               <div class="box-content">${obj.introduction}</div>
-             </div>`;
-        }
-        if(obj.effect){
-            area.innerHTML +=
-            `<div class="content-box">
-               <div class="box-title">${labelEffect}</div>
-               <div class="box-content">${obj.effect}</div>
-             </div>`;
-        }
-        if(obj.responsive_effect){
-            area.innerHTML +=
-            `<div class="content-box responsive-effect">
-               <div class="box-title">${labelResponsive}</div>
-               <div class="box-content">${obj.responsive_effect}</div>
-             </div>`;
-        }
+                function nl2br(str) { return String(str).replace(/\n/g, '<br>'); }
+                if(obj.introduction){
+                        area.innerHTML +=
+                        `<div class="content-box attribute-box">
+                             <div class="box-content">${nl2br(obj.introduction)}</div>
+                         </div>`;
+                }
+                if(obj.effect){
+                        area.innerHTML +=
+                        `<div class="content-box">
+                             <div class="box-title">${labelEffect}</div>
+                             <div class="box-content">${nl2br(obj.effect)}</div>
+                         </div>`;
+                }
+                if(obj.responsive_effect){
+                        area.innerHTML +=
+                        `<div class="content-box responsive-effect">
+                             <div class="box-title">${labelResponsive}</div>
+                             <div class="box-content">${nl2br(obj.responsive_effect)}</div>
+                         </div>`;
+                }
 
         shrinkToFit(area);
         card.append(area);
@@ -469,10 +470,11 @@
          </div>
          <div class="card-image-container"><img src="${obj.image||''}"></div>`;
         const area = document.createElement('div'); area.className='card-content';
+        function nl2br(str) { return String(str).replace(/\n/g, '<br>'); }
         if(obj.description){
             area.innerHTML +=
             `<div class="content-box attribute-box">
-                 <div class="box-content">${obj.description}</div>
+                 <div class="box-content">${nl2br(obj.description)}</div>
              </div>`;
         }
         let normalChar = attrs.normal_attribute || '';
@@ -481,14 +483,14 @@
             area.innerHTML +=
                 `<div class="content-box attribute-box normal-attr">
                      <div class="box-title">${labelNormal}</div>
-                     <div class="box-content">${normalChar}</div>
+                     <div class="box-content">${nl2br(normalChar)}</div>
                  </div>`;
         }
         if (reactChar) {
             area.innerHTML +=
                 `<div class="content-box attribute-box reaction-attr">
                      <div class="box-title">${labelReact}</div>
-                     <div class="box-content">${reactChar}</div>
+                     <div class="box-content">${nl2br(reactChar)}</div>
                  </div>`;
         }
         // Add skill-small class if 3+ skills and lang is en
@@ -502,7 +504,7 @@
                              <div class="skill-name">${sk.name||''}</div>
                              <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
                          </div>
-                         <div class="skill-desc">${sk.effect||''}</div>
+                         <div class="skill-desc">${nl2br(sk.effect||'')}</div>
                      </div>
                  </div>`;
             });
