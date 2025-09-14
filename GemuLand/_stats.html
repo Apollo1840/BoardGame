@@ -66,10 +66,21 @@
   const sortNumAsc = (a,b)=>a-b;
   const sortByCountDesc = (a,b)=>b[1]-a[1];
 
-  const parseCSV = (raw) =>
+
+  // Parse CSV header line into array of field names
+  const parseCsvHeader = (line) =>
     window.Papa
-      ? Papa.parse(raw, { delimiter:'|', skipEmptyLines:true, newline:'\n' }).data
-      : raw.trim().split(/\r?\n/).map(r=>r.split('|'));
+      ? Papa.parse(line, { delimiter:'|', skipEmptyLines:true, newline:'\n' }).data[0]
+      : line.trim().split('|');
+
+  // Map a CSV row (array) to an object using header fields
+  function mapCsvRowToObj(headerArr, rowArr) {
+    const obj = {};
+    for (let i = 0; i < headerArr.length; i++) {
+      obj[headerArr[i]] = rowArr[i] !== undefined ? rowArr[i] : '';
+    }
+    return obj;
+  }
 
   const destroyCharts = () => {
     Object.values(state.charts).forEach(ch => ch && ch.destroy && ch.destroy());
@@ -173,35 +184,59 @@
     </div>`;
   };
 
-  /* 统一的 CSV 行→卡片 对象 */
+  /* 统一的 CSV 行→卡片 对象（支持对象或数组） */
   const rowToCard = (type, row) => {
-    if (type==='prophecy'){
-      const [t,intro,effect,responsive_effect='',image] = (row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row);
-      const title = t || '';
-      const ename = (image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
-      return { title, ename, intro:intro||'', effect:effect||'', responsive_effect:responsive_effect||'', image: image || (ename?`pictures/${ename}.png`: '') };
+    let obj;
+    if (Array.isArray(row)) {
+      // fallback to old order
+      if (type==='prophecy') {
+        const [t,intro,effect,responsive_effect='',image] = (row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row);
+        obj = { card_title: t, introduction: intro, effect, responsive_effect, image };
+      } else {
+        const [t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image] = row;
+        obj = {
+          card_title: t, level: lvl, monster_type: typ, description: desc, attack: atk, defence: def, magic,
+          attributes: charStr, skills: skillStr, image
+        };
+      }
+    } else {
+      obj = row;
     }
-    const [t,lvl,typ,desc,atk,def,magic,charStr,skillStr,image] = row;
-    const title = t || '';
-    const ename = (image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
+    if (type==='prophecy') {
+      const title = obj.card_title || '';
+      const ename = (obj.image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
+      return {
+        title,
+        ename,
+        intro: obj.introduction||'',
+        effect: obj.effect||'',
+        responsive_effect: obj.responsive_effect||'',
+        image: obj.image || (ename?`pictures/${ename}.png`: '')
+      };
+    }
+    const title = obj.card_title || '';
+    const ename = (obj.image||'').replace(/^pictures\//,'').replace(/\.(png|jpe?g|gif)$/i,'') || (title?title.trim().replace(/\s+/g,'_').toLowerCase():'');
+    let attrs = (()=>{ try{return JSON.parse(obj.attributes);}catch{return {};} })();
+    let skills = (()=>{ try{
+      const arr = JSON.parse(obj.skills);
+      return Array.isArray(arr) ? arr.map(sk => ({
+        name: sk.name,
+        energy_cost: sk.energy_cost,
+        effect: sk.effect
+      })) : [];
+    }catch{return [];} })();
     return {
-      title, ename,
-      level: nint(lvl),
-      monster_type: typ || '',
-      description: desc || '',
-      attack: nint(atk),
-      defence: nint(def),
-      magic: parseFloat(magic),
-  attributes: (()=>{ try{return JSON.parse(charStr);}catch{return {};} })(),
-      skills: (()=>{ try{
-        const arr = JSON.parse(skillStr);
-        return Array.isArray(arr) ? arr.map(sk => ({
-          name: sk.name,
-          energy_cost: sk.energy_cost,
-          effect: sk.effect
-        })) : [];
-      }catch{return [];} })(),
-      image: image || (ename?`pictures/${ename}.png`:'')
+      title,
+      ename,
+      level: nint(obj.level),
+      monster_type: obj.monster_type || '',
+      description: obj.description || '',
+      attack: nint(obj.attack),
+      defence: nint(obj.defence),
+      magic: parseFloat(obj.magic),
+      attributes: attrs,
+      skills: skills,
+      image: obj.image || (ename?`pictures/${ename}.png`:'')
     };
   };
 
@@ -210,15 +245,20 @@
     panel.textContent = '加载中...';
     try{
       for (const k of Object.keys(CONFIG)) {
-        const txt = await fetchCsvNoCache(CONFIG[k].path);  // ← 关键改动
+        const txt = await fetchCsvNoCache(CONFIG[k].path);
         if (!txt.trim()) { state.cards[k] = []; continue; }
 
-        const rows = window.Papa
-          ? Papa.parse(txt, { delimiter:'|', skipEmptyLines:true, newline:'\n' }).data
-          : txt.trim().split(/\r?\n/).map(r=>r.split('|'));
-
-        if (rows.length && Array.isArray(rows[0])) rows.shift(); // 去表头
-        state.cards[k] = rows.map(r => rowToCard(k, r));
+        const lines = txt.trim().split(/\r?\n/).filter(r=>r.trim());
+        if (!lines.length) { state.cards[k] = []; continue; }
+        const headerArr = parseCsvHeader(lines[0]);
+        const rowsArr = lines.slice(1).map(line => {
+          // Use PapaParse for robust splitting if available
+          const arr = window.Papa
+            ? Papa.parse(line, { delimiter:'|', skipEmptyLines:true, newline:'\n' }).data[0]
+            : line.split('|');
+          return mapCsvRowToObj(headerArr, arr);
+        });
+        state.cards[k] = rowsArr.map(r => rowToCard(k, r));
       }
       renderStats();
     } catch (e) {
