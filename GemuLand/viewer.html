@@ -292,17 +292,33 @@
       <span style="font-size:22px;">🃏</span> 控制面板
     </h4>
   </div>
-  <div class="divider"></div>
-  <div class="section">
-    <div class="section-row">
-      <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
-      <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:70px;min-width:40px;">
-      <button id="btn-refresh" class="btn btn-primary mb-2" style="background:#23272f;border:none;border-radius:6px;padding:4px 8px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;min-height:0;box-shadow:none;width:auto;height:32px;">
-        <span>🔄</span>
-      </button>
+    <div class="divider"></div>
+    <div class="section">
+        <div class="section-row">
+            <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
+            <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:70px;min-width:40px;">
+            <button id="btn-refresh" class="btn btn-primary mb-2" style="background:#23272f;border:none;border-radius:6px;padding:4px 8px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;min-height:0;box-shadow:none;width:auto;height:32px;">
+                <span>🔄</span>
+            </button>
+        </div>
+        <span class="helper-text">可调整显示的卡牌对数</span>
     </div>
-    <span class="helper-text">可调整显示的卡牌对数</span>
-  </div>
+    <div class="divider"></div>
+    <div class="section">
+        <div class="section-row">
+            <label for="sort-field" style="flex-shrink:0;">排序方式</label>
+            <select id="sort-field" style="flex:1;max-width:120px;min-width:80px;">
+        <option value="description">描述</option>
+        <option value="update_datetime" selected>更新时间</option>
+        <option value="card_id">卡牌ID</option>
+            </select>
+        </div>
+        <div class="section-row" style="margin-top:8px;">
+            <label style="flex-shrink:0;">交替显示</label>
+            <input id="alt-display-toggle" type="checkbox" style="margin-left:8px;">
+            <span class="helper-text" style="margin-left:8px;">怪物与预言交替</span>
+        </div>
+    </div>
   <div class="divider"></div>
   <div class="section">
     <button id="btn-print" class="btn btn-success"><span>🖨️</span> 打印/导出 PDF</button>
@@ -536,20 +552,67 @@
     let prophecyHeader = [], monsterHeader = [], allProphecyRows = [], allMonsterRows = [];
     let displayCount = 9;
 
+    function getSortField() {
+    const el = document.getElementById('sort-field');
+    return el ? el.value : 'update_datetime';
+    }
+    function getAltDisplay() {
+    const el = document.getElementById('alt-display-toggle');
+    return el ? el.checked : true;
+    }
+    function sortRows(rows, header, field) {
+        const idx = header.indexOf(field);
+        if (idx === -1) return rows.slice();
+        return rows.slice().sort((a, b) => {
+            if (field === 'update_datetime') {
+                // Descending: most recent last
+                return (new Date(a[idx] || 0)) - (new Date(b[idx] || 0));
+            } else if (field === 'card_id') {
+                // Numeric sort if possible, fallback to string
+                const aVal = a[idx] || '';
+                const bVal = b[idx] || '';
+                const aNum = parseInt(aVal, 10);
+                const bNum = parseInt(bVal, 10);
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return aNum - bNum;
+                }
+                return aVal.localeCompare(bVal);
+            } else {
+                return (a[idx] || '').localeCompare(b[idx] || '');
+            }
+        });
+    }
+
     async function renderAllCards() {
         const ctr = document.getElementById('card-container');
         ctr.innerHTML = '';
 
-        // Only use the latest N cards (interleaved)
-        const prophecyRows = allProphecyRows.slice(-displayCount);
-        const monsterRows = allMonsterRows.slice(-displayCount);
-        const maxLen = Math.max(prophecyRows.length, monsterRows.length);
-        for (let i = 0; i < maxLen; i++) {
-            if (i < prophecyRows.length) {
-                ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, prophecyRows[i])));
+        // Get sort and display mode
+        const sortField = getSortField();
+        const altDisplay = getAltDisplay();
+
+        // Sort independently
+        const sortedProphecyRows = sortRows(allProphecyRows.slice(-displayCount), prophecyHeader, sortField);
+        const sortedMonsterRows = sortRows(allMonsterRows.slice(-displayCount), monsterHeader, sortField);
+
+        if (altDisplay) {
+            // Interleave
+            const maxLen = Math.max(sortedProphecyRows.length, sortedMonsterRows.length);
+            for (let i = 0; i < maxLen; i++) {
+                if (i < sortedMonsterRows.length) {
+                    ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader, sortedMonsterRows[i])));
+                }
+                if (i < sortedProphecyRows.length) {
+                    ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
+                }
             }
-            if (i < monsterRows.length) {
-                ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader, monsterRows[i])));
+        } else {
+            // Grouped: monsters first, then prophecies
+            for (let i = 0; i < sortedMonsterRows.length; i++) {
+                ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader, sortedMonsterRows[i])));
+            }
+            for (let i = 0; i < sortedProphecyRows.length; i++) {
+                ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
             }
         }
     }
@@ -582,9 +645,11 @@
 
     /* ---------- 主入口 ---------- */
     document.addEventListener('DOMContentLoaded', () => {
-        // Initial load
-        reloadCSVsAndRender();
-        setLangClass();
+    // Set alternate display as default
+    document.getElementById('alt-display-toggle').checked = true;
+    // Initial load
+    reloadCSVsAndRender();
+    setLangClass();
 
         // Refresh button
         document.getElementById('btn-refresh').onclick = reloadCSVsAndRender;
