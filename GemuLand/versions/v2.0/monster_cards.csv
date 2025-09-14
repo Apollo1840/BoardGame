@@ -1,14 +1,14 @@
-card_title|level|monster_type|description|attack|defence|magic|characters|skills|image
-斯巴达武士|0|土|【人类种】在这个充满怪物的基姆世界，人类也是怪物的一种。|5|5|0|{}|[{"skill_name":"背水一击","number_power":1,"skill_text":"本回合的下次攻击攻击力+1"}]|pictures/spartan_samurai.png
-狼巨人|1|木|【兽人种】栖息在巨木林的巨大的狼人，最大的身高可以到20米。|7|6|0|{"react_characters":"被翻面召唤时，可以立即攻击己方场上一只怪兽。如果成功攻击破坏，将会给对方造成对应攻击伤害。"}|[{"skill_name":"狼嗥","number_power":0,"skill_text":"可以额外召唤一只名字中带有“狼”的怪兽，或额外使用一张名字中带有“狼”的预言卡。"},{"skill_name":"森林重击","number_power":2,"skill_text":"此卡可以依次攻击对方场上所有怪兽一次，直到此卡被破坏。"}]|pictures/wolf_gaint.png
+card_title|level|monster_type|description|attack|defence|magic|attributes|skills|image
+斯巴达武士|0|土|【人类种】在这个充满怪物的基姆世界，人类也是怪物的一种。|5|5|0|{}|[{"name":"背水一击","energy_cost":1,"effect":"本回合的下次攻击攻击力+1"}]|pictures/spartan_samurai.png
+狼巨人|1|木|【兽人种】栖息在巨木林的巨大的狼人，最大的身高可以到20米。|7|6|0|{"responsive_attribute":"被翻面召唤时，可以立即攻击己方场上一只怪兽。如果成功攻击破坏，将会给对方造成对应攻击伤害。"}|[{"name":"狼嗥","energy_cost":0,"effect":"可以额外召唤一只名字中带有“狼”的怪兽，或额外使用一张名字中带有“狼”的预言卡。"},{"name":"森林重击","energy_cost":2,"effect":"此卡可以依次攻击对方场上所有怪兽一次，直到此卡被破坏。"}]|pictures/wolf_gaint.png
 石砖人|2|岩|【石头人种】废弃的城堡变化成的石头人|10|10|0|{}|[]|pictures/castle_man.png
-大嘴哥布林|1||【兽人种】抢夺了族人的食物而长大的哥布林，寿命很短。|7|3|0|{}|[{"skill_name":"召唤","number_power":0,"skill_text":"特殊召唤一只0级兽人种怪物到我方场上。"},{"skill_name":"强袭","number_power":1,"skill_text":"【攻击技能】此卡攻击造成的战斗伤害 + （我方场上怪兽数量）"}]|pictures/big_goblin.png
-刺客哥布林|0|金|【兽人种】虽然但是，在大白天会不会太显眼了一点。|2|0|0|{"normal_characters":"当我方场上有其他怪兽时，无法指定为被攻击的对象。攻击力+我方场上的怪兽数量x2。"}|[]|pictures/assassin_goblin.png
-哥布林萨满|1|木|【兽人种】没有什么智慧，都是装的。|0|2|0|{}|[{"skill_name":"哥布林幻影","number_power":2,"skill_text":"从手牌特殊召唤一只怪物。该怪物无法发出攻击指令，对方回合结束后从任意处都要回到我方手牌。"},{"skill_name":"神圣祝福","number_power":1,"skill_text":"操作阶段开始使用，破坏一只怪物，回合结束。直到对方回合结束我方怪物都不会被战斗破坏，也不会被对方预言破坏。"},{"skill_name":"灵力吸收","number_power":0,"skill_text":"吸收我方场上任意数量的灵力。或者将此卡灵力全部分配给另一只怪兽。"}]|pictures/goblin_sama.png
-哥布林厨师长|0||【兽人种】孩子，该回家吃饭了。|0|3|0|{}|[{"skill_name":"佳肴","number_power":1,"skill_text":"我方场上所有除自己外兽人族，攻击+2。"},{"skill_name":"躲锅里","number_power":0,"skill_text":"此回合不攻击，防御力+4直至对方回合结束。"}]|pictures/goblin_chef.png
-哥布林圣壶|0||【器具种】哥布林这个肮脏的种族竟然有如此圣器。|0|5|0|{"normal_characters":"一回合一次，可以支付20点生命值，将两只怪物从弃牌堆加入手牌。"}|[{"skill_name":"圣育","number_power":0,"skill_text":"丢弃一张手牌，额外召唤一只1级以下名字中带有【哥布林】的怪物。该怪物此回合不能攻击。"},{"skill_name":"族诞","number_power":1,"skill_text":"丢弃两张手牌，重新进入布置阶段。且召唤次数不受限制。"},{"skill_name":"种运","number_power":2,"skill_text":"丢弃三张手牌，破坏对方场上一只怪物，一张预言，一张手牌。"}]|pictures/goblin_vase.png
+大嘴哥布林|1||【兽人种】抢夺了族人的食物而长大的哥布林，寿命很短。|7|3|0|{}|[{"name":"召唤","energy_cost":0,"effect":"特殊召唤一只0级兽人种怪物到我方场上。"},{"name":"强袭","energy_cost":1,"effect":"【攻击技能】此卡攻击造成的战斗伤害 + （我方场上怪兽数量）"}]|pictures/big_goblin.png
+刺客哥布林|0|金|【兽人种】虽然但是，在大白天会不会太显眼了一点。|2|0|0|{"normal_attribute":"当我方场上有其他怪兽时，无法指定为被攻击的对象。攻击力+我方场上的怪兽数量x2。"}|[]|pictures/assassin_goblin.png
+哥布林萨满|1|木|【兽人种】没有什么智慧，都是装的。|0|2|0|{}|[{"name":"哥布林幻影","energy_cost":2,"effect":"从手牌特殊召唤一只怪物。该怪物无法发出攻击指令，对方回合结束后从任意处都要回到我方手牌。"},{"name":"神圣祝福","energy_cost":1,"effect":"操作阶段开始使用，破坏一只怪物，回合结束。直到对方回合结束我方怪物都不会被战斗破坏，也不会被对方预言破坏。"},{"name":"灵力吸收","energy_cost":0,"effect":"吸收我方场上任意数量的灵力。或者将此卡灵力全部分配给另一只怪兽。"}]|pictures/goblin_sama.png
+哥布林厨师长|0||【兽人种】孩子，该回家吃饭了。|0|3|0|{}|[{"name":"佳肴","energy_cost":1,"effect":"我方场上所有除自己外兽人族，攻击+2。"},{"name":"躲锅里","energy_cost":0,"effect":"此回合不攻击，防御力+4直至对方回合结束。"}]|pictures/goblin_chef.png
+哥布林圣壶|0||【器具种】哥布林这个肮脏的种族竟然有如此圣器。|0|5|0|{"normal_attribute":"一回合一次，可以支付20点生命值，将两只怪物从弃牌堆加入手牌。"}|[{"name":"圣育","energy_cost":0,"effect":"丢弃一张手牌，额外召唤一只1级以下名字中带有【哥布林】的怪物。该怪物此回合不能攻击。"},{"name":"族诞","energy_cost":1,"effect":"丢弃两张手牌，重新进入布置阶段。且召唤次数不受限制。"},{"name":"种运","energy_cost":2,"effect":"丢弃三张手牌，破坏对方场上一只怪物，一张预言，一张手牌。"}]|pictures/goblin_vase.png
 少年勇士|0|金|【人类种】意气风发的少年勇士。|6|4|0|{}|[]|pictures/young_fighter.png
-阴阳真人|0|虚|【人类种】中二的修行之人。|3|3|0|{"normal_characters":"操作阶段可额外使用一张预言卡。","react_characters":"当对方在我方回合使用预言卡时，将<天借真力>从牌堆或弃牌堆加入手牌。"}|[{"skill_name":"八门遁甲","number_power":1,"skill_text":"将对方场上一张卡片返回对方手牌。"}]|pictures/yin_yang.png
+阴阳真人|0|虚|【人类种】中二的修行之人。|3|3|0|{"normal_attribute":"操作阶段可额外使用一张预言卡。","responsive_attribute":"当对方在我方回合使用预言卡时，将<天借真力>从牌堆或弃牌堆加入手牌。"}|[{"name":"八门遁甲","energy_cost":1,"effect":"将对方场上一张卡片返回对方手牌。"}]|pictures/yin_yang.png
 重锤骑士|1|金|【兽人种】温和的兽人，喜欢和人类生活在一起。|7|9|0|{}|[]|pictures/hard_knight.png
 贪婪壶灵|0|金|【灵体种】年龄非常大的器灵。|1|1|0|{"normal_characters":"不会被战斗破坏。","react_characters":"当对方在抽牌阶段外抽牌时，我方同步抽相同张数。"}|[]|pictures/greedy.png
 双胞胎哥布林|0||【兽人种】从出生就形影不离的两只哥布林|2|2|0|{"normal_characters":"在场上视为两只怪物。一回合被攻击破坏两次或被卡片破坏两次才会被破坏。"}|[{"skill_name":"双重攻击","number_power":1,"skill_text":"此回合可以攻击两次。"}]|pictures/double_goblin.png
