@@ -678,7 +678,8 @@
     // Only allow normal_attribute and responsive_attribute as keys
     card.attributes = {};
     $$('#attr-container .attr-key', body).forEach((sel,i)=>{
-      const val = $$('#attr-container .attr-val', body)[i].value.trim();
+      // Do not trim, preserve newlines
+      const val = $$('#attr-container .attr-val', body)[i].value;
       if(val && (sel.value==='normal_attribute'||sel.value==='responsive_attribute'))
         card.attributes[sel.value]=val;
     });
@@ -687,7 +688,8 @@
     $$('#skill-container .skill-row', body).forEach(row=>{
       const name  = row.querySelector('.skill-name' ).value.trim();
       const power = +row.querySelector('.skill-power').value || 0;
-      const text  = row.querySelector('.skill-text' ).value.trim();
+      // Do not trim, preserve newlines
+      const text  = row.querySelector('.skill-text' ).value;
       if(name||text) card.skills.push({name:name,energy_cost:power,effect:text});
     });
   }
