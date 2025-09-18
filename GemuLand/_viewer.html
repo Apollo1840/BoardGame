@@ -565,17 +565,19 @@
         if (idx === -1) return rows.slice();
         return rows.slice().sort((a, b) => {
             if (field === 'update_datetime') {
-                // Descending: most recent last
-                return (new Date(a[idx] || 0)) - (new Date(b[idx] || 0));
-            } else if (field === 'card_id') {
-                // Numeric sort if possible, fallback to string
+                // Robust descending sort: most recent last
                 const aVal = a[idx] || '';
                 const bVal = b[idx] || '';
-                const aNum = parseInt(aVal, 10);
-                const bNum = parseInt(bVal, 10);
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return aNum - bNum;
+                const aDate = Date.parse(aVal);
+                const bDate = Date.parse(bVal);
+                if (!isNaN(aDate) && !isNaN(bDate)) {
+                    return aDate - bDate;
                 }
+                return aVal.localeCompare(bVal);
+            } else if (field === 'card_id') {
+                // Sort by full card_id string (lexicographical)
+                const aVal = a[idx] || '';
+                const bVal = b[idx] || '';
                 return aVal.localeCompare(bVal);
             } else {
                 return (a[idx] || '').localeCompare(b[idx] || '');
@@ -619,12 +621,13 @@
 
     async function reloadCSVsAndRender() {
         let prophecy, monster;
+        const ts = Date.now();
         if(lang==='en'){
-            prophecy = await loadCSVWithHeader('prophecy_cards_en.csv');
-            monster = await loadCSVWithHeader('monster_cards_en.csv');
+            prophecy = await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
+            monster = await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
         }else{
-            prophecy = await loadCSVWithHeader('prophecy_cards.csv');
-            monster = await loadCSVWithHeader('monster_cards.csv');
+            prophecy = await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
+            monster = await loadCSVWithHeader('monster_cards.csv?t='+ts);
         }
         prophecyHeader = prophecy.headerArr;
         allProphecyRows = prophecy.rowsArr;
