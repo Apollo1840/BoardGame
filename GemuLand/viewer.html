@@ -387,6 +387,13 @@
         const rowsArr = lines.slice(1).map(parsePipeCsvLine);
         return {headerArr, rowsArr};
     }
+    // Loads CSV, returns array of row arrays (without header)
+    async function loadCSV(path) {
+        const txt = await (await fetch(path)).text();
+        const lines = txt.split('\n').filter(r=>r.trim());
+        if (lines.length === 0) return [];
+        return lines.slice(1).map(parsePipeCsvLine);
+    }
     // 修正：支持单引号 JSON
     function fixJsonQuotes(str) {
         if (!str) return str;
@@ -631,12 +638,14 @@
         if(lang==='en'){
             prophecy = await loadCSVWithHeader(getCsvUrl('prophecy_cards_en.csv'));
             monster = await loadCSVWithHeader(getCsvUrl('monster_cards_en.csv'));
+            allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards_en.csv'));
+            allMonsterRows = await loadCSV(getCsvUrl('monster_cards_en.csv'));
         }else{
             prophecy = await loadCSVWithHeader(getCsvUrl('prophecy_cards.csv'));
             monster = await loadCSVWithHeader(getCsvUrl('monster_cards.csv'));
+            allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards.csv'));
+            allMonsterRows = await loadCSV(getCsvUrl('monster_cards.csv'));
         }
-        allProphecyRows = await loadCSV(getCsvUrl('prophecy_cards.csv'));
-        allMonsterRows = await loadCSV(getCsvUrl('monster_cards.csv'));
         renderAllCards();
     }
 
