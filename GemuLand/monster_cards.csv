@@ -94,3 +94,8 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20250927-00186-99624322|雷域魅魔|0|雷|【恶魔种】|6|3|0.5|{"responsive_attribute":"当我方怪物（包括此卡）被破坏时：给予对方7点伤害。"}|[]|pictures/lightning_demon.png|2025-09-27 09:28:26
 20250927-00184-712c3331|墓灵女魔|0|毒|【恶魔种】|0|5|1.5|{"normal_attribute":"召唤阶段的普通召唤可以从弃牌堆召唤。"}|[]|pictures/reborn_demon.png|2025-09-27 09:32:15
 20250927-00189-01a21d8b|审判天使|0|光|【天使种】|3|6|0|{}|[{"name":"预示","energy_cost":1,"effect":"查看对方牌堆最上方四张牌。"}]|pictures/judge.png|2025-09-27 09:44:00
+20251003-00190-a789793b|血角女狩|1|暗|【鬼人种】|10|4|0|{}|[{"name":"死神肃杀","energy_cost":2,"effect":"破坏对方场上一张覆盖怪物卡或零级怪物卡。"}]|pictures/bloodhorn.png|2025-10-03 20:02:40
+20251003-00192-b7c9f1fd|控制机械|0|雷|【机器种】|4|0|2|{}|[{"name":"控制","energy_cost":1,"effect":"破坏此卡，获得对方场上一只怪物控制权（移动到我方场上）。"}]|pictures/control.png|2025-10-03 20:53:14
+20251003-00193-6db55e69|灵藤|0|木|【植物人种】|2|2|1.5|{"responsive_attribute":"（一回合一次）对方怪物发动效果或技能时，使其无效化。"}|[{"name":"幻手","energy_cost":2,"effect":"此卡进入【灵觉】状态：当对方使用指向我方怪物的预言卡时：使其无效，并我方获得该卡，加入手牌。"}]|pictures/verdant.png|2025-10-03 21:28:18
+20251003-00194-f8ad6a45|护花使者|0|木|【植物人种】|0|4|1|{"normal_attribute":"此卡左右两侧怪物 DEF+3","responsive_attribute":"当我方场上有灵力增减时：我方所有怪物DEF+2直到对方回合结束（不可叠加）"}|[{"name":"花爆","energy_cost":1,"effect":"选择场上一只怪物DEF+3，并破坏对方场上一张覆盖怪物卡"}]|pictures/blossom_protector.png|2025-10-03 22:39:07
+20251003-00191-eed3aefa|紫罗公主|2|毒|【植物人种】|8|7|1|{}|[{"name":"退化粉雾","energy_cost":0,"effect":"将对方场上一张正面怪物卡翻面"},{"name":"紫金爆","energy_cost":3,"effect":"对方信仰 -（对方场上卡牌数量+1）x 5 "}]|pictures/paralysia.png|2025-10-04 09:12:38
