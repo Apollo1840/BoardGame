@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appendix - Print PDF</title>
+    <style>
+        .deck-label {
+            font-family: 'Orbitron', 'Segoe UI', 'Arial Black', Arial, sans-serif;
+            font-size: 2.1em;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #ffe082;
+            text-shadow:
+                0 0 8px #333,
+                0 0 16px #222,
+                0 0 2px #000;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .card-lines {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: stretch;
+            height: 50px;
+            pointer-events: none;
+        }
+        .card-lines > div {
+            height: 15px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 5px solid #333;
+            border-bottom: none;
+        }
+        .card-lines {
+            height: 10px;
+        }
+    .card-lines > div:nth-child(1) { background: #2d0036; }
+    .card-lines > div:nth-child(2) { background: #6c3483; }
+    .card-lines > div:nth-child(3) { background: #a569bd; }
+    .card-lines > div:nth-child(4) { background: #5dade2; }
+    .card-lines > div:nth-child(5) { background: #b3e5fc; }
+        .card-grid {
+            display: grid;
+            grid-template-rows: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10mm;
+            width: 282mm; /* 4x63mm + 3x10mm */
+            height: 188mm;
+            margin: 0 auto;
+        }
+        .card-box {
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #fafafa;
+            width: 63mm;
+            height: 88mm;
+            display: block;
+            position: relative;
+            padding-bottom: 0;
+            text-align: center;
+            isolation: isolate;
+        }
+        .field-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            font-weight: bold;
+            color: #fff;
+            text-shadow:
+                0 0 16px #fff,
+                0 0 32px #fff,
+                0 0 48px #fff,
+                0 0 4px #000;
+            letter-spacing: 1px;
+            width: 90%;
+            pointer-events: none;
+            text-align: center;
+        }
+        .monster-label {
+            font-family: 'Bangers', 'Segoe UI', 'Arial Black', Arial, sans-serif;
+            letter-spacing: 2px;
+            font-size: 2.2em;
+            text-transform: uppercase;
+        }
+        .prophecy-label {
+            font-family: 'Dancing Script', 'Segoe Script', 'Comic Sans MS', cursive, sans-serif;
+            font-style: italic;
+            font-size: 2em;
+            letter-spacing: 1.5px;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Dancing+Script:wght@700&display=swap');
+        .card-box .card-lines {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: stretch;
+            height: 200px;
+            pointer-events: none;
+        }
+        @media print {
+            html, body {
+                width: 297mm;
+                height: 210mm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: none !important;
+                overflow: hidden;
+            }
+            body > :not(.a4-landscape) {
+                display: none !important;
+            }
+            .a4-landscape {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                position: absolute !important;
+                left: 0;
+                top: 0;
+                width: 297mm;
+                height: 210mm;
+                box-shadow: none !important;
+                margin: 0 !important;
+                background: #fff !important;
+                page-break-after: avoid;
+                z-index: 9999;
+            }
+            .card-grid {
+                width: 282mm !important;
+                height: 188mm !important;
+                gap: 10mm !important;
+                margin: 0 auto !important;
+                display: grid !important;
+                grid-template-rows: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+            }
+            .card-box {
+                box-shadow: none !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+        }
+        .grey-bg {
+            background: #888 !important;
+        }
+        .card-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 0;
+        }
+        .card-bg.monster-bg-1 { background-image: url('pictures/background_monster_1.png'); }
+        .card-bg.monster-bg-2 { background-image: url('pictures/background_monster_2.png'); }
+        .card-bg.monster-bg-3 { background-image: url('pictures/background_monster_3.png'); }
+        .card-bg.prophecy-bg { background-image: url('pictures/background_prophecy.png'); }
+        .card-bg.monster-bg-1,
+        .card-bg.monster-bg-2,
+        .card-bg.monster-bg-3,
+        .card-bg.prophecy-bg {
+            background-size: cover;
+            background-position: center;
+        }
+        .card-bg .bg-filter {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+        }
+        .card-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="actions">
+            <button onclick="window.print()">Print PDF</button>
+        </div>
+        <div class="preview">
+            <!-- Preview hidden in print, .a4-landscape is outside for print -->
+        </div>
+    </div>
+    <div class="a4-landscape">
+        <div class="card-grid">
+            <div class="card-box monster-bg-1">
+                <div class="card-bg monster-bg-1"><div class="bg-filter"></div></div>
+                <div class="card-content">
+                    <span class="field-label monster-label">Monster Field</span>
+                    <div class="card-lines">
+                        <div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-box monster-bg-2">
+                <div class="card-bg monster-bg-2"><div class="bg-filter"></div></div>
+                <div class="card-content">
+                    <span class="field-label monster-label">Monster Field</span>
+                    <div class="card-lines">
+                        <div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-box monster-bg-3">
+                <div class="card-bg monster-bg-3"><div class="bg-filter"></div></div>
+                <div class="card-content">
+                    <span class="field-label monster-label">Monster Field</span>
+                    <div class="card-lines">
+                        <div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-box grey-bg"><span class="field-label deck-label">Discard</span></div>
+            <div class="card-box prophecy-bg">
+                <div class="card-bg prophecy-bg"><div class="bg-filter"></div></div>
+                <div class="card-content"><span class="field-label prophecy-label">Prophecy Field</span></div>
+            </div>
+            <div class="card-box prophecy-bg">
+                <div class="card-bg prophecy-bg"><div class="bg-filter"></div></div>
+                <div class="card-content"><span class="field-label prophecy-label">Prophecy Field</span></div>
+            </div>
+            <div class="card-box prophecy-bg">
+                <div class="card-bg prophecy-bg"><div class="bg-filter"></div></div>
+                <div class="card-content"><span class="field-label prophecy-label">Prophecy Field</span></div>
+            </div>
+            <div class="card-box grey-bg"><span class="field-label deck-label">Deck</span></div>
+        </div>
+    </div>
+</body>
+</html>

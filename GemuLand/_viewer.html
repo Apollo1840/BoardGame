@@ -1,704 +1,592 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8"/>
-    <title>卡牌生成器</title>
-    <style>
-        /* 打印保真 */
-        img, .content-box, .card-title { print-color-adjust: exact; }
-        body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-        #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:left; align-items:start; justify-content:start; align-content:start; }
+  <meta charset="UTF-8"/>
+  <title>卡牌生成器</title>
+  <style>
+    /* ---------- 参数（统一用 mm） ---------- */
+    :root{
+      --card-w: 63mm;           /* 卡牌内容宽（不含边框） */
+      --card-h: 88mm;           /* 卡牌内容高（不含边框） */
+      --border: 0.53mm;         /* ≈2px，卡牌黑边 */
+      --gap: 0.53mm;            /* ≈2px，卡牌间隙 */
+      --tick: 0.20mm;           /* 裁切线宽度 */
+      --cols: 3;                /* 打印列数 */
+      --line-color: rgba(120,120,120,.9);
+    }
 
-        /* 卡牌基座 */
-        .card {
-            position: relative;
-            width: 63mm;
-            height: 88mm;
-            border: 2px solid #000;
-            border-radius: 8px;
-            overflow: hidden;
-            page-break-inside: avoid;
-            -webkit-print-color-adjust: exact;   /* 旧版 Chromium、Safari */
-            print-color-adjust: exact;           /* 新标准写法 */
-        }
+    /* 屏幕态基础样式（保留你的原样） */
+    img, .content-box, .card-title { print-color-adjust: exact; }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:left; align-items:start; }
 
-        /* 分类底色 */
-        .card.monster  { background:#ffffff; }   /* 纯白色 */
-        .card.prophecy {
-            position: relative;
-            background: none;
-        }
-        .card.prophecy::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-            background-image: var(--prophecy-bg, none);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            filter: blur(12px) brightness(0.7) saturate(1.2);
-            border-radius: 8px;
-            transition: background-image 0.3s;
-        }
-        .card.prophecy .card-image-container {
-            position: absolute;
-            top: 24px;
-            left: 4px;
-            right: 4px;
-            bottom: calc(4px + 29.33mm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2;
-            overflow: hidden;
-        }
-        .card.prophecy .card-content {
-            position: absolute;
-            bottom: calc(4px + 16px);
-            left: 4px;
-            right: 4px;
-            height: calc(50% - 4px - 16px);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            gap: 2px;
-            overflow: hidden;
-            z-index: 3;
-            font-size: 10px;
-        }
-        .card.prophecy .card-title {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            right: 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgba(10,30,80,0.5) !important;
-            border-radius: 4px;
-            padding: 2px 4px;
-            font-weight: bold;
-            font-size: 12px;
-            z-index: 3;
-            color: #fff !important;
-        }
+    .card {
+      position: relative; width: 63mm; height: 88mm;
+      border: 2px solid #000; border-radius: 8px; overflow: hidden;
+      page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
 
-        /* 预言卡文本框深蓝半透明底白字 */
-        .card.prophecy .content-box {
-            background: rgba(10,30,80,0.5) !important;
-            color: #fff !important;
-            border-color: rgba(255,255,255,0.2) !important;
-        }
-        .card.prophecy .box-title,
-        .card.prophecy .box-content {
-            color: #fff !important;
-        }
-        /* 响应效果标题依然为红色 */
-        .card.prophecy .responsive-effect .box-title {
-            color: red !important;
-        }
-        .card.prophecy .card-title {
-            background: rgba(10,30,80,0.5) !important;
-            color: #fff !important;
-        }
+    .card.monster  { background:#ffffff; }
+    .card.prophecy { position: relative; background: none; }
+    .card.prophecy::before {
+      content: ''; position: absolute; inset: 0; z-index: 0;
+      background-image: var(--prophecy-bg, none);
+      background-size: cover; background-position: center; background-repeat: no-repeat;
+      filter: blur(12px) brightness(0.7) saturate(1.2);
+      border-radius: 8px; transition: background-image 0.3s;
+    }
+    .card.prophecy .card-image-container { position: absolute; top: 24px; left: 4px; right: 4px; bottom: calc(4px + 29.33mm); display:flex; align-items:center; justify-content:center; z-index:2; overflow:hidden; }
+    .card.prophecy .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px; height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end; gap:2px; overflow:hidden; z-index:3; font-size:10px; }
+    .card.prophecy .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:center; align-items:center; background:rgba(10,30,80,0.5) !important; border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; color:#fff !important; }
 
-        /* 标题栏 */
-        .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
-            background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; }
-        .card-title .level, .card-title .type { font-size:11px; width:15%; text-align:center; }
-        .card-title .name { font-size:12px; flex:1; text-align:center; }
-        .prophecy .card-title { justify-content:center; }
+    .card.prophecy .content-box { background: rgba(10,30,80,0.5) !important; color:#fff !important; border-color: rgba(255,255,255,0.2) !important; }
+    .card.prophecy .box-title, .card.prophecy .box-content { color:#fff !important; }
+    .card.prophecy .responsive-effect .box-title { color:red !important; }
 
-        /* 图片区 */
-        .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
-            display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
-        .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+    .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; }
+    .card-title .level, .card-title .type { font-size:11px; width:15%; text-align:center; }
+    .card-title .name { font-size:12px; flex:1; text-align:center; }
+    .prophecy .card-title { justify-content:center; }
 
-        /* 文本区 */
-        .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px;
-            height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end;
-            gap:2px; overflow:hidden; z-index:2; font-size:10px; }
+    .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm); display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
+    .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
 
-        /* 文本框 */
-        .content-box{
-            background: rgba(255,255,255,0.75);
-            border: 3px solid rgba(0,0,0,0.2);
-            border-radius: 4px;
-            padding: 3px;
-            display: grid;
-            grid-template-columns: auto 1fr;
-            align-items: start;
-            overflow: hidden;
-        }
-        .content-box.attribute-box { border:none; }
-        .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
-        .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
+    .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px; height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end; gap:2px; overflow:hidden; z-index:2; font-size:10px; }
 
-        /* 技能框 */
-        .skill-box { display:grid; grid-template-columns: auto 1fr; grid-auto-rows: auto; gap:4px; }
-        .skill-name { font-weight:bold; font-size:10px; }
-        .skill-desc { font-size:9px; }
-        .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
-        .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
+    .content-box{ background: rgba(255,255,255,0.75); border: 3px solid rgba(0,0,0,0.2); border-radius:4px; padding:3px; display:grid; grid-template-columns:auto 1fr; align-items:start; overflow:hidden; }
+    .content-box.attribute-box { border:none; }
+    .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
+    .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
 
-        /* 底部数值 */
-        .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
-            font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
-        .stats .atk::before { content:'▲'; margin-right:2px; }
-        .stats .def::before { content:'◇'; margin-right:2px; }
+    .skill-box { display:grid; grid-template-columns:auto 1fr; grid-auto-rows:auto; gap:4px; }
+    .skill-name { font-weight:bold; font-size:10px; }
+    .skill-desc { font-size:9px; }
+    .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
+    .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
 
-        /* 红色标题：响应效果 & 反应属性 */
+    .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between; font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
+    .stats .atk::before { content:'▲'; margin-right:2px; }
+    .stats .def::before { content:'◇'; margin-right:2px; }
 
-        .responsive-effect .box-title { color: red; }
-        .reaction-attr .box-title { color: red; }
-        .normal-attr .box-title { color: blue; }
+    .responsive-effect .box-title { color:red; }
+    .reaction-attr .box-title { color:red; }
+    .normal-attr .box-title { color:blue; }
 
-        @page {               /* 新增 */
-            margin: 0;        /* 0 mm 页边距 */
-            size: auto;       /* 让浏览器保持原纸张大小 */
-        }
+    @page { margin: 0; size: auto; }
 
-        @media print {
-            body{background:none;margin:0;padding:0;}
-            #main-content {
-                width: calc(3 * 63mm + 2 * 2px) !important; /* 3 columns, 2 gaps */
-                margin: 0 auto !important;
-                box-sizing: border-box !important;
-            }
-            #card-container{
-                display: grid !important;
-                grid-template-columns: repeat(3, 63mm) !important;
-                gap: 2px !important;
-                box-sizing: border-box !important;
-                overflow: visible !important;
-            }
-            .card{box-sizing: border-box !important; box-shadow:none;}
-            .card.monster  { background:#ffffff !important; }
-            .card.prophecy { background:#e9f1fb !important; }
-        }
+    /* English mode */
+    body.en-mode .attribute-box .box-content { font-size: 8px !important; }
+    body.en-mode .card.monster .content-box.skill-small .skill-desc { font-size: 8px !important; }
 
-        /* English mode: smaller attribute text */
-        body.en-mode .attribute-box .box-content {
-            font-size: 8px !important;
-        }
-        /* English mode: smaller skill text if 3+ skills */
-        body.en-mode .card.monster .content-box.skill-small .skill-desc {
-            font-size: 8px !important;
-        }
+    /* Sidebar（保留） */
+    #lang-switch span { user-select: none; border:1px solid #3b82f6; margin:0; }
+    #lang-switch .active { background:#3b82f6 !important; color:#fff !important; }
+    #lang-switch span:not(.active) { background:#23272f !important; color:#fff !important; }
 
-        #lang-switch span {
-          user-select: none;
-          border: 1px solid #3b82f6;
-          margin: 0;
-        }
-        #lang-switch .active {
-          background: #3b82f6 !important;
-          color: #fff !important;
-        }
-        #lang-switch span:not(.active) {
-          background: #23272f !important;
-          color: #fff !important;
-        }
+    #sidebar-panel {
+      border-radius:0 !important; box-shadow:2px 0 12px rgba(0,0,0,0.12);
+      padding:28px 18px 18px; display:flex; flex-direction:column; gap:18px;
+      background:#23272f; color:#fff; z-index:100; position:fixed; left:0; top:0; height:100vh; width:240px;
+    }
+    #sidebar-panel input[type="number"]{ width:100%; margin-bottom:4px; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; outline:none; font-size:15px; box-sizing:border-box; }
+    #sidebar-panel .btn{ width:100%; border-radius:4px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; margin:0; box-sizing:border-box; padding:8px 0; }
+    #sidebar-panel .section { display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
+    #sidebar-panel .divider { border-bottom:1px solid #444; margin:10px 0; }
+    #sidebar-panel .section-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 
-        /* Sidebar styles */
-        #sidebar-panel {
-          border-top-right-radius: 0 !important;
-          border-bottom-right-radius: 0 !important;
-          border-radius: 0 !important;
-          box-shadow: 2px 0 12px rgba(0,0,0,0.12);
-          padding: 28px 18px 18px 18px;
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
-          background: #23272f;
-          color: #fff;
-          z-index: 100;
-          position: fixed;
-          left: 0;
-          top: 0;
-          height: 100vh;
-          width: 240px;
-        }
-        #sidebar-panel label[for="card-count"] {
-          margin-bottom: 2px;
-          font-size: 14px;
-          font-weight: 500;
-          display: block;
-        }
-        #sidebar-panel input[type="number"] {
-          width: 100%;
-          margin-bottom: 4px;
-          border-radius: 4px;
-          border: 1px solid #444;
-          padding: 4px 8px;
-          background: #181b20;
-          color: #fff;
-          outline: none;
-          font-size: 15px;
-          box-sizing: border-box;
-        }
-        #sidebar-panel .btn {
-          width: 100%;
-          border-radius: 4px;
-          font-size: 15px;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          margin-bottom: 0;
-          margin-top: 0;
-          box-sizing: border-box;
-          padding: 8px 0;
-        }
-        #sidebar-panel .btn + .btn {
-          margin-top: 8px;
-        }
-        #sidebar-panel .section {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-        #sidebar-panel .section + .section {
-          margin-top: 8px;
-        }
-        #sidebar-panel .helper-text {
-          font-size: 12px;
-          color: #aaa;
-          margin-bottom: 2px;
-        }
-        #sidebar-panel .divider {
-          border-bottom: 1px solid #444;
-          margin: 10px 0;
-        }
-        #sidebar-panel #lang-switch {
-          margin-top: 4px;
-        }
-        #sidebar-panel .section-row {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-    </style>
+    /* ---------- 打印布局（以及测量用的模拟打印布局） ---------- */
+    @media print, (orientation:portrait) {
+      /* 这段会被 .measure-print 复用（见下） */
+    }
+    /* 用类名强制打印布局，供测量时使用（避免 beforeprint 竞态） */
+    body.measure-print #main-content{
+      /* 宽度 = 列数*(卡面+左右边框) + (列数-1)*gap；不加“外侧半gap” */
+      width: calc(var(--cols) * (var(--card-w) + 2*var(--border)) + (var(--cols) - 1) * var(--gap)) !important;
+      margin: 0 !important;
+      background: none !important;
+    }
+    body.measure-print #card-container{
+      display: grid !important;
+      grid-template-columns: repeat(var(--cols), var(--card-w)) !important;
+      gap: var(--gap) !important;
+      box-sizing: border-box !important;
+      overflow: visible !important;
+      background: none !important;
+    }
+    body.measure-print .card{
+      box-sizing: content-box !important; /* width/height 仅内容，边框另算 */
+      width: var(--card-w) !important;
+      height: var(--card-h) !important;
+      border: var(--border) solid #000 !important;
+      box-shadow:none !important;
+    }
+
+    /* 真正打印时应用同样布局，并隐藏侧栏 */
+    @media print {
+      #main-content{
+        width: calc(var(--cols) * (var(--card-w) + 2*var(--border)) + (var(--cols) - 1) * var(--gap)) !important;
+        margin: 0 !important;
+        background: none !important;
+      }
+      #card-container{
+        display: grid !important;
+        grid-template-columns: repeat(var(--cols), var(--card-w)) !important;
+        gap: var(--gap) !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+      }
+      .card{
+        box-sizing: content-box !important;
+        width: var(--card-w) !important;
+        height: var(--card-h) !important;
+        border: var(--border) solid #000 !important;
+        box-shadow:none !important;
+      }
+      #sidebar-panel{ display:none !important; }
+    }
+
+    /* SVG 覆盖层（整页裁切线） */
+    #cutlines{ display:none; }
+    @media print { #cutlines{ display:block; position:fixed; inset:0; z-index:0; pointer-events:none; } }
+    body.measure-print #cutlines{ display:block; position:fixed; inset:0; z-index:0; pointer-events:none; }
+  </style>
 </head>
 <body>
-<div id="sidebar-panel">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 18px 0;">
-    <h4 style="font-size:20px;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0;">
-      <span style="font-size:22px;">🃏</span> 控制面板
-    </h4>
-  </div>
-    <div class="divider"></div>
-    <div class="section">
-        <div class="section-row">
-            <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
-            <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:70px;min-width:40px;">
-            <button id="btn-refresh" class="btn btn-primary mb-2" style="background:#23272f;border:none;border-radius:6px;padding:4px 8px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;min-height:0;box-shadow:none;width:auto;height:32px;">
-                <span>🔄</span>
-            </button>
-        </div>
-        <span class="helper-text">可调整显示的卡牌对数</span>
+  <!-- 整页裁切线（由 JS 实测绘制） -->
+  <svg id="cutlines" aria-hidden="true"></svg>
+
+  <div id="sidebar-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 18px 0;">
+      <h4 style="font-size:20px;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0;">
+        <span style="font-size:22px;">🃏</span> 控制面板
+      </h4>
     </div>
     <div class="divider"></div>
     <div class="section">
-        <div class="section-row">
-            <label for="sort-field" style="flex-shrink:0;">排序方式</label>
-            <select id="sort-field" style="flex:1;max-width:120px;min-width:80px;">
-        <option value="description">描述</option>
-        <option value="update_datetime" selected>更新时间</option>
-        <option value="card_id">卡牌ID</option>
-            </select>
-        </div>
-        <div class="section-row" style="margin-top:8px;">
-            <label style="flex-shrink:0;">交替显示</label>
-            <input id="alt-display-toggle" type="checkbox" style="margin-left:8px;">
-            <span class="helper-text" style="margin-left:8px;">怪物与预言交替</span>
-        </div>
+      <div class="section-row">
+        <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
+        <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:70px;min-width:40px;">
+        <button id="btn-refresh" class="btn btn-primary mb-2" style="background:#23272f;border:none;border-radius:6px;padding:4px 8px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;min-height:0;box-shadow:none;width:auto;height:32px;">
+          <span>🔄</span>
+        </button>
+      </div>
+      <span class="helper-text">可调整显示的卡牌对数</span>
     </div>
-  <div class="divider"></div>
-  <div class="section">
-    <button id="btn-print" class="btn btn-success"><span>🖨️</span> 打印/导出 PDF</button>
-    <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
-      <span style="font-size:14px;">语言</span>
-      <div id="lang-switch" style="display:flex;align-items:center;gap:0;">
-        <span id="lang-cn" style="font-size:14px;padding:2px 10px;border-radius:6px 0 0 6px;background:#3b82f6;color:#fff;cursor:pointer;transition:background 0.2s;">中文</span>
-        <span id="lang-en" style="font-size:14px;padding:2px 10px;border-radius:0 6px 6px 0;background:#23272f;color:#fff;cursor:pointer;transition:background 0.2s;">English</span>
+    <div class="divider"></div>
+    <div class="section">
+      <div class="section-row">
+        <label for="sort-field" style="flex-shrink:0;">排序方式</label>
+        <select id="sort-field" style="flex:1;max-width:120px;min-width:80px;">
+          <option value="description">描述</option>
+          <option value="update_datetime" selected>更新时间</option>
+          <option value="card_id">卡牌ID</option>
+        </select>
+      </div>
+      <div class="section-row" style="margin-top:8px;">
+        <label style="flex-shrink:0;">交替显示</label>
+        <input id="alt-display-toggle" type="checkbox" style="margin-left:8px;">
+        <span class="helper-text" style="margin-left:8px;">怪物与预言交替</span>
       </div>
     </div>
+    <div class="divider"></div>
+    <div class="section">
+      <button id="btn-print" class="btn btn-success"><span>🖨️</span> 打印/导出 PDF</button>
+      <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
+        <span style="font-size:14px;">语言</span>
+        <div id="lang-switch" style="display:flex;align-items:center;gap:0;">
+          <span id="lang-cn" class="active" style="font-size:14px;padding:2px 10px;border-radius:6px 0 0 6px;background:#3b82f6;color:#fff;cursor:pointer;">中文</span>
+          <span id="lang-en" style="font-size:14px;padding:2px 10px;border-radius:0 6px 6px 0;background:#23272f;color:#fff;cursor:pointer;">English</span>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="font-size:13px;color:#aaa;text-align:center;letter-spacing:1px;">© BoardGame 工具</div>
   </div>
-  <div style="flex:1"></div>
-  <div style="font-size:13px;color:#aaa;text-align:center;letter-spacing:1px;">© BoardGame 工具</div>
-</div>
-<div id="main-content" style="margin-left:240px;">
-  <div id="card-container"></div>
-</div>
-<script>
+
+  <div id="main-content" style="margin-left:240px;">
+    <div id="card-container"></div>
+  </div>
+
+  <script>
     // Decode \n to real newlines
-    function decodeText(s){
-        return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n');
-    }
+    function decodeText(s){ return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n'); }
     let lang = 'zh'; // 'zh' or 'en'
 
-    /* ---------- 工具 ---------- */
-    // Robust pipe-splitting (copied from _editor.html)
-    // Robust pipe-splitting, returns array of fields
+    /* ---------- CSV/解析工具 ---------- */
     function parsePipeCsvLine(line) {
-        const out = [];
-        let cur = '';
-        for (let i=0; i<line.length; i++) {
-            const ch = line[i];
-            if (ch === '\\') {
-                const next = line[i+1];
-                if (next === '|') { cur += '|'; i++; continue; }
-                if (next === '\\') { cur += '\\'; i++; continue; }
-                cur += '\\'; continue;
-            }
-            if (ch === '|') { out.push(cur); cur=''; continue; }
-            cur += ch;
+      const out = []; let cur = '';
+      for (let i=0; i<line.length; i++) {
+        const ch = line[i];
+        if (ch === '\\') {
+          const next = line[i+1];
+          if (next === '|') { cur += '|'; i++; continue; }
+          if (next === '\\') { cur += '\\'; i++; continue; }
+          cur += '\\'; continue;
         }
-        out.push(cur);
-        return out;
+        if (ch === '|') { out.push(cur); cur=''; continue; }
+        cur += ch;
+      }
+      out.push(cur); return out;
     }
-
-    // Parse CSV header line into array of field names
-    function parseCsvHeader(line) {
-        return parsePipeCsvLine(line);
-    }
-
-    // Map a CSV row (array) to an object using header fields
+    const parseCsvHeader = (line)=>parsePipeCsvLine(line);
     function mapCsvRowToObj(headerArr, rowArr) {
-        const obj = {};
-        for (let i = 0; i < headerArr.length; i++) {
-            // Always decode text fields
-            obj[headerArr[i]] = rowArr[i] !== undefined ? decodeText(rowArr[i]) : '';
-        }
-        return obj;
+      const obj = {}; for (let i=0; i<headerArr.length; i++) obj[headerArr[i]] = rowArr[i]!==undefined?decodeText(rowArr[i]):'';
+      return obj;
     }
-    // Loads CSV, returns {headerArr, rowsArr} where rowsArr is array of row arrays
     async function loadCSVWithHeader(path) {
-        const txt = await (await fetch(path)).text();
-        const lines = txt.split('\n').filter(r=>r.trim());
-        if (lines.length === 0) return {headerArr: [], rowsArr: []};
-        const headerArr = parseCsvHeader(lines[0]);
-        const rowsArr = lines.slice(1).map(parsePipeCsvLine);
-        return {headerArr, rowsArr};
+      const txt = await (await fetch(path)).text();
+      const lines = txt.split('\n').filter(r=>r.trim());
+      if (!lines.length) return {headerArr: [], rowsArr: []};
+      return {headerArr: parseCsvHeader(lines[0]), rowsArr: lines.slice(1).map(parsePipeCsvLine)};
     }
-    // 修正：支持单引号 JSON
     function fixJsonQuotes(str) {
-        if (!str) return str;
-        if (str.trim().startsWith("'{") || str.trim().startsWith("'[") ) {
-            str = str.trim().replace(/^'/, '').replace(/'$/, '');
-        }
-        return str.replace(/'/g, '"');
+      if (!str) return str;
+      if (str.trim().startsWith("'{") || str.trim().startsWith("'[")) { str = str.trim().replace(/^'/,'').replace(/'$/,''); }
+      return str.replace(/'/g, '"');
     }
     const safeParse = (str, def={}) => { try{ return JSON.parse(fixJsonQuotes(str)); } catch { return def; } };
 
-    /* ---------- 预言卡 ---------- */
-    // Robust: Accepts rowObj (field mapping) or array (legacy)
+    /* ---------- 卡片渲染 ---------- */
     function createProphecyCard(row, langOverride) {
-        let obj;
-        if (Array.isArray(row)) {
-            // Legacy: fallback to old order
-            const [title,intro,effect,responsive_effect='',image] = row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row;
-            obj = {card_title:title, introduction:intro, effect, responsive_effect, image};
-        } else {
-            obj = row;
-        }
-        const card = document.createElement('div'); card.className='card prophecy';
-        if(obj.image){
-            card.style.setProperty('--prophecy-bg', `url('${obj.image}')`);
-        } else {
-            card.style.removeProperty('--prophecy-bg');
-        }
-        card.innerHTML =
-        `<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
-         <div class="card-image-container"><img src="${obj.image||''}"></div>`;
-        const area = document.createElement('div'); area.className='card-content';
-        // English/Chinese labels
-        const l = (langOverride||lang);
-        const labelEffect = l==='en' ? 'Effect' : '效果';
-        const labelResponsive = l==='en' ? 'RespEkt' : '响应效果';
-                function nl2br(str) { return String(str).replace(/\n/g, '<br>'); }
-                if(obj.introduction){
-                        area.innerHTML +=
-                        `<div class="content-box attribute-box">
-                             <div class="box-content">${nl2br(obj.introduction)}</div>
-                         </div>`;
-                }
-                if(obj.effect){
-                        area.innerHTML +=
-                        `<div class="content-box">
-                             <div class="box-title">${labelEffect}</div>
-                             <div class="box-content">${nl2br(obj.effect)}</div>
-                         </div>`;
-                }
-                if(obj.responsive_effect){
-                        area.innerHTML +=
-                        `<div class="content-box responsive-effect">
-                             <div class="box-title">${labelResponsive}</div>
-                             <div class="box-content">${nl2br(obj.responsive_effect)}</div>
-                         </div>`;
-                }
-
-        shrinkToFit(area);
-        card.append(area);
-        // Set the background image for the pseudo-element (in case of async rendering)
-        setTimeout(()=>{
-            card.style.setProperty('--prophecy-bg', obj.image ? `url('${obj.image}')` : 'none');
-        }, 0);
-        return card;
+      let obj = Array.isArray(row) ? (()=>{ const [title,intro,effect,responsive_effect='',image] = row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row; return {card_title:title, introduction:intro, effect, responsive_effect, image}; })() : row;
+      const card = document.createElement('div'); card.className='card prophecy';
+      if(obj.image){ card.style.setProperty('--prophecy-bg', `url('${obj.image}')`); } else { card.style.removeProperty('--prophecy-bg'); }
+      card.innerHTML = `<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
+                        <div class="card-image-container"><img src="${obj.image||''}"></div>`;
+      const area = document.createElement('div'); area.className='card-content';
+      const l = (langOverride||lang);
+      const labelEffect = l==='en' ? 'Effect' : '效果';
+      const labelResponsive = l==='en' ? 'RespEkt' : '响应效果';
+      const nl2br = s => String(s).replace(/\n/g,'<br>');
+      if(obj.introduction){
+        area.innerHTML += `<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.introduction)}</div></div>`;
+      }
+      if(obj.effect){
+        area.innerHTML += `<div class="content-box"><div class="box-title">${labelEffect}</div><div class="box-content">${nl2br(obj.effect)}</div></div>`;
+      }
+      if(obj.responsive_effect){
+        area.innerHTML += `<div class="content-box responsive-effect"><div class="box-title">${labelResponsive}</div><div class="box-content">${nl2br(obj.responsive_effect)}</div></div>`;
+      }
+      shrinkToFit(area); card.append(area);
+      setTimeout(()=>{ card.style.setProperty('--prophecy-bg', obj.image ? `url('${obj.image}')` : 'none'); }, 0);
+      return card;
     }
 
-    /* ---------- 怪兽卡 ---------- */
-    // Patch createMonsterCard to add 'skill-small' class if 3+ skills and lang==='en'
-    // Robust: Accepts rowObj (field mapping) or array (legacy)
     function createMonsterCard(row, langOverride) {
-        let obj;
-        if (Array.isArray(row)) {
-            // Legacy: fallback to old order
-            const [title,level,type,desc,atk,def,magic,charStr,skillStr,image] = row;
-            obj = {
-                card_title: title, level, monster_type: type, description: desc, attack: atk, defence: def, magic,
-                attributes: charStr, skills: skillStr, image
-            };
-        } else {
-            obj = row;
-        }
-        const attrs = safeParse(obj.attributes, {});
-        let skills = safeParse(obj.skills, []);
-        if (!Array.isArray(skills)) skills = [];
-        skills = skills.map(sk => ({
-            name: sk.name,
-            energy_cost: sk.energy_cost,
-            effect: sk.effect
-        }));
-        const lvlIcons = '❖'.repeat(Math.max(0,parseInt(obj.level)));
-        const l = (langOverride||lang);
-        const labelNormal = l==='en' ? 'Attr' : '通常属性';
-        const labelReact = l==='en' ? 'RespAttr' : '反应属性';
-        const labelAtk = l==='en' ? 'ATK' : '攻击';
-        const labelDef = l==='en' ? 'DEF' : '防御';
-        const card = document.createElement('div'); card.className='card monster';
-        card.innerHTML =
+      let obj = Array.isArray(row) ? (()=>{
+        const [title,level,type,desc,atk,def,magic,charStr,skillStr,image] = row;
+        return { card_title:title, level, monster_type:type, description:desc, attack:atk, defence:def, magic, attributes:charStr, skills:skillStr, image };
+      })() : row;
+      const attrs = safeParse(obj.attributes, {});
+      let skills = safeParse(obj.skills, []); if(!Array.isArray(skills)) skills = [];
+      skills = skills.map(sk=>({name: sk.name, energy_cost: sk.energy_cost, effect: sk.effect}));
+      const lvlIcons = '❖'.repeat(Math.max(0,parseInt(obj.level)));
+      const l = (langOverride||lang);
+      const labelNormal = l==='en' ? 'Attr' : '通常属性';
+      const labelReact  = l==='en' ? 'RespAttr' : '反应属性';
+      const labelAtk = l==='en' ? 'ATK' : '攻击';
+      const labelDef = l==='en' ? 'DEF' : '防御';
+      const card = document.createElement('div'); card.className='card monster';
+      card.innerHTML =
         `<div class="card-title">
-             <span class="level">${lvlIcons}</span>
-             <span class="name">${obj.card_title||''}</span>
-             <span class="type">${obj.monster_type||''}</span>
+           <span class="level">${lvlIcons}</span>
+           <span class="name">${obj.card_title||''}</span>
+           <span class="type">${obj.monster_type||''}</span>
          </div>
          <div class="card-image-container"><img src="${obj.image||''}"></div>`;
-        const area = document.createElement('div'); area.className='card-content';
-        function nl2br(str) { return String(str).replace(/\n/g, '<br>'); }
-        if(obj.description){
-            area.innerHTML +=
-            `<div class="content-box attribute-box">
-                 <div class="box-content">${nl2br(obj.description)}</div>
-             </div>`;
-        }
-        let normalChar = attrs.normal_attribute || '';
-        let reactChar = attrs.responsive_attribute || '';
-        if (normalChar) {
-            area.innerHTML +=
-                `<div class="content-box attribute-box normal-attr">
-                     <div class="box-title">${labelNormal}</div>
-                     <div class="box-content">${nl2br(normalChar)}</div>
-                 </div>`;
-        }
-        if (reactChar) {
-            area.innerHTML +=
-                `<div class="content-box attribute-box reaction-attr">
-                     <div class="box-title">${labelReact}</div>
-                     <div class="box-content">${nl2br(reactChar)}</div>
-                 </div>`;
-        }
-        // Add skill-small class if 3+ skills and lang is en
-        let skillBoxClass = (l==='en' && skills.length>=3) ? 'content-box skill-small' : 'content-box';
-        if(Array.isArray(skills)){
-            skills.forEach(sk=>{
-                area.innerHTML +=
-                `<div class="${skillBoxClass}">
-                     <div class="skill-box">
-                         <div>
-                             <div class="skill-name">${sk.name||''}</div>
-                             <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
-                         </div>
-                         <div class="skill-desc">${nl2br(sk.effect||'')}</div>
-                     </div>
-                 </div>`;
-            });
-        }
-        shrinkToFit(area);
-        card.append(area);
-        card.innerHTML +=
-        `<div class="stats">
-           <div class="atk">${labelAtk}: ${obj.attack||''}</div>
-           <div class="def">${labelDef}: ${obj.defence||''}</div>
-         </div>`;
-        return card;
+      const area = document.createElement('div'); area.className='card-content';
+      const nl2br = s => String(s).replace(/\n/g,'<br>');
+      if(obj.description){
+        area.innerHTML += `<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.description)}</div></div>`;
+      }
+      let normalChar = attrs.normal_attribute || '';
+      let reactChar  = attrs.responsive_attribute || '';
+      if (normalChar) {
+        area.innerHTML += `<div class="content-box attribute-box normal-attr">
+                             <div class="box-title">${labelNormal}</div>
+                             <div class="box-content">${nl2br(normalChar)}</div>
+                           </div>`;
+      }
+      if (reactChar) {
+        area.innerHTML += `<div class="content-box attribute-box reaction-attr">
+                             <div class="box-title">${labelReact}</div>
+                             <div class="box-content">${nl2br(reactChar)}</div>
+                           </div>`;
+      }
+      let skillBoxClass = (l==='en' && skills.length>=3) ? 'content-box skill-small' : 'content-box';
+      skills.forEach(sk=>{
+        area.innerHTML += `<div class="${skillBoxClass}">
+                             <div class="skill-box">
+                               <div>
+                                 <div class="skill-name">${sk.name||''}</div>
+                                 <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
+                               </div>
+                               <div class="skill-desc">${nl2br(sk.effect||'')}</div>
+                             </div>
+                           </div>`;
+      });
+      shrinkToFit(area); card.append(area);
+      card.innerHTML += `<div class="stats"><div class="atk">${labelAtk}: ${obj.attack||''}</div><div class="def">${labelDef}: ${obj.defence||''}</div></div>`;
+      return card;
     }
 
-    /* ---------- 缩放 ---------- */
     function shrinkToFit(el){
-        let fs=parseFloat(getComputedStyle(el).fontSize);
-        while(el.scrollHeight>el.clientHeight && fs>5){
-            fs-=0.5; el.style.fontSize=fs+'px';
-        }
+      let fs=parseFloat(getComputedStyle(el).fontSize);
+      while(el.scrollHeight>el.clientHeight && fs>5){ fs-=0.5; el.style.fontSize=fs+'px'; }
     }
 
-    // --- Robust CSV loading and rendering ---
+    // --- CSV 加载与渲染 ---
     let prophecyHeader = [], monsterHeader = [], allProphecyRows = [], allMonsterRows = [];
     let displayCount = 9;
 
-    function getSortField() {
-    const el = document.getElementById('sort-field');
-    return el ? el.value : 'update_datetime';
-    }
-    function getAltDisplay() {
-    const el = document.getElementById('alt-display-toggle');
-    return el ? el.checked : true;
-    }
+    const getSortField = ()=> (document.getElementById('sort-field')?.value || 'update_datetime');
+    const getAltDisplay = ()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
+
     function sortRows(rows, header, field) {
-        const idx = header.indexOf(field);
-        if (idx === -1) return rows.slice();
-        return rows.slice().sort((a, b) => {
-            if (field === 'update_datetime') {
-                // Robust descending sort: most recent last
-                const aVal = a[idx] || '';
-                const bVal = b[idx] || '';
-                const aDate = Date.parse(aVal);
-                const bDate = Date.parse(bVal);
-                if (!isNaN(aDate) && !isNaN(bDate)) {
-                    return aDate - bDate;
-                }
-                return aVal.localeCompare(bVal);
-            } else if (field === 'card_id') {
-                // Sort by full card_id string (lexicographical)
-                const aVal = a[idx] || '';
-                const bVal = b[idx] || '';
-                return aVal.localeCompare(bVal);
-            } else {
-                return (a[idx] || '').localeCompare(b[idx] || '');
-            }
-        });
+      const idx = header.indexOf(field); if (idx === -1) return rows.slice();
+      return rows.slice().sort((a, b) => {
+        if (field === 'update_datetime') {
+          const aVal = a[idx] || '', bVal = b[idx] || '';
+          const aDate = Date.parse(aVal), bDate = Date.parse(bVal);
+          if (!isNaN(aDate) && !isNaN(bDate)) return aDate - bDate;
+          return aVal.localeCompare(bVal);
+        } else if (field === 'card_id') {
+          return (a[idx]||'').localeCompare(b[idx]||'');
+        } else {
+          return (a[idx]||'').localeCompare(b[idx]||'');
+        }
+      });
     }
 
     async function renderAllCards() {
-        const ctr = document.getElementById('card-container');
-        ctr.innerHTML = '';
-
-        // Get sort and display mode
-        const sortField = getSortField();
-        const altDisplay = getAltDisplay();
-
-        // Sort independently
-        const sortedProphecyRows = sortRows(allProphecyRows.slice(-displayCount), prophecyHeader, sortField);
-        const sortedMonsterRows = sortRows(allMonsterRows.slice(-displayCount), monsterHeader, sortField);
-
-        if (altDisplay) {
-            // Interleave
-            const maxLen = Math.max(sortedProphecyRows.length, sortedMonsterRows.length);
-            for (let i = 0; i < maxLen; i++) {
-                if (i < sortedMonsterRows.length) {
-                    ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader, sortedMonsterRows[i])));
-                }
-                if (i < sortedProphecyRows.length) {
-                    ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
-                }
-            }
-        } else {
-            // Grouped: monsters first, then prophecies
-            for (let i = 0; i < sortedMonsterRows.length; i++) {
-                ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader, sortedMonsterRows[i])));
-            }
-            for (let i = 0; i < sortedProphecyRows.length; i++) {
-                ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
-            }
+      const ctr = document.getElementById('card-container'); ctr.innerHTML = '';
+      const sortField = getSortField(), altDisplay = getAltDisplay();
+      const sortedProphecyRows = sortRows(allProphecyRows.slice(-displayCount), prophecyHeader, sortField);
+      const sortedMonsterRows  = sortRows(allMonsterRows.slice(-displayCount),  monsterHeader,  sortField);
+      if (altDisplay) {
+        const maxLen = Math.max(sortedProphecyRows.length, sortedMonsterRows.length);
+        for (let i = 0; i < maxLen; i++) {
+          if (i < sortedMonsterRows.length)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
+          if (i < sortedProphecyRows.length) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
         }
+      } else {
+        for (let i = 0; i < sortedMonsterRows.length;  i++) ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
+        for (let i = 0; i < sortedProphecyRows.length; i++) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
+      }
     }
 
     async function reloadCSVsAndRender() {
-        let prophecy, monster;
-        const ts = Date.now();
-        if(lang==='en'){
-            prophecy = await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
-            monster = await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
-        }else{
-            prophecy = await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
-            monster = await loadCSVWithHeader('monster_cards.csv?t='+ts);
+      let prophecy, monster; const ts = Date.now();
+      if(lang==='en'){
+        prophecy = await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
+        monster  = await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
+      }else{
+        prophecy = await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
+        monster  = await loadCSVWithHeader('monster_cards.csv?t='+ts);
+      }
+      prophecyHeader = prophecy.headerArr; allProphecyRows = prophecy.rowsArr;
+      monsterHeader  = monster.headerArr;  allMonsterRows  = monster.rowsArr;
+      await renderAllCards();
+    }
+
+    function setLangClass() { document.body.classList.toggle('en-mode', lang==='en'); }
+
+    /* ---------- 绘制裁切线（基于打印布局的实测坐标） ---------- */
+    function buildCutlinesMeasured(){
+      const svg = document.getElementById('cutlines');
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const cs = getComputedStyle(document.documentElement);
+      const lineColor = cs.getPropertyValue('--line-color').trim() || 'rgba(120,120,120,.9)';
+
+      // 将 tick(mm) 转 px
+      function cssLenToPx(lenStr){
+        const el = document.createElement('div');
+        el.style.position='absolute'; el.style.left='-9999px'; el.style.top='-9999px';
+        el.style.width = lenStr; el.style.height='0'; el.style.visibility='hidden';
+        document.body.appendChild(el);
+        const px = el.getBoundingClientRect().width; el.remove(); return px;
+      }
+      const tickPx = Math.max(1, Math.round(cssLenToPx(cs.getPropertyValue('--tick').trim() || '1px')));
+
+      const cards = Array.from(document.querySelectorAll('#card-container .card'));
+      if (!cards.length) return;
+
+      // 读取卡片 rect，并按 y,x 排序
+      const rects = cards.map(el=>el.getBoundingClientRect()).sort((a,b)=> (a.top-b.top) || (a.left-b.left));
+
+      // 行分组
+      const rows = [];
+      const lineJoinTol = Math.max(2, Math.round(rects[0].height*0.05)); // 容差：卡高的5%或>=2px
+      rects.forEach(r=>{
+        if (!rows.length) { rows.push([r]); return; }
+        const last = rows[rows.length-1][0];
+        if (Math.abs(r.top - last.top) <= lineJoinTol) rows[rows.length-1].push(r);
+        else rows.push([r]);
+      });
+      rows.forEach(row=>row.sort((a,b)=>a.left-b.left));
+
+      // 视口大小（用于拉满整页）
+      const pageW = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
+      const pageH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+      svg.setAttribute('width', pageW);
+      svg.setAttribute('height', pageH);
+      svg.setAttribute('viewBox', `0 0 ${pageW} ${pageH}`);
+
+      function addLine(x1,y1,x2,y2){
+        const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+        ln.setAttribute('x1', x1); ln.setAttribute('y1', y1);
+        ln.setAttribute('x2', x2); ln.setAttribute('y2', y2);
+        ln.setAttribute('stroke', lineColor);
+        ln.setAttribute('stroke-width', tickPx);
+        ln.setAttribute('vector-effect', 'non-scaling-stroke');
+        ln.setAttribute('shape-rendering', 'crispEdges');
+        svg.appendChild(ln);
+      }
+
+      /* ===== 垂直线 ===== */
+      const vXs = [];
+      // 内部：各行相邻列的中点平均
+      const maxCols = Math.max(...rows.map(r=>r.length));
+      for (let j=0; j<maxCols-1; j++){
+        const xs = [];
+        rows.forEach(r=>{
+          if (r.length>j+1){
+            xs.push( (r[j].right + r[j+1].left)/2 );
+          }
+        });
+        if (xs.length) vXs.push(xs.reduce((a,b)=>a+b,0)/xs.length);
+      }
+      // 外侧：用每行首列/末列与相邻间隙估算，再平均
+      const leftCands = [], rightCands = [];
+      rows.forEach(r=>{
+        if (r.length>=2){
+          const gap1 = r[1].left - r[0].right;
+          leftCands.push( r[0].left - gap1/2 );
+          const gapLast = r[r.length-1].left - r[r.length-2].right;
+          rightCands.push( r[r.length-1].right + gapLast/2 );
+        } else if (r.length===1){
+          // 只有一列时按卡宽的3%估一个半间隙
+          const approx = r[0].width*0.03;
+          leftCands.push( r[0].left - approx/2 );
+          rightCands.push( r[0].right + approx/2 );
         }
-        prophecyHeader = prophecy.headerArr;
-        allProphecyRows = prophecy.rowsArr;
-        monsterHeader = monster.headerArr;
-        allMonsterRows = monster.rowsArr;
-        renderAllCards();
+      });
+      if (leftCands.length)  vXs.unshift(leftCands.reduce((a,b)=>a+b,0)/leftCands.length);
+      if (rightCands.length) vXs.push(  rightCands.reduce((a,b)=>a+b,0)/rightCands.length);
+
+      vXs.forEach(x=> addLine(x, 0, x, pageH));
+
+      /* ===== 水平线 ===== */
+      const hYs = [];
+      // 内部：相邻两行同列卡的上下中点平均
+      for (let r=0; r<rows.length-1; r++){
+        const ys = [];
+        const A = rows[r], B = rows[r+1];
+        const colsBoth = Math.min(A.length, B.length);
+        for (let k=0; k<colsBoth; k++){
+          ys.push( (A[k].bottom + B[k].top)/2 );
+        }
+        if (ys.length) hYs.push(ys.reduce((a,b)=>a+b,0)/ys.length);
+      }
+      // 外侧：用第一/第二行、倒数两行估算半间隙，再平均
+      if (rows.length>=2){
+        const topYs = [], botYs = [];
+        const gapTopSamples=[], gapBotSamples=[];
+        const A = rows[0], B = rows[1];
+        const C = rows[rows.length-2], D = rows[rows.length-1];
+        const colsTop = Math.min(A.length,B.length);
+        for (let k=0;k<colsTop;k++) gapTopSamples.push( B[k].top - A[k].bottom );
+        const colsBot = Math.min(C.length,D.length);
+        for (let k=0;k<colsBot;k++) gapBotSamples.push( D[k].top - C[k].bottom );
+        const gapTop = gapTopSamples.reduce((a,b)=>a+b,0)/gapTopSamples.length;
+        const gapBot = gapBotSamples.reduce((a,b)=>a+b,0)/gapBotSamples.length;
+        // 用多列平均后的半间隙
+        const yTop = (A.map(x=>x.top).reduce((a,b)=>Math.min(a,b),Infinity)) - gapTop/2;
+        const yBot = (D.map(x=>x.bottom).reduce((a,b)=>Math.max(a,b),-Infinity)) + gapBot/2;
+        hYs.unshift(yTop); hYs.push(yBot);
+      }else{
+        // 仅一行时用卡高的3%估半间隙
+        const approx = rows[0][0].height*0.03;
+        hYs.unshift(rows[0][0].top - approx/2);
+        hYs.push(rows[0][0].bottom + approx/2);
+      }
+
+      hYs.forEach(y=> addLine(0, y, pageW, y));
     }
 
-    function setLangClass() {
-        document.body.classList.toggle('en-mode', lang==='en');
-    }
-
-    /* ---------- 主入口 ---------- */
+    /* ---------- 打印流程 ---------- */
     document.addEventListener('DOMContentLoaded', () => {
-    // Set alternate display as default
-    document.getElementById('alt-display-toggle').checked = true;
-    // Initial load
-    reloadCSVsAndRender();
-    setLangClass();
+      document.getElementById('alt-display-toggle').checked = true;
+      reloadCSVsAndRender();
+      setLangClass();
 
-        // Refresh button
-        document.getElementById('btn-refresh').onclick = reloadCSVsAndRender;
+      document.getElementById('btn-refresh').onclick = reloadCSVsAndRender;
 
-        // Card count input
-        const cardCountInput = document.getElementById('card-count');
-        cardCountInput.onchange = function() {
-            let val = parseInt(cardCountInput.value, 10);
-            if (isNaN(val) || val < 1) val = 1;
-            displayCount = val;
-            renderAllCards();
-        };
+      const cardCountInput = document.getElementById('card-count');
+      cardCountInput.onchange = function() {
+        let val = parseInt(cardCountInput.value, 10);
+        if (isNaN(val) || val < 1) val = 1;
+        displayCount = val;
+        renderAllCards();
+      };
 
-        // Print button
-        document.getElementById('btn-print').onclick = function() {
-            // Hide sidebar for print
-            document.getElementById('sidebar-panel').style.display = 'none';
-            document.getElementById('main-content').style.marginLeft = '0';
+      // 打印按钮：先切换到“测量用打印布局”，再测量，再 print
+      document.getElementById('btn-print').onclick = function() {
+        document.getElementById('sidebar-panel').style.display = 'none';
+        document.getElementById('main-content').style.marginLeft = '0';
+        document.body.classList.add('measure-print');
+
+        // 等一帧让布局稳定
+        requestAnimationFrame(()=>{
+          buildCutlinesMeasured();
+          // 再等一小步，确保 SVG 挂上
+          setTimeout(()=>{
+            window.print();
+            // 恢复
             setTimeout(()=>{
-                window.print();
-                // Restore sidebar after print
-                setTimeout(()=>{
-                    document.getElementById('sidebar-panel').style.display = '';
-                    document.getElementById('main-content').style.marginLeft = '240px';
-                }, 100);
-            }, 50);
-        };
+              document.body.classList.remove('measure-print');
+              document.getElementById('sidebar-panel').style.display = '';
+              document.getElementById('main-content').style.marginLeft = '240px';
+            }, 100);
+          }, 30);
+        });
+      };
 
-        // Language switch logic
-        function updateLangSwitch() {
-            document.getElementById('lang-cn').classList.toggle('active', lang === 'zh');
-            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-        }
-        updateLangSwitch();
-        document.getElementById('lang-cn').onclick = function() {
-            if(lang !== 'zh') {
-                lang = 'zh';
-                reloadCSVsAndRender();
-                setLangClass();
-                updateLangSwitch();
-            }
-        };
-        document.getElementById('lang-en').onclick = function() {
-            if(lang !== 'en') {
-                lang = 'en';
-                reloadCSVsAndRender();
-                setLangClass();
-                updateLangSwitch();
-            }
-        };
+      // 用户直接 Ctrl+P：进入前切换布局并生成线
+      if ('onbeforeprint' in window){
+        window.addEventListener('beforeprint', ()=>{
+          document.body.classList.add('measure-print');
+          buildCutlinesMeasured();
+        });
+        window.addEventListener('afterprint', ()=>{
+          document.body.classList.remove('measure-print');
+        });
+      } else if (window.matchMedia) {
+        const mq = window.matchMedia('print');
+        mq.addListener && mq.addListener(e=>{
+          if (e.matches){
+            document.body.classList.add('measure-print');
+            buildCutlinesMeasured();
+          } else {
+            document.body.classList.remove('measure-print');
+          }
+        });
+      }
+
+      // 语言
+      function updateLangSwitch() {
+        document.getElementById('lang-cn').classList.toggle('active', lang === 'zh');
+        document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+      }
+      updateLangSwitch();
+      document.getElementById('lang-cn').onclick = function() {
+        if(lang !== 'zh') { lang = 'zh'; reloadCSVsAndRender(); setLangClass(); updateLangSwitch(); }
+      };
+      document.getElementById('lang-en').onclick = function() {
+        if(lang !== 'en') { lang = 'en'; reloadCSVsAndRender(); setLangClass(); updateLangSwitch(); }
+      };
     });
-
-</script>
+  </script>
 </body>
 </html>
