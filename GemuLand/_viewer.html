@@ -2,181 +2,213 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8"/>
-  <title>卡牌生成器</title>
+  <title>卡牌生成器（20mm 背景网格，卡牌下方隐形）</title>
   <style>
     /* ---------- 参数（统一用 mm） ---------- */
     :root{
-      --card-w: 63mm;           /* 卡牌内容宽（不含边框） */
-      --card-h: 88mm;           /* 卡牌内容高（不含边框） */
-      --border: 0.53mm;         /* ≈2px，卡牌黑边 */
-      --gap: 0.53mm;            /* ≈2px，卡牌间隙 */
-      --tick: 0.20mm;           /* 裁切线宽度 */
-      --cols: 3;                /* 打印列数 */
-      --line-color: rgba(120,120,120,.9);
+      --card-w: 63mm;
+      --card-h: 88mm;
+      --border: 0.53mm;   /* ≈2px */
+      --gap: 0.53mm;      /* ≈2px */
+      --tick: 0.20mm;     /* 线宽（保留以备后用） */
+      --cols: 3;
+
+      /* 背景网格参数（每 20mm 一条线） */
+      --grid-step: 20mm;
+      --grid-tick: 0.18mm;
+      --grid-color: rgba(120,120,120,.9);
     }
 
-    /* 屏幕态基础样式（保留你的原样） */
-    img, .content-box, .card-title { print-color-adjust: exact; }
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-    #card-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(63mm,1fr)); gap:10px; justify-items:left; align-items:start; }
+    /* 屏幕态基础样式 */
+    img, .content-box, .card-title { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    html, body { height: 100%; }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      margin: 0;
+
+      /* === 20mm 背景网格（整页，位于所有内容之下） === */
+      background:
+        /* 竖线 */
+        repeating-linear-gradient(
+          to right,
+          transparent 0,
+          transparent calc(var(--grid-step) - var(--grid-tick)),
+          var(--grid-color) calc(var(--grid-step) - var(--grid-tick)),
+          var(--grid-color) var(--grid-step)
+        ),
+        /* 横线 */
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent calc(var(--grid-step) - var(--grid-tick)),
+          var(--grid-color) calc(var(--grid-step) - var(--grid-tick)),
+          var(--grid-color) var(--grid-step)
+        ),
+        /* 背景底色 */
+        #ffffff;
+      background-repeat: repeat, repeat, no-repeat;
+      background-position: 0 0, 0 0, 0 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    #card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(63mm,1fr));
+      gap: var(--gap); /* Use the same gap for both rows and columns */
+      justify-items:left; align-items:start;
+    }
 
     .card {
-      position: relative; width: 63mm; height: 88mm;
-      border: 2px solid #000; border-radius: 8px; overflow: hidden;
-      page-break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      position: relative;
+      width: var(--card-w);
+      height: 88mm;
+      border: 2px solid #000; border-radius: 8px;
+      overflow: hidden; page-break-inside: avoid;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      /* ★ 关键：不透明白底，完全遮挡页面背景网格（卡牌区域内“隐形”） */
+      background-color: #ffffff;
+      isolation: isolate;
     }
 
-    .card.monster  { background:#ffffff; }
-    .card.prophecy { position: relative; background: none; }
-    .card.prophecy::before {
-      content: ''; position: absolute; inset: 0; z-index: 0;
+    .card.prophecy::before{
+      content:''; position:absolute; inset:0; z-index:0;
       background-image: var(--prophecy-bg, none);
       background-size: cover; background-position: center; background-repeat: no-repeat;
       filter: blur(12px) brightness(0.7) saturate(1.2);
-      border-radius: 8px; transition: background-image 0.3s;
+      border-radius: 8px; transition: background-image .3s;
     }
-    .card.prophecy .card-image-container { position: absolute; top: 24px; left: 4px; right: 4px; bottom: calc(4px + 29.33mm); display:flex; align-items:center; justify-content:center; z-index:2; overflow:hidden; }
-    .card.prophecy .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px; height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end; gap:2px; overflow:hidden; z-index:3; font-size:10px; }
-    .card.prophecy .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:center; align-items:center; background:rgba(10,30,80,0.5) !important; border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; color:#fff !important; }
+    .card.prophecy .card-image-container{ position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
+      display:flex; align-items:center; justify-content:center; z-index:2; overflow:hidden; }
+    .card.prophecy .card-content{ position:absolute; bottom:calc(4px + 16px); left:4px; right:4px; height:calc(50% - 4px - 16px);
+      display:flex; flex-direction:column; justify-content:flex-end; gap:2px; overflow:hidden; z-index:3; font-size:10px; }
+    .card.prophecy .card-title{
+      position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:center; align-items:center;
+      background:rgba(10,30,80,0.5)!important; border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; color:#fff!important;
+    }
+    .card.prophecy .content-box{ background:rgba(10,30,80,0.5)!important; color:#fff!important; border-color:rgba(255,255,255,0.2)!important; }
+    .card.prophecy .box-title,.card.prophecy .box-content{ color:#fff!important; }
+    .card.prophecy .responsive-effect .box-title{ color:red!important; }
 
-    .card.prophecy .content-box { background: rgba(10,30,80,0.5) !important; color:#fff !important; border-color: rgba(255,255,255,0.2) !important; }
-    .card.prophecy .box-title, .card.prophecy .box-content { color:#fff !important; }
-    .card.prophecy .responsive-effect .box-title { color:red !important; }
+    .card-title{
+      position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center;
+      background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3;
+    }
+    .card-title .level,.card-title .type{ font-size:11px; width:15%; text-align:center; }
+    .card-title .name{ font-size:12px; flex:1; text-align:center; }
+    .prophecy .card-title{ justify-content:center; }
 
-    .card-title { position:absolute; top:4px; left:4px; right:4px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 4px; font-weight:bold; font-size:12px; z-index:3; }
-    .card-title .level, .card-title .type { font-size:11px; width:15%; text-align:center; }
-    .card-title .name { font-size:12px; flex:1; text-align:center; }
-    .prophecy .card-title { justify-content:center; }
+    .card-image-container{ position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm);
+      display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
+    .card-image-container img{ max-width:100%; max-height:100%; object-fit:contain; display:block; }
 
-    .card-image-container { position:absolute; top:24px; left:4px; right:4px; bottom:calc(4px + 29.33mm); display:flex; align-items:center; justify-content:center; z-index:1; overflow:hidden; }
-    .card-image-container img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
+    .card-content{ position:absolute; bottom:calc(4px + 16px); left:4px; right:4px; height:calc(50% - 4px - 16px);
+      display:flex; flex-direction:column; justify-content:flex-end; gap:2px; overflow:hidden; z-index:2; font-size:10px; }
 
-    .card-content { position:absolute; bottom:calc(4px + 16px); left:4px; right:4px; height:calc(50% - 4px - 16px); display:flex; flex-direction:column; justify-content:flex-end; gap:2px; overflow:hidden; z-index:2; font-size:10px; }
+    .content-box{ background:rgba(255,255,255,0.75); border:3px solid rgba(0,0,0,0.2); border-radius:4px; padding:3px;
+      display:grid; grid-template-columns:auto 1fr; align-items:start; overflow:hidden; }
+    .content-box.attribute-box{ border:none; }
+    .box-title{ font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
+    .box-content{ font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
 
-    .content-box{ background: rgba(255,255,255,0.75); border: 3px solid rgba(0,0,0,0.2); border-radius:4px; padding:3px; display:grid; grid-template-columns:auto 1fr; align-items:start; overflow:hidden; }
-    .content-box.attribute-box { border:none; }
-    .box-title { font-weight:bold; font-size:10px; margin-right:3px; white-space:nowrap; }
-    .box-content { font-size:9px; line-height:1.2; text-align:justify; overflow:hidden; }
+    .skill-box{ display:grid; grid-template-columns:auto 1fr; grid-auto-rows:auto; gap:4px; }
+    .skill-name{ font-weight:bold; font-size:10px; }
+    .skill-desc{ font-size:9px; }
+    .skill-power{ display:flex; flex-wrap:wrap; gap:2px; }
+    .power-icon::before{ content:'✦'; font-size:10px; margin-right:1px; }
 
-    .skill-box { display:grid; grid-template-columns:auto 1fr; grid-auto-rows:auto; gap:4px; }
-    .skill-name { font-weight:bold; font-size:10px; }
-    .skill-desc { font-size:9px; }
-    .skill-power { display:flex; flex-wrap:wrap; gap:2px; }
-    .power-icon::before { content:'✦'; font-size:10px; margin-right:1px; }
+    .card.monster .stats{ position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
+      font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
+    .stats .atk::before{ content:'▲'; margin-right:2px; }
+    .stats .def::before{ content:'◇'; margin-right:2px; }
 
-    .monster .stats { position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between; font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
-    .stats .atk::before { content:'▲'; margin-right:2px; }
-    .stats .def::before { content:'◇'; margin-right:2px; }
+    .responsive-effect .box-title{ color:red; }
+    .reaction-attr .box-title{ color:red; }
+    .normal-attr .box-title{ color:blue; }
 
-    .responsive-effect .box-title { color:red; }
-    .reaction-attr .box-title { color:red; }
-    .normal-attr .box-title { color:blue; }
+    /* 侧边栏（含语言切换） */
+    #lang-switch span{ user-select:none; border:1px solid #3b82f6; margin:0; cursor:pointer; }
+    #lang-switch .active{ background:#3b82f6!important; color:#fff!important; }
+    #lang-switch span:not(.active){ background:#23272f!important; color:#fff!important; }
 
-    @page { margin: 0; size: auto; }
-
-    /* English mode */
-    body.en-mode .attribute-box .box-content { font-size: 8px !important; }
-    body.en-mode .card.monster .content-box.skill-small .skill-desc { font-size: 8px !important; }
-
-    /* Sidebar（保留） */
-    #lang-switch span { user-select: none; border:1px solid #3b82f6; margin:0; }
-    #lang-switch .active { background:#3b82f6 !important; color:#fff !important; }
-    #lang-switch span:not(.active) { background:#23272f !important; color:#fff !important; }
-
-    #sidebar-panel {
-      border-radius:0 !important; box-shadow:2px 0 12px rgba(0,0,0,0.12);
+    #sidebar-panel{
+      border-radius:0!important; box-shadow:2px 0 12px rgba(0,0,0,0.12);
       padding:28px 18px 18px; display:flex; flex-direction:column; gap:18px;
       background:#23272f; color:#fff; z-index:100; position:fixed; left:0; top:0; height:100vh; width:240px;
     }
     #sidebar-panel input[type="number"]{ width:100%; margin-bottom:4px; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; outline:none; font-size:15px; box-sizing:border-box; }
-    #sidebar-panel .btn{ width:100%; border-radius:4px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; margin:0; box-sizing:border-box; padding:8px 0; }
-    #sidebar-panel .section { display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
-    #sidebar-panel .divider { border-bottom:1px solid #444; margin:10px 0; }
-    #sidebar-panel .section-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    #sidebar-panel select{ width:100%; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; font-size:15px; }
+    #sidebar-panel .btn{ width:100%; border-radius:6px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; margin:0; box-sizing:border-box; padding:8px 0; background:#3b82f6; color:#fff; border:none; }
+    #sidebar-panel .section{ display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
+    #sidebar-panel .divider{ border-bottom:1px solid #444; margin:10px 0; }
+    #sidebar-panel .section-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 
-    /* ---------- 打印布局（以及测量用的模拟打印布局） ---------- */
-    @media print, (orientation:portrait) {
-      /* 这段会被 .measure-print 复用（见下） */
-    }
-    /* 用类名强制打印布局，供测量时使用（避免 beforeprint 竞态） */
-    body.measure-print #main-content{
-      /* 宽度 = 列数*(卡面+左右边框) + (列数-1)*gap；不加“外侧半gap” */
-      width: calc(var(--cols) * (var(--card-w) + 2*var(--border)) + (var(--cols) - 1) * var(--gap)) !important;
-      margin: 0 !important;
+    /* 主内容区 */
+    #main-content{ margin-left:240px; position:relative; }
+
+    /* 打印时固定列宽网格（与 20mm 背景无耦合） */
+    .fixed-print-width {
+      width: calc(var(--cols) * var(--card-w) + (var(--cols) - 1) * var(--gap)) !important;
+      margin: 0 auto !important;
       background: none !important;
+      box-sizing: border-box !important;
     }
-    body.measure-print #card-container{
+    .grid-for-print {
       display: grid !important;
       grid-template-columns: repeat(var(--cols), var(--card-w)) !important;
       gap: var(--gap) !important;
       box-sizing: border-box !important;
       overflow: visible !important;
-      background: none !important;
+      margin: 0 auto !important;
     }
-    body.measure-print .card{
-      box-sizing: content-box !important; /* width/height 仅内容，边框另算 */
-      width: var(--card-w) !important;
-      height: var(--card-h) !important;
-      border: var(--border) solid #000 !important;
-      box-shadow:none !important;
-    }
-
-    /* 真正打印时应用同样布局，并隐藏侧栏 */
-    @media print {
-      #main-content{
-        width: calc(var(--cols) * (var(--card-w) + 2*var(--border)) + (var(--cols) - 1) * var(--gap)) !important;
-        margin: 0 !important;
-        background: none !important;
-      }
-      #card-container{
-        display: grid !important;
-        grid-template-columns: repeat(var(--cols), var(--card-w)) !important;
-        gap: var(--gap) !important;
-        box-sizing: border-box !important;
-        overflow: visible !important;
-      }
-      .card{
-        box-sizing: content-box !important;
-        width: var(--card-w) !important;
-        height: var(--card-h) !important;
-        border: var(--border) solid #000 !important;
-        box-shadow:none !important;
-      }
-      #sidebar-panel{ display:none !important; }
+    .card-print-size{
+      box-sizing: border-box!important;
+      width: var(--card-w)!important;
+      height: var(--card-h)!important;
+      border: var(--border) solid #000!important; 
+      box-shadow:none!important;
+      margin: 0!important;
+      justify-self: start;
     }
 
-    /* SVG 覆盖层（整页裁切线） */
-    #cutlines{ display:none; }
-    @media print { #cutlines{ display:block; position:fixed; inset:0; z-index:0; pointer-events:none; } }
-    body.measure-print #cutlines{ display:block; position:fixed; inset:0; z-index:0; pointer-events:none; }
+    /* 打印介质设置 */
+    @page { margin: 0; size: auto; }
+    @media print{
+      html, body { margin:0!important; padding:0!important; }
+      #sidebar-panel{ display:none!important; }
+      #main-content{ margin-left:0!important; }
+      body{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    /* English mode */
+    body.en-mode .attribute-box .box-content{ font-size:8px!important; }
+    body.en-mode .card.monster .content-box.skill-small .skill-desc{ font-size:8px!important; }
   </style>
 </head>
 <body>
-  <!-- 整页裁切线（由 JS 实测绘制） -->
-  <svg id="cutlines" aria-hidden="true"></svg>
-
   <div id="sidebar-panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 18px 0;">
       <h4 style="font-size:20px;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0;">
         <span style="font-size:22px;">🃏</span> 控制面板
       </h4>
     </div>
+
     <div class="divider"></div>
+
     <div class="section">
       <div class="section-row">
         <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
-        <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:70px;min-width:40px;">
-        <button id="btn-refresh" class="btn btn-primary mb-2" style="background:#23272f;border:none;border-radius:6px;padding:4px 8px;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:0;min-width:0;min-height:0;box-shadow:none;width:auto;height:32px;">
-          <span>🔄</span>
-        </button>
+        <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:80px;min-width:60px;">
+        <button id="btn-refresh" class="btn" title="重新加载/排序"><span>🔄</span> 刷新</button>
       </div>
-      <span class="helper-text">可调整显示的卡牌对数</span>
+      <span class="helper-text" style="color:#bbb;font-size:12px;">可调整显示的卡牌对数</span>
     </div>
-    <div class="divider"></div>
+
     <div class="section">
       <div class="section-row">
         <label for="sort-field" style="flex-shrink:0;">排序方式</label>
-        <select id="sort-field" style="flex:1;max-width:120px;min-width:80px;">
+        <select id="sort-field" style="flex:1;">
           <option value="description">描述</option>
           <option value="update_datetime" selected>更新时间</option>
           <option value="card_id">卡牌ID</option>
@@ -184,149 +216,124 @@
       </div>
       <div class="section-row" style="margin-top:8px;">
         <label style="flex-shrink:0;">交替显示</label>
-        <input id="alt-display-toggle" type="checkbox" style="margin-left:8px;">
-        <span class="helper-text" style="margin-left:8px;">怪物与预言交替</span>
+        <input id="alt-display-toggle" type="checkbox" style="margin-left:8px;" checked>
+        <span class="helper-text" style="margin-left:8px;color:#bbb;font-size:12px;">怪物与预言交替</span>
       </div>
     </div>
+
     <div class="divider"></div>
+
     <div class="section">
-      <button id="btn-print" class="btn btn-success"><span>🖨️</span> 打印/导出 PDF</button>
+      <button id="btn-print" class="btn"><span>🖨️</span> 打印/导出 PDF</button>
+      <div style="font-size:12px;color:#aaa;line-height:1.3;margin-top:6px;">
+        打印时请勾选“打印背景图形 / Background graphics”
+      </div>
+    </div>
+
+    <div class="section">
       <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
         <span style="font-size:14px;">语言</span>
         <div id="lang-switch" style="display:flex;align-items:center;gap:0;">
-          <span id="lang-cn" class="active" style="font-size:14px;padding:2px 10px;border-radius:6px 0 0 6px;background:#3b82f6;color:#fff;cursor:pointer;">中文</span>
-          <span id="lang-en" style="font-size:14px;padding:2px 10px;border-radius:0 6px 6px 0;background:#23272f;color:#fff;cursor:pointer;">English</span>
+          <span id="lang-cn" class="active" style="font-size:14px;padding:2px 10px;border-radius:6px 0 0 6px;">中文</span>
+          <span id="lang-en" style="font-size:14px;padding:2px 10px;border-radius:0 6px 6px 0;">English</span>
         </div>
       </div>
     </div>
+
     <div style="flex:1"></div>
     <div style="font-size:13px;color:#aaa;text-align:center;letter-spacing:1px;">© BoardGame 工具</div>
   </div>
 
-  <div id="main-content" style="margin-left:240px;">
+  <div id="main-content" style="position:relative; margin-left:240px;">
     <div id="card-container"></div>
   </div>
 
   <script>
     // Decode \n to real newlines
     function decodeText(s){ return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n'); }
-    let lang = 'zh'; // 'zh' or 'en'
+    let lang = 'zh';
 
-    /* ---------- CSV/解析工具 ---------- */
-    function parsePipeCsvLine(line) {
-      const out = []; let cur = '';
-      for (let i=0; i<line.length; i++) {
-        const ch = line[i];
-        if (ch === '\\') {
-          const next = line[i+1];
-          if (next === '|') { cur += '|'; i++; continue; }
-          if (next === '\\') { cur += '\\'; i++; continue; }
-          cur += '\\'; continue;
+    /* ---------- CSV/解析 ---------- */
+    function parsePipeCsvLine(line){
+      const out=[]; let cur='';
+      for (let i=0;i<line.length;i++){
+        const ch=line[i];
+        if (ch==='\\'){
+          const next=line[i+1];
+          if (next==='|'){ cur+='|'; i++; continue; }
+          if (next==='\\'){ cur+='\\'; i++; continue; }
+          cur+='\\'; continue;
         }
-        if (ch === '|') { out.push(cur); cur=''; continue; }
-        cur += ch;
+        if (ch==='|'){ out.push(cur); cur=''; continue; }
+        cur+=ch;
       }
       out.push(cur); return out;
     }
-    const parseCsvHeader = (line)=>parsePipeCsvLine(line);
-    function mapCsvRowToObj(headerArr, rowArr) {
-      const obj = {}; for (let i=0; i<headerArr.length; i++) obj[headerArr[i]] = rowArr[i]!==undefined?decodeText(rowArr[i]):'';
+    const parseCsvHeader=(line)=>parsePipeCsvLine(line);
+    function mapCsvRowToObj(headerArr,rowArr){
+      const obj={}; for(let i=0;i<headerArr.length;i++){ obj[headerArr[i]]=rowArr[i]!==undefined?decodeText(rowArr[i]):''; }
       return obj;
     }
-    async function loadCSVWithHeader(path) {
-      const txt = await (await fetch(path)).text();
-      const lines = txt.split('\n').filter(r=>r.trim());
+    async function loadCSVWithHeader(path){
+      const txt=await (await fetch(path)).text();
+      const lines=txt.split('\n').filter(r=>r.trim());
       if (!lines.length) return {headerArr: [], rowsArr: []};
-      return {headerArr: parseCsvHeader(lines[0]), rowsArr: lines.slice(1).map(parsePipeCsvLine)};
+      return {headerArr:parseCsvHeader(lines[0]), rowsArr:lines.slice(1).map(parsePipeCsvLine)};
     }
-    function fixJsonQuotes(str) {
+    function fixJsonQuotes(str){
       if (!str) return str;
-      if (str.trim().startsWith("'{") || str.trim().startsWith("'[")) { str = str.trim().replace(/^'/,'').replace(/'$/,''); }
-      return str.replace(/'/g, '"');
+      if (str.trim().startsWith("'{")||str.trim().startsWith("'[")) str=str.trim().replace(/^'/,'').replace(/'$/,'');
+      return str.replace(/'/g,'"');
     }
-    const safeParse = (str, def={}) => { try{ return JSON.parse(fixJsonQuotes(str)); } catch { return def; } };
+    const safeParse=(s,def={})=>{ try{return JSON.parse(fixJsonQuotes(s));}catch{return def;} };
 
     /* ---------- 卡片渲染 ---------- */
-    function createProphecyCard(row, langOverride) {
-      let obj = Array.isArray(row) ? (()=>{ const [title,intro,effect,responsive_effect='',image] = row.length===4 ? [row[0],row[1],row[2],'',row[3]] : row; return {card_title:title, introduction:intro, effect, responsive_effect, image}; })() : row;
-      const card = document.createElement('div'); card.className='card prophecy';
-      if(obj.image){ card.style.setProperty('--prophecy-bg', `url('${obj.image}')`); } else { card.style.removeProperty('--prophecy-bg'); }
-      card.innerHTML = `<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
-                        <div class="card-image-container"><img src="${obj.image||''}"></div>`;
-      const area = document.createElement('div'); area.className='card-content';
-      const l = (langOverride||lang);
-      const labelEffect = l==='en' ? 'Effect' : '效果';
-      const labelResponsive = l==='en' ? 'RespEkt' : '响应效果';
-      const nl2br = s => String(s).replace(/\n/g,'<br>');
-      if(obj.introduction){
-        area.innerHTML += `<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.introduction)}</div></div>`;
-      }
-      if(obj.effect){
-        area.innerHTML += `<div class="content-box"><div class="box-title">${labelEffect}</div><div class="box-content">${nl2br(obj.effect)}</div></div>`;
-      }
-      if(obj.responsive_effect){
-        area.innerHTML += `<div class="content-box responsive-effect"><div class="box-title">${labelResponsive}</div><div class="box-content">${nl2br(obj.responsive_effect)}</div></div>`;
-      }
+    function createProphecyCard(row,langOverride){
+      let obj=Array.isArray(row)?(()=>{const [t,i,e,r='',img]=row.length===4?[row[0],row[1],row[2],'',row[3]]:row; return {card_title:t,introduction:i,effect:e,responsive_effect:r,image:img};})():row;
+      const card=document.createElement('div'); card.className='card prophecy';
+      if(obj.image){ card.style.setProperty('--prophecy-bg',`url('${obj.image}')`);} else { card.style.removeProperty('--prophecy-bg');}
+      card.innerHTML=`<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
+                      <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
+      const area=document.createElement('div'); area.className='card-content';
+      const l=(langOverride||lang);
+      const labelEffect=l==='en'?'Effect':'效果';
+      const labelResponsive=l==='en'?'Responsive Effect':'响应效果';
+      const nl2br=s=>String(s).replace(/\n/g,'<br>');
+      if(obj.introduction){ area.innerHTML+=`<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.introduction)}</div></div>`; }
+      if(obj.effect){ area.innerHTML+=`<div class="content-box"><div class="box-title">${labelEffect}</div><div class="box-content">${nl2br(obj.effect)}</div></div>`; }
+      if(obj.responsive_effect){ area.innerHTML+=`<div class="content-box responsive-effect"><div class="box-title">${labelResponsive}</div><div class="box-content">${nl2br(obj.responsive_effect)}</div></div>`; }
       shrinkToFit(area); card.append(area);
-      setTimeout(()=>{ card.style.setProperty('--prophecy-bg', obj.image ? `url('${obj.image}')` : 'none'); }, 0);
+      setTimeout(()=>{ card.style.setProperty('--prophecy-bg', obj.image?`url('${obj.image}')`:'none'); },0);
       return card;
     }
 
-    function createMonsterCard(row, langOverride) {
-      let obj = Array.isArray(row) ? (()=>{
-        const [title,level,type,desc,atk,def,magic,charStr,skillStr,image] = row;
-        return { card_title:title, level, monster_type:type, description:desc, attack:atk, defence:def, magic, attributes:charStr, skills:skillStr, image };
-      })() : row;
-      const attrs = safeParse(obj.attributes, {});
-      let skills = safeParse(obj.skills, []); if(!Array.isArray(skills)) skills = [];
-      skills = skills.map(sk=>({name: sk.name, energy_cost: sk.energy_cost, effect: sk.effect}));
-      const lvlIcons = '❖'.repeat(Math.max(0,parseInt(obj.level)));
-      const l = (langOverride||lang);
-      const labelNormal = l==='en' ? 'Attr' : '通常属性';
-      const labelReact  = l==='en' ? 'RespAttr' : '反应属性';
-      const labelAtk = l==='en' ? 'ATK' : '攻击';
-      const labelDef = l==='en' ? 'DEF' : '防御';
-      const card = document.createElement('div'); card.className='card monster';
-      card.innerHTML =
-        `<div class="card-title">
-           <span class="level">${lvlIcons}</span>
-           <span class="name">${obj.card_title||''}</span>
-           <span class="type">${obj.monster_type||''}</span>
-         </div>
-         <div class="card-image-container"><img src="${obj.image||''}"></div>`;
-      const area = document.createElement('div'); area.className='card-content';
-      const nl2br = s => String(s).replace(/\n/g,'<br>');
-      if(obj.description){
-        area.innerHTML += `<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.description)}</div></div>`;
-      }
-      let normalChar = attrs.normal_attribute || '';
-      let reactChar  = attrs.responsive_attribute || '';
-      if (normalChar) {
-        area.innerHTML += `<div class="content-box attribute-box normal-attr">
-                             <div class="box-title">${labelNormal}</div>
-                             <div class="box-content">${nl2br(normalChar)}</div>
-                           </div>`;
-      }
-      if (reactChar) {
-        area.innerHTML += `<div class="content-box attribute-box reaction-attr">
-                             <div class="box-title">${labelReact}</div>
-                             <div class="box-content">${nl2br(reactChar)}</div>
-                           </div>`;
-      }
-      let skillBoxClass = (l==='en' && skills.length>=3) ? 'content-box skill-small' : 'content-box';
+    function createMonsterCard(row,langOverride){
+      let obj=Array.isArray(row)?(()=>{const [t,l,ty,desc,atk,def,magic,charStr,skillStr,img]=row; return {card_title:t, level:l, monster_type:ty, description:desc, attack:atk, defence:def, magic, attributes:charStr, skills:skillStr, image:img};})():row;
+      const attrs=safeParse(obj.attributes,{});
+      let skills=safeParse(obj.skills,[]); if(!Array.isArray(skills)) skills=[];
+      skills=skills.map(sk=>({name:sk.name, energy_cost:sk.energy_cost, effect:sk.effect}));
+      const lvlIcons='❖'.repeat(Math.max(0,parseInt(obj.level)));
+      const l=(langOverride||lang);
+      const labelNormal=l==='en'?'Attr':'通常属性';
+      const labelReact=l==='en'?'RespAttr':'反应属性';
+      const labelAtk=l==='en'?'ATK':'攻击';
+      const labelDef=l==='en'?'DEF':'防御';
+      const card=document.createElement('div'); card.className='card monster';
+      card.innerHTML=`<div class="card-title"><span class="level">${lvlIcons}</span><span class="name">${obj.card_title||''}</span><span class="type">${obj.monster_type||''}</span></div>
+                      <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
+      const area=document.createElement('div'); area.className='card-content';
+      const nl2br=s=>String(s).replace(/\n/g,'<br>');
+      if(obj.description){ area.innerHTML+=`<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.description)}</div></div>`; }
+      let normalChar=attrs.normal_attribute||'';
+      let reactChar=attrs.responsive_attribute||'';
+      if(normalChar){ area.innerHTML+=`<div class="content-box attribute-box normal-attr"><div class="box-title">${labelNormal}</div><div class="box-content">${nl2br(normalChar)}</div></div>`; }
+      if(reactChar){ area.innerHTML+=`<div class="content-box attribute-box reaction-attr"><div class="box-title">${labelReact}</div><div class="box-content">${nl2br(reactChar)}</div></div>`; }
+      let skillBoxClass=(l==='en'&&skills.length>=3)?'content-box skill-small':'content-box';
       skills.forEach(sk=>{
-        area.innerHTML += `<div class="${skillBoxClass}">
-                             <div class="skill-box">
-                               <div>
-                                 <div class="skill-name">${sk.name||''}</div>
-                                 <div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div>
-                               </div>
-                               <div class="skill-desc">${nl2br(sk.effect||'')}</div>
-                             </div>
-                           </div>`;
+        area.innerHTML+=`<div class="${skillBoxClass}"><div class="skill-box"><div><div class="skill-name">${sk.name||''}</div><div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div></div><div class="skill-desc">${nl2br(sk.effect||'')}</div></div></div>`;
       });
       shrinkToFit(area); card.append(area);
-      card.innerHTML += `<div class="stats"><div class="atk">${labelAtk}: ${obj.attack||''}</div><div class="def">${labelDef}: ${obj.defence||''}</div></div>`;
+      card.innerHTML+=`<div class="stats"><div class="atk">${labelAtk}: ${obj.attack||''}</div><div class="def">${labelDef}: ${obj.defence||''}</div></div>`;
       return card;
     }
 
@@ -335,256 +342,171 @@
       while(el.scrollHeight>el.clientHeight && fs>5){ fs-=0.5; el.style.fontSize=fs+'px'; }
     }
 
-    // --- CSV 加载与渲染 ---
-    let prophecyHeader = [], monsterHeader = [], allProphecyRows = [], allMonsterRows = [];
-    let displayCount = 9;
+    // --- 数据与渲染 ---
+    let prophecyHeader=[], monsterHeader=[], allProphecyRows=[], allMonsterRows=[];
+    let displayCount=9;
 
-    const getSortField = ()=> (document.getElementById('sort-field')?.value || 'update_datetime');
-    const getAltDisplay = ()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
+    const getSortField=()=> (document.getElementById('sort-field')?.value || 'update_datetime');
+    const getAltDisplay=()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
 
-    function sortRows(rows, header, field) {
-      const idx = header.indexOf(field); if (idx === -1) return rows.slice();
-      return rows.slice().sort((a, b) => {
-        if (field === 'update_datetime') {
-          const aVal = a[idx] || '', bVal = b[idx] || '';
-          const aDate = Date.parse(aVal), bDate = Date.parse(bVal);
-          if (!isNaN(aDate) && !isNaN(bDate)) return aDate - bDate;
+    function sortRows(rows, header, field){
+      const idx=header.indexOf(field); if(idx===-1) return rows.slice();
+      return rows.slice().sort((a,b)=>{
+        if(field==='update_datetime'){
+          const aVal=a[idx]||'', bVal=b[idx]||'';
+          const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
+          if(!isNaN(aDate)&&!isNaN(bDate)) return aDate-bDate;
           return aVal.localeCompare(bVal);
-        } else if (field === 'card_id') {
-          return (a[idx]||'').localeCompare(b[idx]||'');
-        } else {
+        }else{
           return (a[idx]||'').localeCompare(b[idx]||'');
         }
       });
     }
 
-    async function renderAllCards() {
-      const ctr = document.getElementById('card-container'); ctr.innerHTML = '';
-      const sortField = getSortField(), altDisplay = getAltDisplay();
-      const sortedProphecyRows = sortRows(allProphecyRows.slice(-displayCount), prophecyHeader, sortField);
-      const sortedMonsterRows  = sortRows(allMonsterRows.slice(-displayCount),  monsterHeader,  sortField);
-      if (altDisplay) {
-        const maxLen = Math.max(sortedProphecyRows.length, sortedMonsterRows.length);
-        for (let i = 0; i < maxLen; i++) {
-          if (i < sortedMonsterRows.length)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
-          if (i < sortedProphecyRows.length) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
+    async function renderAllCards(){
+      const ctr=document.getElementById('card-container');
+      ctr.innerHTML='';
+      const sortField=getSortField(), altDisplay=getAltDisplay();
+      const sortedProphecyRows=sortRows(allProphecyRows.slice(-displayCount), prophecyHeader, sortField);
+      const sortedMonsterRows =sortRows(allMonsterRows.slice(-displayCount),  monsterHeader,  sortField);
+      if(altDisplay){
+        const maxLen=Math.max(sortedProphecyRows.length, sortedMonsterRows.length);
+        for(let i=0;i<maxLen;i++){
+          if(i<sortedMonsterRows.length)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
+          if(i<sortedProphecyRows.length) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
         }
-      } else {
-        for (let i = 0; i < sortedMonsterRows.length;  i++) ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
-        for (let i = 0; i < sortedProphecyRows.length; i++) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
+      }else{
+        for(let i=0;i<sortedMonsterRows.length;i++)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
+        for(let i=0;i<sortedProphecyRows.length;i++) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
       }
     }
 
-    async function reloadCSVsAndRender() {
-      let prophecy, monster; const ts = Date.now();
+    async function reloadCSVsAndRender(){
+      let prophecy, monster; const ts=Date.now();
       if(lang==='en'){
-        prophecy = await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
-        monster  = await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
+        prophecy=await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
+        monster =await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
       }else{
-        prophecy = await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
-        monster  = await loadCSVWithHeader('monster_cards.csv?t='+ts);
+        prophecy=await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
+        monster =await loadCSVWithHeader('monster_cards.csv?t='+ts);
       }
-      prophecyHeader = prophecy.headerArr; allProphecyRows = prophecy.rowsArr;
-      monsterHeader  = monster.headerArr;  allMonsterRows  = monster.rowsArr;
+      prophecyHeader=prophecy.headerArr; allProphecyRows=prophecy.rowsArr;
+      monsterHeader =monster.headerArr;  allMonsterRows =monster.rowsArr;
       await renderAllCards();
     }
 
-    function setLangClass() { document.body.classList.toggle('en-mode', lang==='en'); }
+    function setLangClass(){ document.body.classList.toggle('en-mode', lang==='en'); }
 
-    /* ---------- 绘制裁切线（基于打印布局的实测坐标） ---------- */
-    function buildCutlinesMeasured(){
-      const svg = document.getElementById('cutlines');
-      while (svg.firstChild) svg.removeChild(svg.firstChild);
-
-      const cs = getComputedStyle(document.documentElement);
-      const lineColor = cs.getPropertyValue('--line-color').trim() || 'rgba(120,120,120,.9)';
-
-      // 将 tick(mm) 转 px
-      function cssLenToPx(lenStr){
-        const el = document.createElement('div');
-        el.style.position='absolute'; el.style.left='-9999px'; el.style.top='-9999px';
-        el.style.width = lenStr; el.style.height='0'; el.style.visibility='hidden';
-        document.body.appendChild(el);
-        const px = el.getBoundingClientRect().width; el.remove(); return px;
-      }
-      const tickPx = Math.max(1, Math.round(cssLenToPx(cs.getPropertyValue('--tick').trim() || '1px')));
-
-      const cards = Array.from(document.querySelectorAll('#card-container .card'));
-      if (!cards.length) return;
-
-      // 读取卡片 rect，并按 y,x 排序
-      const rects = cards.map(el=>el.getBoundingClientRect()).sort((a,b)=> (a.top-b.top) || (a.left-b.left));
-
-      // 行分组
-      const rows = [];
-      const lineJoinTol = Math.max(2, Math.round(rects[0].height*0.05)); // 容差：卡高的5%或>=2px
-      rects.forEach(r=>{
-        if (!rows.length) { rows.push([r]); return; }
-        const last = rows[rows.length-1][0];
-        if (Math.abs(r.top - last.top) <= lineJoinTol) rows[rows.length-1].push(r);
-        else rows.push([r]);
-      });
-      rows.forEach(row=>row.sort((a,b)=>a.left-b.left));
-
-      // 视口大小（用于拉满整页）
-      const pageW = Math.max(document.documentElement.clientWidth,  window.innerWidth  || 0);
-      const pageH = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-      svg.setAttribute('width', pageW);
-      svg.setAttribute('height', pageH);
-      svg.setAttribute('viewBox', `0 0 ${pageW} ${pageH}`);
-
-      function addLine(x1,y1,x2,y2){
-        const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
-        ln.setAttribute('x1', x1); ln.setAttribute('y1', y1);
-        ln.setAttribute('x2', x2); ln.setAttribute('y2', y2);
-        ln.setAttribute('stroke', lineColor);
-        ln.setAttribute('stroke-width', tickPx);
-        ln.setAttribute('vector-effect', 'non-scaling-stroke');
-        ln.setAttribute('shape-rendering', 'crispEdges');
-        svg.appendChild(ln);
-      }
-
-      /* ===== 垂直线 ===== */
-      const vXs = [];
-      // 内部：各行相邻列的中点平均
-      const maxCols = Math.max(...rows.map(r=>r.length));
-      for (let j=0; j<maxCols-1; j++){
-        const xs = [];
-        rows.forEach(r=>{
-          if (r.length>j+1){
-            xs.push( (r[j].right + r[j+1].left)/2 );
-          }
-        });
-        if (xs.length) vXs.push(xs.reduce((a,b)=>a+b,0)/xs.length);
-      }
-      // 外侧：用每行首列/末列与相邻间隙估算，再平均
-      const leftCands = [], rightCands = [];
-      rows.forEach(r=>{
-        if (r.length>=2){
-          const gap1 = r[1].left - r[0].right;
-          leftCands.push( r[0].left - gap1/2 );
-          const gapLast = r[r.length-1].left - r[r.length-2].right;
-          rightCands.push( r[r.length-1].right + gapLast/2 );
-        } else if (r.length===1){
-          // 只有一列时按卡宽的3%估一个半间隙
-          const approx = r[0].width*0.03;
-          leftCands.push( r[0].left - approx/2 );
-          rightCands.push( r[0].right + approx/2 );
-        }
-      });
-      if (leftCands.length)  vXs.unshift(leftCands.reduce((a,b)=>a+b,0)/leftCands.length);
-      if (rightCands.length) vXs.push(  rightCands.reduce((a,b)=>a+b,0)/rightCands.length);
-
-      vXs.forEach(x=> addLine(x, 0, x, pageH));
-
-      /* ===== 水平线 ===== */
-      const hYs = [];
-      // 内部：相邻两行同列卡的上下中点平均
-      for (let r=0; r<rows.length-1; r++){
-        const ys = [];
-        const A = rows[r], B = rows[r+1];
-        const colsBoth = Math.min(A.length, B.length);
-        for (let k=0; k<colsBoth; k++){
-          ys.push( (A[k].bottom + B[k].top)/2 );
-        }
-        if (ys.length) hYs.push(ys.reduce((a,b)=>a+b,0)/ys.length);
-      }
-      // 外侧：用第一/第二行、倒数两行估算半间隙，再平均
-      if (rows.length>=2){
-        const topYs = [], botYs = [];
-        const gapTopSamples=[], gapBotSamples=[];
-        const A = rows[0], B = rows[1];
-        const C = rows[rows.length-2], D = rows[rows.length-1];
-        const colsTop = Math.min(A.length,B.length);
-        for (let k=0;k<colsTop;k++) gapTopSamples.push( B[k].top - A[k].bottom );
-        const colsBot = Math.min(C.length,D.length);
-        for (let k=0;k<colsBot;k++) gapBotSamples.push( D[k].top - C[k].bottom );
-        const gapTop = gapTopSamples.reduce((a,b)=>a+b,0)/gapTopSamples.length;
-        const gapBot = gapBotSamples.reduce((a,b)=>a+b,0)/gapBotSamples.length;
-        // 用多列平均后的半间隙
-        const yTop = (A.map(x=>x.top).reduce((a,b)=>Math.min(a,b),Infinity)) - gapTop/2;
-        const yBot = (D.map(x=>x.bottom).reduce((a,b)=>Math.max(a,b),-Infinity)) + gapBot/2;
-        hYs.unshift(yTop); hYs.push(yBot);
-      }else{
-        // 仅一行时用卡高的3%估半间隙
-        const approx = rows[0][0].height*0.03;
-        hYs.unshift(rows[0][0].top - approx/2);
-        hYs.push(rows[0][0].bottom + approx/2);
-      }
-
-      hYs.forEach(y=> addLine(0, y, pageW, y));
-    }
-
-    /* ---------- 打印流程 ---------- */
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('alt-display-toggle').checked = true;
+    /* ---------- 打印流程（背景网格 + 固定排版） ---------- */
+    document.addEventListener('DOMContentLoaded', ()=>{
       reloadCSVsAndRender();
       setLangClass();
 
-      document.getElementById('btn-refresh').onclick = reloadCSVsAndRender;
+      document.getElementById('btn-refresh').onclick=reloadCSVsAndRender;
 
-      const cardCountInput = document.getElementById('card-count');
-      cardCountInput.onchange = function() {
-        let val = parseInt(cardCountInput.value, 10);
-        if (isNaN(val) || val < 1) val = 1;
-        displayCount = val;
+      const cardCountInput=document.getElementById('card-count');
+      cardCountInput.onchange=function(){
+        let val=parseInt(cardCountInput.value,10);
+        if(isNaN(val)||val<1) val=1;
+        displayCount=val;
         renderAllCards();
       };
 
-      // 打印按钮：先切换到“测量用打印布局”，再测量，再 print
-      document.getElementById('btn-print').onclick = function() {
-        document.getElementById('sidebar-panel').style.display = 'none';
-        document.getElementById('main-content').style.marginLeft = '0';
-        document.body.classList.add('measure-print');
+      document.getElementById('btn-print').onclick=function(){
+        // 进入打印布局
+        document.getElementById('sidebar-panel').style.display='none';
+        const main = document.getElementById('main-content');
+        main.style.marginLeft='0';
+        main.classList.add('fixed-print-width');
+        document.getElementById('card-container').classList.add('grid-for-print');
+        document.querySelectorAll('.card').forEach(c=>c.classList.add('card-print-size'));
 
-        // 等一帧让布局稳定
-        requestAnimationFrame(()=>{
-          buildCutlinesMeasured();
-          // 再等一小步，确保 SVG 挂上
+        // 触发打印
+        setTimeout(()=>{
+          window.print();
+          // 恢复
           setTimeout(()=>{
-            window.print();
-            // 恢复
-            setTimeout(()=>{
-              document.body.classList.remove('measure-print');
-              document.getElementById('sidebar-panel').style.display = '';
-              document.getElementById('main-content').style.marginLeft = '240px';
-            }, 100);
-          }, 30);
-        });
+            document.getElementById('sidebar-panel').style.display='';
+            main.style.marginLeft='240px';
+            main.classList.remove('fixed-print-width');
+            document.getElementById('card-container').classList.remove('grid-for-print');
+            document.querySelectorAll('.card').forEach(c=>c.classList.remove('card-print-size'));
+          }, 50);
+        }, 30);
       };
 
-      // 用户直接 Ctrl+P：进入前切换布局并生成线
-      if ('onbeforeprint' in window){
+      // Ctrl+P 直接打印时，自动套用/清理打印布局
+      if('onbeforeprint' in window){
         window.addEventListener('beforeprint', ()=>{
-          document.body.classList.add('measure-print');
-          buildCutlinesMeasured();
+          const main = document.getElementById('main-content');
+          main.classList.add('fixed-print-width');
+          document.getElementById('card-container').classList.add('grid-for-print');
+          document.querySelectorAll('.card').forEach(c=>c.classList.add('card-print-size'));
         });
         window.addEventListener('afterprint', ()=>{
-          document.body.classList.remove('measure-print');
+          const main = document.getElementById('main-content');
+          main.classList.remove('fixed-print-width');
+          document.getElementById('card-container').classList.remove('grid-for-print');
+          document.querySelectorAll('.card').forEach(c=>c.classList.remove('card-print-size'));
         });
-      } else if (window.matchMedia) {
-        const mq = window.matchMedia('print');
-        mq.addListener && mq.addListener(e=>{
-          if (e.matches){
-            document.body.classList.add('measure-print');
-            buildCutlinesMeasured();
-          } else {
-            document.body.classList.remove('measure-print');
-          }
-        });
+      }else if(window.matchMedia){
+        const mq=window.matchMedia('print');
+        if (mq.addEventListener) {
+          mq.addEventListener('change', e=>{
+            const main = document.getElementById('main-content');
+            if(e.matches){
+              main.classList.add('fixed-print-width');
+              document.getElementById('card-container').classList.add('grid-for-print');
+              document.querySelectorAll('.card').forEach(c=>c.classList.add('card-print-size'));
+            }else{
+              main.classList.remove('fixed-print-width');
+              document.getElementById('card-container').classList.remove('grid-for-print');
+              document.querySelectorAll('.card').forEach(c=>c.classList.remove('card-print-size'));
+            }
+          });
+        } else if (mq.addListener) { // 旧浏览器
+          mq.addListener(e=>{
+            const main = document.getElementById('main-content');
+            if(e.matches){
+              main.classList.add('fixed-print-width');
+              document.getElementById('card-container').classList.add('grid-for-print');
+              document.querySelectorAll('.card').forEach(c=>c.classList.add('card-print-size'));
+            }else{
+              main.classList.remove('fixed-print-width');
+              document.getElementById('card-container').classList.remove('grid-for-print');
+              document.querySelectorAll('.card').forEach(c=>c.classList.remove('card-print-size'));
+            }
+          });
+        }
       }
 
-      // 语言
-      function updateLangSwitch() {
-        document.getElementById('lang-cn').classList.toggle('active', lang === 'zh');
-        document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+      // —— 语言切换（恢复） ——
+      function updateLangSwitch(){
+        const cn=document.getElementById('lang-cn');
+        const en=document.getElementById('lang-en');
+        if(!cn || !en) return;
+        cn.classList.toggle('active', lang==='zh');
+        en.classList.toggle('active', lang==='en');
       }
       updateLangSwitch();
-      document.getElementById('lang-cn').onclick = function() {
-        if(lang !== 'zh') { lang = 'zh'; reloadCSVsAndRender(); setLangClass(); updateLangSwitch(); }
+
+      const cnBtn=document.getElementById('lang-cn');
+      const enBtn=document.getElementById('lang-en');
+      if(cnBtn) cnBtn.onclick=function(){
+        if(lang!=='zh'){
+          lang='zh';
+          reloadCSVsAndRender();
+          setLangClass();
+          updateLangSwitch();
+        }
       };
-      document.getElementById('lang-en').onclick = function() {
-        if(lang !== 'en') { lang = 'en'; reloadCSVsAndRender(); setLangClass(); updateLangSwitch(); }
+      if(enBtn) enBtn.onclick=function(){
+        if(lang!=='en'){
+          lang='en';
+          reloadCSVsAndRender();
+          setLangClass();
+          updateLangSwitch();
+        }
       };
     });
   </script>
