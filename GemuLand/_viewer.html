@@ -26,7 +26,20 @@
       font-family: sans-serif;
       padding: 20px;
       margin: 0;
-      background-color: #ffffff; /* Screen-mode background color */
+      background-color: transparent; /* Make body transparent to see ::before */
+    }
+
+    /* The Image Background Trick: Applied globally for screen and print. */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1; /* Place it behind all content */
+      background-image: url('pictures/grid.png'); /* Your tileable grid image */
+      background-repeat: repeat;
+      background-color: #ffffff; /* The page's white background is now here */
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     #card-container {
