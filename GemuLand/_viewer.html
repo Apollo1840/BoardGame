@@ -12,45 +12,21 @@
       --gap: 0.53mm;      /* ≈2px */
       --tick: 0.20mm;     /* 线宽（保留以备后用） */
       --cols: 3;
-
-      /* 背景网格参数（每 20mm 一条线） */
-      --grid-step: 20mm;
-      --grid-tick: 0.18mm;
-      --grid-color: rgba(120,120,120,.9);
     }
 
     /* 屏幕态基础样式 */
-    img, .content-box, .card-title { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    html, body { height: 100%; }
+    img, .content-box, .card-title {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    html, body {
+      height: 100%;
+    }
     body {
       font-family: sans-serif;
       padding: 20px;
       margin: 0;
-
-      /* === 20mm 背景网格（整页，位于所有内容之下） === */
-      background:
-        /* 竖线 */
-        repeating-linear-gradient(
-          to right,
-          transparent 0,
-          transparent calc(var(--grid-step) - var(--grid-tick)),
-          var(--grid-color) calc(var(--grid-step) - var(--grid-tick)),
-          var(--grid-color) var(--grid-step)
-        ),
-        /* 横线 */
-        repeating-linear-gradient(
-          to bottom,
-          transparent 0,
-          transparent calc(var(--grid-step) - var(--grid-tick)),
-          var(--grid-color) calc(var(--grid-step) - var(--grid-tick)),
-          var(--grid-color) var(--grid-step)
-        ),
-        /* 背景底色 */
-        #ffffff;
-      background-repeat: repeat, repeat, no-repeat;
-      background-position: 0 0, 0 0, 0 0;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      background-color: #ffffff; /* Screen-mode background color */
     }
 
     #card-container {
@@ -175,10 +151,20 @@
     /* 打印介质设置 */
     @page { margin: 0; size: auto; }
     @media print{
-      html, body { margin:0!important; padding:0!important; }
+      html, body {
+        margin:0!important;
+        padding:0!important;
+        height: 100%; /* Ensure full height for printing */
+        width: 100%;
+        overflow: visible;
+      }
       #sidebar-panel{ display:none!important; }
       #main-content{ margin-left:0!important; }
-      body{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body {
+        background: #ffffff !important; /* Ensure a pure white background for printing */
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
     }
 
     /* English mode */
@@ -297,7 +283,7 @@
       const area=document.createElement('div'); area.className='card-content';
       const l=(langOverride||lang);
       const labelEffect=l==='en'?'Effect':'效果';
-      const labelResponsive=l==='en'?'Responsive Effect':'响应效果';
+      const labelResponsive=l==='en'?'RespEffect':'响应效果';
       const nl2br=s=>String(s).replace(/\n/g,'<br>');
       if(obj.introduction){ area.innerHTML+=`<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.introduction)}</div></div>`; }
       if(obj.effect){ area.innerHTML+=`<div class="content-box"><div class="box-title">${labelEffect}</div><div class="box-content">${nl2br(obj.effect)}</div></div>`; }
