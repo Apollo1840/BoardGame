@@ -1,8 +1,6 @@
 card_id|card_title|level|monster_type|description|attack|defence|magic|attributes|skills|image|last_update_datetime
-20250914-00001-2322b230|骨刺魔女|1|土|【恶魔族】|10|4|0.5|{}|[{"name":"刺骨穿心","energy_cost":1,"effect":"此卡攻击破坏对方怪兽时，给予对方等同该怪兽防御力的伤害。此伤害视作战斗伤害。此卡防御力+3直到对方回合结束。"}]|pictures/skeleton_girl.png|2025-09-14 15:25:52
 20250914-00002-0dfbcedf|鲨之猎人|0|水|【鱼人种】|5|3|0|{"responsive_attribute":"我方受到非战斗伤害时：抽一张牌。"}|[{"name":"破浪攻击","energy_cost":2,"effect":"【攻击技能】对方随机两张手牌丢弃。"}]|pictures/sharkman.png|2025-09-14 15:24:31
 20250914-00003-86c0c963|飓风魔鱼|1|风|【鱼种】|5|4|2|{}|[{"name":"风吸","energy_cost":0,"effect":"选择对方场上一只怪物卡，回到对方手牌。并获得该怪物所有灵力。"}]|pictures/cyclone.png|2025-09-14 15:24:23
-20250914-00004-0b970164|舞鱼人|0|水|【鱼人种】|0|3|0|{"normal_attribute":"此卡在场上，我方每回合可以额外再使用一次预言卡。"}|[{"name":"防御之舞","energy_cost":0,"effect":"信仰-5，下次对此卡的攻击无效化。"},{"name":"进攻之舞","energy_cost":0,"effect":"每丢弃一张手牌，此卡此回合攻击力+5（最多三张）"}]|pictures/dance_fish.png|2025-09-14 15:24:03
 20250914-00005-b64ac1ef|虎金大哥|0||【鱼人种】|4|4|0.5|{"normal_attribute":"此卡造成的战斗伤害翻1.5倍（向上取整）"}|[{"name":"虎鲸拳","energy_cost":1,"effect":"攻击力x2"}]|pictures/hujin.png|2025-09-14 15:23:49
 20250914-00006-470840aa|龙虾骑士|1|水|【鱼人种】|6|5|0|{"normal_attribute":"此卡攻击力+最高场上其他卡片攻击力加成。"}|[{"name":"虾线冲击","energy_cost":0,"effect":"信仰-5，破坏对方场上一张覆盖的预言卡。并获得一点灵力，可随意分配至场上卡片。"},{"name":"突刺","energy_cost":1,"effect":"【攻击技能】如果此卡攻击力大与对方两只怪兽防御力的总和，可以一起破坏，并计算战斗伤害。"}]|pictures/lobster.png|2025-09-14 15:23:41
 20250914-00007-7feb8c9a|龙王三公主|2|水|【鱼人种】能谋善战，未来的女龙王。|10|8|1|{"normal_attribute":"（一回合一次）可以无效化对此卡的一次攻击，或者一次效果。"}|[]|pictures/dragon_princess.png|2025-09-14 15:23:36
@@ -115,3 +113,10 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251108-00222-89520111|象灵|0|虚|【灵体种】一出生就拥有被祝福的护盾|1|7|1|{"normal_attribute":"防御力+5"}|[]|pictures/little_elephant.png|2025-11-08 15:38:07
 20251108-00225-f796eae0|犀牛战车|0|岩|【石头人种】四肢都可以变成轮式|5|8|0.5|{"normal_attribute":"召唤后，我方信仰 - 7。","responsive_attribute":"此卡发动攻击时：攻击力 + 2"}|[]|pictures/rhino_car.png|2025-11-08 15:38:50
 20251108-00226-ed04544f|雪女.玖|1|冰|【鬼人种】雪山里才能听到她的歌声|9|5|0|{"normal_attribute":"此卡使用技能时，可以使用我方其他怪物的灵力。"}|[{"name":"吹雪","energy_cost":1,"effect":"破坏对方场上一张覆盖怪兽卡。"}]|pictures/ninetail.png|2025-11-08 15:42:57
+20251109-00230-ba84cc39|号角哥布林|0|土|【兽人种】|1|0|0|{}|[{"name":"呼叫","energy_cost":0,"effect":"从牌堆中【直接召唤】一只0级【兽种】或【兽人种】怪物。"}]|pictures/horn_goblin.png|2025-11-09 16:41:13
+20251109-00232-f21f421b|宝箱龙|0|金|【龙种】|3|5|1|{}|[{"name":"龙珠","energy_cost":0,"effect":"从我方场上去除一点灵力，破坏一预言卡。从牌堆种选择一张牌加入手牌。"}]|pictures/treasure_dragon.png|2025-11-09 18:00:48
+20251109-00236-4afb5844|光葵|1|光|【植物人种】|0|11|0|{"normal_attribute":"此卡召唤后自带一点灵力。灵力为0时，防御力归0。","responsive_attribute":"当我方受到或造成效果伤害后：此卡灵力+1，并可以从我方场上吸取一点灵力。"}|[{"name":"投光","energy_cost":1,"effect":"我方一只怪物灵力+1"},{"name":"光束","energy_cost":3,"effect":"【攻击技能】发动攻击力=15的攻击"}]|pictures/sunflower.png|2025-11-09 21:29:36
+20251109-00237-4d64a96a|雷公甲|0|雷|【昆虫人种】|2|6|0|{"normal_attribute":"此卡攻击后无法使用技能，使用技能后无法攻击。","responsive_attribute":"当我方造成效果伤害时：对方信仰 - 3。"}|[{"name":"雷盾","energy_cost":1,"effect":"我方场上一只怪物防御+3直到对方回合结束，若那时该怪物没被战斗破坏，对方信仰 - 2。"}]|pictures/thunder_jia.png|2025-11-09 21:56:53
+20251109-00238-9d912f34|萤妹|0|光|【昆虫人】|3|5|0.5|{"normal_attribute":"如果拥有灵力，防御+2"}|[{"name":"微光","energy_cost":0,"effect":"信仰+3"}]|pictures/firefly.png|2025-11-09 22:04:44
+20250914-00001-2322b230|骨刺魔女|1|土|【恶魔族】|10|4|0.5|{}|[{"name":"刺骨穿心","energy_cost":1,"effect":"【攻击技能】攻击破坏对方怪兽后，给予对方等同被破坏怪物防御力的伤害（战斗伤害）。此后，防御力+3直到对方回合结束。"}]|pictures/skeleton_girl.png|2025-11-16 09:56:47
+20250914-00004-0b970164|舞鱼人|0|水|【鱼人种】|0|3|0|{"normal_attribute":"此卡在场上，我方每回合可以额外再使用一张预言卡。"}|[{"name":"防御之舞","energy_cost":0,"effect":"信仰-5，下次对此卡的攻击无效化。"},{"name":"进攻之舞","energy_cost":0,"effect":"每丢弃一张手牌，此卡此回合攻击力+5（最多三张）"}]|pictures/dance_fish.png|2025-11-16 10:00:07
