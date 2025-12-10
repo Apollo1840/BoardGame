@@ -1,7 +1,4 @@
 card_id|card_title|introduction|effect|responsive_effect|image|last_update_datetime
-20250914-00094-750ddd53|Lost Treasure|[Persistent]||(Once per turn) When we take card-effect damage: choose 1 card from our discard to add to hand.|pictures/lost_treasure.png|2025-09-14 15:27:23
-20250914-00099-ef0b9d6d|Grand Prophecy|[Persistent] The Prophet said nothing—only wrote a book.|On the turn this card is removed from the field, we may use up to three additional Prophecies.||pictures/prophey_book.png|2025-09-14 15:26:30
-20250914-00101-b5a19483|Art of Summons|[Quick]|Additional summon 1 monster; attach this card under it as Mana.||pictures/summon.png|2025-09-14 15:19:02
 20250914-00103-249f1d2d|Windguard|||When our monster is targeted for destruction by an effect: negate that effect and view all cards in the opponent’s hand.|pictures/wind_protection.png|2025-09-14 15:18:38
 20250914-00104-b6d39918|Rally Speech||All our monsters gain ATK +5 this turn.||pictures/fight_speech.png|2025-09-14 15:18:25
 20250914-00109-0053dbb4|Force Snatch|||When the opponent draws a card: take that card or take 1 card from their hand.|pictures/snatch.png|2025-09-14 15:16:18
@@ -138,8 +135,3 @@ card_id|card_title|introduction|effect|responsive_effect|image|last_update_datet
 20251210-00264-c6e32726|Shadow Miasma||Flip 1 opponent monster face-down (Set it); then the opponent discards 1 card of their choice from their hand.||pictures/dark_fog.png|2025-12-10 17:26:22
 20251209-00256-3138649d|Razor Claw|[Persistent/Equipment] Extremely expensive.|Equipped monster gains ATK +4.|When we take effect damage: the equipped monster may immediately make 1 additional attack.|pictures/sharp_craw.png|2025-12-10 19:27:18
 20251123-00246-7c1186ed|Blood Hunt||Destroy 1 opponent Level 0 monster, or 1 opponent Set (face-down) monster.||pictures/blood_strike.png|2025-11-23 13:35:21
-20250914-00114-25a553ae|Fool’s Axe|[Persistent/Equipment] Guided by the Prophet, a magic axe was found.|Equipped monster’s attributes are negated and it cannot use skills. ATK/DEF + 4.||pictures/fool_arc.png|2025-09-17 20:50:34
-20250914-00139-98e184c6|Orb Rebound|||When the opponent declares an attack: negate it; the attacked monster can remove 1 Mana to deal 14 damage to the opponent.|pictures/rebound.png|2025-09-17 20:59:25
-20250914-00085-35544896|Crab King Claw|[Persistent/Equipment]|Equipped monster gets ATK +2, DEF +2.|When our Faith decreases: the equipped monster gains +1 Mana.|pictures/krebs_weapon.png|2025-09-17 21:00:37
-20250914-00100-cfcc35af|Prophecy Chain||You may use 1 extra Prophecy afterwards. If that resolves successfully, flip and use 1 more Set Prophecy from the field.|After a [Chain] occurs during our turn: Prophecy uses are unlimited this turn.|pictures/continous_prophecy.png|2025-09-17 21:01:25
-
