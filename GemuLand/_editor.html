@@ -347,11 +347,17 @@
     }
     // Only show columns in DISPLAY[type], never show card_id or last_update_datetime
     const keys = DISPLAY[type];
+    // Make prophecy card title column wider for better readability
+    const ths = keys.map(k => {
+      // Use em-based width so it scales with font; ~6em fits ~4 Chinese characters comfortably
+      if (type === 'prophecy' && k === 'title') return `<th style="width:6em;">${LABELS[k]}</th>`;
+      return `<th>${LABELS[k]}</th>`;
+    }).join('');
     let html = `
       <div class="card-table">
         <table class="table table-sm table-bordered align-middle">
           <thead><tr>
-            ${keys.map(k=>`<th>${LABELS[k]}</th>`).join('')}
+            ${ths}
             <th style="width:120px;">操作</th>
           </tr></thead><tbody>`;
 

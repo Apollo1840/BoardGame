@@ -125,3 +125,13 @@ card_id|card_title|introduction|effect|responsive_effect|image|last_update_datet
 20251123-00245-f576745f|Judging Eye||Look at all opponent Set (face-down) cards on the field, then choose 1 to destroy.||pictures/judge_eyes.png|2025-11-29 11:21:11
 20251128-00249-00997300|Royal Sight|[Persistent]|You may look at the top card of the opponent’s deck.||pictures/sight_power.png|2025-11-29 11:21:23
 20251128-00250-97e6e32c|Self-Detonation Raid||Destroy 1 monster we control; flip all opponent monsters face-down (Set them); opponent loses 5 Faith.||pictures/selfboom.png|2025-11-29 11:21:33
+20251209-00254-1aa8acfc|Deathward Surge||All our monsters gain ATK +1; then destroy 2 monsters we control; then destroy 1 monster the opponent controls.||pictures/death_charge.png|2025-12-09 08:54:59
+20251210-00262-e4cd1617|Duel of Two Dragons||Target 1 monster you control; it immediately attacks another monster you control. If that battle destroys the attacked monster: the attacker gains ATK equal to that monster’s original ATK + DEF until end of turn; this turn, its battle damage is doubled.||pictures/dragon_fight.png|2025-12-10 15:42:24
+20251210-00261-8bd319a8|True Dragon Orb|||When we would take battle damage: negate that damage, then restore the same amount of Faith.|pictures/dragon_heart.png|2025-12-10 15:46:46
+20250914-00140-0e578bd2|Virtual Mirror Return|||When we would take effect damage: negate that damage, then inflict the same amount to the opponent.|pictures/magic_mirrow.png|2025-12-10 15:51:23
+20251209-00255-654e11a4|Draconic Glare|||When the opponent declares an attack: negate that attack. If we have no cards in hand, return all opponent monsters to their owner’s hand.|pictures/dragon_scary.png|2025-12-10 17:22:28
+20251209-00254-1aa8acfc|Deathward Surge||All our monsters gain ATK +1; then destroy 2 monsters we control; then destroy 1 monster the opponent controls.||pictures/death_charge.png|2025-12-10 17:22:40
+20251210-00263-b156e9bc|Sealing Talisman|||When the opponent activates a Prophecy: negate its effect, and that Prophecy does not generate Mana attachment.|pictures/forbiden.png|2025-12-10 17:22:52
+20251210-00264-c6e32726|Shadow Miasma||Flip 1 opponent monster face-down (Set it); then the opponent discards 1 card of their choice from their hand.||pictures/dark_fog.png|2025-12-10 17:26:22
+20251209-00256-3138649d|Razor Claw|[Persistent/Equipment] Extremely expensive.|Equipped monster gains ATK +4.|When we take effect damage: the equipped monster may immediately make 1 additional attack.|pictures/sharp_craw.png|2025-12-10 19:27:18
+20251123-00246-7c1186ed|Blood Hunt||Destroy 1 opponent Level 0 monster, or 1 opponent Set (face-down) monster.||pictures/blood_strike.png|2025-11-23 13:35:21
