@@ -118,7 +118,6 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20250914-00030-57451eff|坐骑狼|1|土|【动物种】由于智商比较低，所以可以乘骑一会儿的狼。|5|8|0.5|{"normal_attribute":"对方场上没有怪物时，攻击力+3","responsive_attribute":"当我方怪物发动攻击时：此卡可以协同攻击。该怪物攻击力+此卡攻击力。（协同攻击消耗此卡攻击次数）"}|[]|pictures/ride_wolf.png|2025-12-09 07:42:08
 20251209-00253-adf6d99c|死灵法师哥布林|0|暗|【兽人种】|2|6|0.5|{}|[{"name":"哥尸","energy_cost":0,"effect":"从墓地直接召唤一只怪物；该怪物当回合不可使用技能，原本攻击力防御力改为0。此卡离场后该怪物也被破坏。"},{"name":"血祭","energy_cost":0,"effect":"破坏我方场上一只怪物（不可自己），对方信仰 - 10"}]|pictures/necro_goblin.png|2025-12-09 09:00:57
 20251209-00251-babe64aa|蓝色哥布林|0|土|【兽人种】|2|2|1.5|{"responsive_attribute":"当此卡被战斗破坏后：下回合我方获得一次额外召唤的机会。"}|[{"name":"呼唤","energy_cost":1,"effect":"抽2张牌，如果其中有预言卡，则丢弃一张预言卡。"}]|pictures/blue_goblin.png|2025-12-09 09:03:02
-20251209-00252-d526191d|拉琳菲尔|0|土|【魔灵种】|0|0|0|{}|[]|pictures/lalinfier.png|2025-12-09 09:03:06
 20250926-00173-796b27ae|迅雷快龙|0|雷|【龙种】|3|5|0.5|{"normal_attribute":"（如果此卡有灵力）针对我方卡牌的卡牌破坏效果会失效。","responsive_attribute":"当对方使用带有破卡效果的卡牌时：此卡灵力-1。"}|[]|pictures/lighting_dragon.png|2025-12-09 09:58:31
 20250914-00081-17a4e98b|刚铎幼龙|0|火|【龙种】|10|5|0|{"normal_attribute":"破坏我方场上1张怪物（或丢弃2张手牌），才可采用普通方式召唤此卡。","responsive_attribute":"当我方回合结束时：我方信仰-5"}|[]|pictures/little_dragon.png|2025-12-10 15:00:01
 20250914-00080-82c3f4a2|霜鳞幼龙|0|冰|【龙种】|7|8|0|{"normal_attribute":"将一张预言卡放回牌堆上方，才可采用普通方式召唤。","responsive_attribute":"当我方回合结束时：我方信仰-5"}|[]|pictures/dragon2.png|2025-12-10 15:00:07
@@ -133,3 +132,4 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251210-00258-70a38d4b|凶暴橙龙|0|火|【龙种】|9|6|0|{"normal_attribute":"上回合我方有怪物卡被破坏，才可采用通常方式召唤此卡。召唤后我方信仰-5。","responsive_attribute":"当此卡给对方造成【战斗伤害】时：我方承担相同【战斗伤害】"}|[]|pictures/orange_dragon.png|2025-12-10 16:27:18
 20251210-00259-3b2c7f5f|四翼魔龙|1|暗|【龙种】|7|7|1|{"normal_attribute":"破坏我方场上一张牌，如果该牌和我方牌堆最上方的牌一致，才可以普通方式召唤此卡。如果对方场上没有正面怪物，此卡可以直接攻击对方。","responsive_attribute":"当我方受到【战斗伤害】时：我方信仰-5，此卡攻击力防御力x2直到我方回合结束。"}|[{"name":"紫龙焰","energy_cost":0,"effect":"破坏对方场上一只（攻击力<5）的怪物。"}]|pictures/purple_dragon.png|2025-12-10 16:27:23
 20251209-00257-e42b4960|虚境龙王|2|虚|【龙种】|16|6|1.5|{"normal_attribute":"与此卡战斗的怪物暂时失去所有攻击力和防御力加成。","responsive_attribute":"当我方回合结束时：我方信仰-10"}|[{"name":"裂空","energy_cost":0,"effect":"开启（或关闭）【虚化】增益：无法发起和被攻击。不受任何除了自身以外的效果影响。"}]|pictures/virtual_dragon.png|2025-12-10 16:27:32
+20251209-00252-d526191d|拉琳菲尔|0|光|【魔灵种】|4|4|0.5|{"responsive_attribute":"当此卡使用灵力时：我方信仰+使用灵力"}|[{"name":"锤锤剑","energy_cost":2,"effect":"【攻击技能】破坏被攻击怪物，不计算战斗伤害。"}]|pictures/lalinfier.png|2025-12-10 20:53:17
