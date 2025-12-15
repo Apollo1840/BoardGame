@@ -296,9 +296,11 @@ V_ATK(5) + DMG.E2() = 2
 ```python
 MANA(x) = x
 
-1/p(MANA) = 1.3           # 对方主动获得或使用了MANA
-1/p(MANA(x)) = 1.5      # 对方主动获得了MANA
-1/p(MANA(-x)) = 1.5       # 对方主动使用了MANA
+1/p(MANA.has) = 2       # 拥有MANA, 预言卡调整
+1/p(-MANA(x)) = 1.5     # 对方主动获得了MANA
+1/p(MANA(-x)) = 1.5     # 对方主动使用了MANA
+1/p(MANA) = 1.3         # 对方主动获得或使用了MANA
+
 
 # 例如：
 MANA(1) = 1
