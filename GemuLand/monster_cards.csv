@@ -149,3 +149,4 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251122-00244-ffd94bf9|石砖虫|0|岩|【昆虫种】一种石头城堡里才会出现的虫。|3|7|0|{}|[]|pictures/castle_insect.png|2025-12-20 08:24:50
 20251220-00295-91be3e02|白砖虫|0|岩|【昆虫种】特殊的石砖虫，在白色城堡才会出现。|3|6|0.5|{}|[{"name":"白垩","energy_cost":0,"effect":"对方信仰-2"}]|pictures/rock_insect.png|2025-12-20 08:25:23
 20251122-00243-2567e1b9|巨翼骑士|0|火|【鸟人种】鸟人种里也算稀有分支，藏匿着生活在人类中。|6|4|0|{}|[]|pictures/wing_knight.png|2025-12-20 08:33:14
+20251221-00298-3523c7b9|白雪魔女|0|冰|【恶魔种】通过亲吻吸食好色者的灵气|2|2|1.5|{"responsive_attribute":"当此卡被指定为攻击对象时：吸取进攻怪物1点灵力。当此卡被攻击时：有1/2的概率不被战斗破坏。"}|[{"name":"飞吻","energy_cost":0,"effect":"对方信仰-对方怪物数量*2"}]|pictures/snow_princess.png|2025-12-20 16:28:56
