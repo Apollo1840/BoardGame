@@ -486,7 +486,13 @@
           }
         });
         const idxStr = String(maxIdx + 1).padStart(5,'0');
-        const randStr = Math.random().toString(16).slice(2,10);
+        // Generate an 8-char rand segment where the first char indicates type:
+        // 'm' for monster, 'p' for prophecy, followed by 7 hex chars.
+        let randHex = Math.random().toString(16).slice(2);
+        while (randHex.length < 7) randHex += Math.random().toString(16).slice(2);
+        randHex = randHex.slice(0,7);
+        const prefix = (type === 'monster') ? 'm' : 'p';
+        const randStr = prefix + randHex;
         card.card_id = `${dateStr}-${idxStr}-${randStr}`;
         card.last_update_datetime = new Date().toISOString().replace('T',' ').substring(0,19);
         state.cards[type] = (state.cards[type]||[]).concat(card);
