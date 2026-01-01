@@ -38,7 +38,6 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20250914-00028-b9ff4830|少年勇士|0|金|【人类种】意气风发的少年勇士。|4|6|0|{}|[]|pictures/young_fighter.png|2025-11-08 14:06:28
 20251108-00221-1f0136ac|野猪战士|0|火|【兽人种】能打能抗，兽人中战斗明星。|6|4|0|{}|[]|pictures/quilboar.png|2025-11-08 14:06:46
 20251108-00222-89520111|象灵|0|虚|【灵体种】一出生就拥有被祝福的护盾|1|7|1|{"normal_attribute":"防御力+5"}|[]|pictures/little_elephant.png|2025-11-08 15:38:07
-20251108-00225-f796eae0|犀牛战车|0|岩|【石头人种】四肢都可以变成轮式|5|8|0.5|{"normal_attribute":"召唤后，我方信仰 - 7。","responsive_attribute":"此卡发动攻击时：攻击力 + 2"}|[]|pictures/rhino_car.png|2025-11-08 15:38:50
 20251108-00226-ed04544f|雪女.玖|1|冰|【鬼人种】雪山里才能听到她的歌声|9|5|0|{"normal_attribute":"此卡使用技能时，可以使用我方其他怪物的灵力。"}|[{"name":"吹雪","energy_cost":1,"effect":"破坏对方场上一张覆盖怪兽卡。"}]|pictures/ninetail.png|2025-11-08 15:42:57
 20250914-00001-2322b230|骨刺魔女|1|土|【恶魔族】|10|4|0.5|{}|[{"name":"刺骨穿心","energy_cost":1,"effect":"【攻击技能】攻击破坏对方怪兽后，给予对方等同被破坏怪物防御力的伤害（战斗伤害）。此后，防御力+3直到对方回合结束。"}]|pictures/skeleton_girl.png|2025-11-16 09:56:47
 20250914-00006-470840aa|龙虾骑士|1|水|【鱼人种】|6|5|0|{"normal_attribute":"此卡攻击力+最高场上其他卡片攻击力加成。"}|[{"name":"虾线冲击","energy_cost":0,"effect":"信仰-5，破坏对方一张覆盖预言卡。获得一点灵力，可随意分配至场上卡片。"},{"name":"突刺","energy_cost":1,"effect":"【攻击技能】如果此卡攻击力大与对方两只怪兽防御力的总和，可以一起破坏，一并计算战斗伤害。"}]|pictures/lobster.png|2025-11-16 10:13:54
@@ -184,5 +183,17 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251226-00361-0dec7c85|蛙蛙王子|0|水|【动物种】|2|6|0|{"responsive_attribute":"当对方发起攻击时：将此卡返回我方卡堆最上方，无效其攻击。"}|[{"name":"金身","energy_cost":1,"effect":"免疫一次破坏，直到对方回合结束。"}]|pictures/frogprince.png|2025-12-26 15:31:52
 20251226-00357-1e33e8e7|通天巨蔓|1|木|【植物种】|5|6|0|{"normal_attribute":"拥有【通常属性】的怪物无法攻击此卡。","responsive_attribute":"当对方怪物使用技能时：对方信仰-5。"}|[{"name":"通天","energy_cost":0,"effect":"丢弃一张手牌，查看对方所有手牌。"},{"name":"撼地","energy_cost":1,"effect":"破坏对方一张【永续/场景】预言卡。"}]|pictures/skywood.png|2025-12-26 16:27:45
 20251226-00359-9e8dc0b5|灯神|2|暗|【灵体种】|8|8|0.5|{}|[{"name":"财富","energy_cost":0,"effect":"我方抽一张牌，对方抽一张牌。"},{"name":"名声","energy_cost":0,"effect":"互看双方手牌。"},{"name":"权力","energy_cost":0,"effect":"破坏对方场上一张怪物卡（或预言卡），我方随机破坏一张同类型卡。"}]|pictures/lightdemo.png|2025-12-26 16:40:56
-20251229-00368-m2cb14d1|毒脉石獾|1|毒|【石兽种】|4|9|0.5|{}|[{"name":"毒雾","energy_cost":0,"effect":"（若对方场上有怪物）对方信仰-4"},{"name":"毒障","energy_cost":1,"effect":"我方信仰-2，此卡防御力+7直到对方回合结束。"}]|pictures/toxic_rock.png|2025-12-28 22:17:03
-20251229-00367-mcbfa0d4|绿野鬼女|0|毒|【鬼人种】|5|0|0.5|{"normal_attribute":"每回合第一次攻击攻击力+3","responsive_attribute":"当此卡给对方造成（>4）【战斗伤害】时：追加5【战斗伤害】。"}|[{"name":"毒镰","energy_cost":1,"effect":"【攻击技能】攻击力+2，对方信仰-3。"}]|pictures/toxic_gost.png|2025-12-28 22:22:06
+20251108-00225-f796eae0|犀牛战车|0|岩|【石兽种】四肢都可以变成轮式|5|8|0.5|{"normal_attribute":"召唤后，我方信仰 - 7。","responsive_attribute":"此卡发动攻击时：攻击力 + 2"}|[]|pictures/rhino_car.png|2025-12-31 16:38:37
+20251229-00368-m2cb14d1|毒脉石獾|1|毒|【石兽种】|4|9|0.5|{}|[{"name":"毒雾","energy_cost":0,"effect":"（若对方场上有怪物）对方信仰-4"},{"name":"毒障","energy_cost":1,"effect":"我方信仰-2，此卡防御力+7直到对方回合结束。"}]|pictures/toxic_rock.png|2025-12-31 16:38:44
+20251229-00367-mcbfa0d4|绿野鬼女|0|毒|【鬼人种】|5|0|0.5|{"normal_attribute":"每回合第一次攻击攻击力+3","responsive_attribute":"当此卡给对方造成（>4）【战斗伤害】时：追加5【战斗伤害】。"}|[{"name":"毒镰","energy_cost":1,"effect":"【攻击技能】攻击力+2，对方信仰-3。"}]|pictures/toxic_gost.png|2025-12-31 16:38:50
+20251231-00380-m865836e|霜铃兰|0|光|【植物种】|0|0|0|{}|[]|pictures/frostbell.png|2025-12-31 18:02:15
+20251231-00374-mef32832|霜原狼|0|冰|【动物种】|6|2|0.5|{"normal_attribute":"召唤后第一次攻击攻击力+5"}|[{"name":"毒牙","energy_cost":1,"effect":"【攻击技能】对方信仰-3（若是第一次攻击）信仰再-5"}]|pictures/glasswolf.png|2025-12-31 19:35:13
+20251231-00376-m463d260|毒凝机兵|0|冰|【机器种】|7|2|0.5|{}|[{"name":"自冰","energy_cost":1,"effect":"获得【冻盾】增益：防御+10，无法发动攻击。"},{"name":"自热","energy_cost":1,"effect":"去除【冻盾】增益。"}]|pictures/frostcondenser.png|2025-12-31 19:36:49
+20251231-00377-m7dc88b2|冻象獒|0|冰|【石兽种】|2|7|0.5|{}|[{"name":"冰原引擎","energy_cost":2,"effect":"此回合攻击力+12"}]|pictures/mastodon.png|2025-12-31 22:22:45
+20251231-00375-maeb49c2|霜寒巨熊|0|冰|【魔灵种】|1|5|0|{"responsive_attribute":"当此卡被攻击时：可以舍弃一张手牌，使得此卡防御暂时+3。"}|[{"name":"霜吸","energy_cost":0,"effect":"破坏我方场上一只怪物，选择我方场上一怪物防御力+3（可叠加）"},{"name":"霜暴","energy_cost":1,"effect":"（若我方手牌数<5）对方信仰-5。"}]|pictures/icebear.png|2025-12-31 23:02:09
+20251231-00373-m5578669|霜毒花喉|0|毒|【植物种】|2|3|1|{}|[{"name":"霜毒","energy_cost":0,"effect":"对方信仰-10，对方回合结束时信仰+5"},{"name":"冰叶","energy_cost":1,"effect":"【攻击技能】此攻击攻击力+6，防御力-2直到对方回合结束。"}]|pictures/frostmaw.png|2025-12-31 23:06:00
+20251231-00372-m28528c8|老烟鸟|0|毒|【鸟人种】|1|4|1|{"responsive_attribute":"当我方给对方造成了【战斗伤害】：追加7【战斗伤害】"}|[{"name":"羽盾","energy_cost":1,"effect":"下回合攻击此卡的怪物攻击力永久下降5。"}]|pictures/chimeney.png|2025-12-31 23:17:04
+20251231-00371-m3186ad5|冰焊工|0|冰|【机器种】|1|4|1|{"normal_attribute":"我方抽牌阶段抽牌数+1（不视为额外抽牌）"}|[{"name":"基建","energy_cost":1,"effect":"我方所有怪物攻击力+3直到回合结束。"}]|pictures/frostwelder.png|2025-12-31 23:37:25
+20251231-00381-me1d00c5|旅者精灵|0|光|【精灵种】|2|4|0|{"normal_attribute":"双方在每回合抽牌阶段都获得一点灵力","responsive_attribute":"此卡被召唤后：我方灵力+1"}|[{"name":"祝福盾","energy_cost":1,"effect":"无效化一次对方下回合的攻击。"}]|pictures/frostelf.png|2026-01-01 11:16:20
+20251231-00378-mbb19cd0|冰弧线缆师|0|雷|【精灵种】法师+刺客|0|0|0|{}|[]|pictures/cablemender.png|2026-01-01 11:28:00
+20251231-00379-m4dee3f1|冻尘飘|0|虚|【不死种】法师 + 坦克|0|0|0|{}|[]|pictures/frostwrapper.png|2026-01-01 11:28:05
