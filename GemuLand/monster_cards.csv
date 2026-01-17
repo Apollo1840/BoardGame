@@ -14,7 +14,6 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20250914-00053-908d8b7c|超级彩虹桉|1|木|【植物人种】|8|6|0.5|{"normal_attribute":"每点携带灵力给自身+1攻击力，+1防御力。"}|[]|pictures/rainbow_tree.png|2025-09-14 07:59:20
 20250914-00054-44a30c65|财宝仓鼠|0|金|【动物种】|0|4|2|{"responsive_attribute":"（一回合一次）当我方丢弃手牌或额外抽牌时：可以去除此卡两点灵力。随机将对方场上一张正面表示的牌移动到我方场上。"}|[]|pictures/gold_hamster.png|2025-09-14 07:59:20
 20250914-00055-a00cc723|爆影精灵|1|暗|【精灵种】|5|4|2|{}|[{"name":"传洞","energy_cost":1,"effect":"丢弃一张手牌，将对方场上一张卡牌放置到对方牌堆上方。"}]|pictures/shadow_burst.png|2025-09-14 07:59:20
-20250914-00057-a0e1d429|雷暴蜂后|1|雷|【昆虫人种】|8|5|1|{}|[{"name":"雷击","energy_cost":0,"effect":"给予对方5点伤害。"}]|pictures/storm_hornet.png|2025-09-14 07:59:20
 20250914-00060-c656f44a|双首九尾冰狐|0|冰|【魔灵种】|4|0|1.5|{"normal_attribute":"此卡一回合可以额外再攻击一次。","responsive_attribute":"此卡被攻击时，防御力+3"}|[]|pictures/nine_tails.png|2025-09-14 07:59:20
 20250914-00062-63793c4a|玄壳毒母|0|毒|【昆虫种】|4|5|0.5|{"normal_attribute":"攻击力+2"}|[]|pictures/poison.png|2025-09-14 07:59:20
 20250914-00063-e59990d1|符石傀儡|0|岩|【石头人种】|3|5|1|{}|[{"name":"符石充能","energy_cost":0,"effect":"此回合攻击力+5"}]|pictures/magic_rock.png|2025-09-14 07:59:20
@@ -147,7 +146,6 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251217-00293-0aaaef9b|小丑|2|木|【不死种】|9|9|0|{"normal_attribute":"此卡会造成战斗伤害。此卡攻击攻击力低于此卡的怪物才能将其战斗破坏；此卡被防御力高于此卡的怪物攻击才能被战斗破坏。"}|[{"name":"鬼牌","energy_cost":0,"effect":"与墓地里的一张牌交换。"}]|pictures/joker.png|2025-12-17 22:40:15
 20251122-00244-ffd94bf9|石砖虫|0|岩|【昆虫种】一种石头城堡里才会出现的虫。|3|7|0|{}|[]|pictures/castle_insect.png|2025-12-20 08:24:50
 20251220-00295-91be3e02|白砖虫|0|岩|【昆虫种】特殊的石砖虫，在白色城堡才会出现。|3|6|0.5|{}|[{"name":"白垩","energy_cost":0,"effect":"对方信仰-2"}]|pictures/rock_insect.png|2025-12-20 08:25:23
-20251122-00243-2567e1b9|巨翼骑士|0|火|【鸟人种】鸟人种里也算稀有分支，藏匿着生活在人类中。|6|4|0|{}|[]|pictures/wing_knight.png|2025-12-20 08:33:14
 20251222-00307-0c1591c6|刘备|0|火|【人类种】|2|4|0|{"responsive_attribute":"当我方额外抽牌时：信仰+7"}|[{"name":"激将","energy_cost":0,"effect":"【专注】我方场上一只怪物额外攻击一次"},{"name":"德报","energy_cost":3,"effect":"【攻击技能】此次攻击攻击力+10。造成【战斗伤害】后，此卡防御+该伤害值直到对方回合结束。"}]|pictures/liubei.png|2025-12-21 21:40:59
 20251222-00308-6c3942f3|关羽|1|金|【人类种】|9|5|0|{"normal_attribute":"（一回合一次）丢弃一张预言卡，可额外攻击一次。"}|[{"name":"千里单骑","energy_cost":3,"effect":"【攻击技能】同时攻击对方场上所有目标。"}]|pictures/guanyu.png|2025-12-21 22:20:29
 20251222-00309-365ec6ac|张飞|0|土|【人类种】|0|4|1|{"normal_attribute":"此卡攻击次数等于对方场上怪物卡数量。此卡每攻击一次，防御力+1（可叠加）"}|[{"name":"守护","energy_cost":1,"effect":"选择场上另一只怪物，与自己都防御力+3"},{"name":"血性","energy_cost":5,"effect":"（防御力>9才可以发动）此卡进入【狂暴】状态：不可使用技能，属性失效，攻击力防御力变成15/15直到下次我方回合结束。"}]|pictures/zhangfei.png|2025-12-21 22:21:02
@@ -197,3 +195,7 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251231-00381-me1d00c5|旅者精灵|1|光|【精灵种】|5|5|0.5|{"normal_attribute":"双方在每回合抽牌阶段都获得一点灵力","responsive_attribute":"此卡被召唤后：我方灵力+2"}|[{"name":"祝福盾","energy_cost":1,"effect":"无效化一次对方下回合的攻击。"}]|pictures/frostelf.png|2026-01-01 18:42:57
 20251231-00380-m865836e|霜铃兰|0|光|【植物种】|0|0|0|{}|[{"name":"采摘","energy_cost":0,"effect":"破坏此卡，我方信仰+14"}]|pictures/frostbell.png|2026-01-02 22:40:06
 20251231-00375-maeb49c2|霜寒巨熊|2|冰|【魔灵种】|6|10|0|{"responsive_attribute":"当此卡被攻击时：可以舍弃一张手牌，使得此卡防御暂时+3。"}|[{"name":"霜吸","energy_cost":0,"effect":"破坏我方场上一只怪物，选择我方场上一怪物防御力+3（可叠加）"},{"name":"掌心寒","energy_cost":1,"effect":"【攻击技能】攻击力-1，战斗伤害+8"},{"name":"霜暴","energy_cost":1,"effect":"（若我方手牌数<5）对方信仰-5。"}]|pictures/icebear.png|2026-01-02 22:51:11
+20251122-00243-2567e1b9|巨翼骑士|0|火|【鸟人种】鸟人种里也算稀有分支，藏匿着生活在人类中。|4|6|0|{}|[]|pictures/wing_knight.png|2026-01-17 20:43:13
+20260117-00393-meda21ad|具身智能体.雷光|0|雷|【机器种】|6|2|0.5|{"responsive_attribute":"当发动的攻击结算后：攻击力+1（可叠加）"}|[{"name":"触电","energy_cost":1,"effect":"对方信仰-对方场上卡片数量x2"}]|pictures/thunder_robot.png|2026-01-17 21:03:39
+20260117-00395-md915b38|诡雷炮台|0|雷|【机器种】黑色雷炮射手|1|4|1|{}|[{"name":"小雷炮","energy_cost":0,"effect":"丢弃一张手牌，对方信仰-7"},{"name":"大雷炮","energy_cost":2,"effect":"丢弃一张手牌，对方信仰-18"}]|pictures/blacklight_robot.png|2026-01-17 21:06:26
+20250914-00057-a0e1d429|雷暴蜂后|1|雷|【昆虫人种】|8|5|1|{}|[{"name":"雷击","energy_cost":0,"effect":"对方信仰-5"}]|pictures/storm_hornet.png|2026-01-17 21:09:47

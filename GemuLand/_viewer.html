@@ -210,6 +210,7 @@
         <select id="sort-field" style="flex:1;">
           <option value="description">描述</option>
           <option value="update_datetime" selected>更新时间</option>
+              <option value="monster_type">怪物属性</option>
           <option value="card_id">卡牌ID</option>
         </select>
       </div>
@@ -351,7 +352,7 @@
     function sortRows(rows, header, field){
       const idx=header.indexOf(field); if(idx===-1) return rows.slice();
       return rows.slice().sort((a,b)=>{
-        if(field==='update_datetime'){
+        if(field==='update_datetime'||field==='monster_type'){
           const aVal=a[idx]||'', bVal=b[idx]||'';
           const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
           if(!isNaN(aDate)&&!isNaN(bDate)) return aDate-bDate;
