@@ -212,6 +212,10 @@
           <option value="update_datetime" selected>更新时间</option>
               <option value="monster_type">怪物属性</option>
           <option value="card_id">卡牌ID</option>
+          <option value="point_atk_def">按照点数（攻防）排序</option>
+          <option value="point_def_atk">按照点数（防攻）排序</option>
+          <option value="effect">按照效果排序</option>
+          <option value="skill_count">按技能数</option>
         </select>
       </div>
       <div class="section-row" style="margin-top:8px;">
@@ -350,13 +354,53 @@
     const getAltDisplay=()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
 
     function sortRows(rows, header, field){
-      const idx=header.indexOf(field); if(idx===-1) return rows.slice();
+      const idx=header.indexOf(field); if(idx===-1 && field!=='point_atk_def' && field!=='point_def_atk' && field!=='effect' && field!=='skill_count') return rows.slice();
       return rows.slice().sort((a,b)=>{
         if(field==='update_datetime'||field==='monster_type'){
           const aVal=a[idx]||'', bVal=b[idx]||'';
           const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
           if(!isNaN(aDate)&&!isNaN(bDate)) return aDate-bDate;
           return aVal.localeCompare(bVal);
+        }else if(field==='point_atk_def'||field==='point_def_atk'){
+          const atkIdx=header.indexOf('attack'), defIdx=header.indexOf('defence');
+          if(atkIdx===-1||defIdx===-1) return rows.slice();
+          const aAtk=parseFloat(a[atkIdx])||0, aDef=parseFloat(a[defIdx])||0;
+          const bAtk=parseFloat(b[atkIdx])||0, bDef=parseFloat(b[defIdx])||0;
+          if(field==='point_atk_def'){
+            if(aAtk!==bAtk) return aAtk-bAtk;
+            return aDef-bDef;
+          }else{
+            if(aDef!==bDef) return aDef-bDef;
+            return aAtk-bAtk;
+          }
+        }else if(field==='effect'){
+          const normalAttrIdx=header.indexOf('attributes');
+          const effectIdx=header.indexOf('effect');
+          const responsiveEffectIdx=header.indexOf('responsive_effect');
+          
+          let aEffectStr='', bEffectStr='';
+          
+          if(normalAttrIdx!==-1){
+            // Monster cards: concatenate normal_attribute + responsive_attribute from attributes JSON
+            const aAttr=(()=>{try{return JSON.parse(a[normalAttrIdx]||'{}');}catch{return{}};})()||{};
+            const bAttr=(()=>{try{return JSON.parse(b[normalAttrIdx]||'{}');}catch{return{}};})()||{};
+            aEffectStr=(aAttr.normal_attribute||'')+(aAttr.responsive_attribute||'');
+            bEffectStr=(bAttr.normal_attribute||'')+(bAttr.responsive_attribute||'');
+          }else if(effectIdx!==-1){
+            // Prophecy cards: concatenate effect + responsive_effect
+            aEffectStr=(a[effectIdx]||'')+(responsiveEffectIdx!==-1?a[responsiveEffectIdx]||'':'');
+            bEffectStr=(b[effectIdx]||'')+(responsiveEffectIdx!==-1?b[responsiveEffectIdx]||'':'');
+          }
+          return String(aEffectStr).localeCompare(String(bEffectStr));
+        }else if(field==='skill_count'){
+          const skillsIdx=header.indexOf('skills');
+          let aSkills=[];
+          try{ aSkills=JSON.parse(a[skillsIdx]||'[]');}catch{}
+          let bSkills=[];
+          try{ bSkills=JSON.parse(b[skillsIdx]||'[]');}catch{}
+          const aCount=Array.isArray(aSkills)?aSkills.length:0;
+          const bCount=Array.isArray(bSkills)?bSkills.length:0;
+          return aCount-bCount;
         }else{
           return (a[idx]||'').localeCompare(b[idx]||'');
         }
