@@ -1,10 +1,6 @@
 card_id|card_title|level|monster_type|description|attack|defence|magic|attributes|skills|image|last_update_datetime
 20250914-00007-7feb8c9a|龙王三公主|2|水|【鱼人种】能谋善战，未来的女龙王。|10|8|1|{"normal_attribute":"（一回合一次）可以无效化对此卡的一次攻击，或者一次效果。"}|[]|pictures/dragon_princess.png|2025-09-14 15:23:36
-20250914-00015-75357920|珍珠人鱼|0|水|【鱼人种】婴儿般大小的人鱼。|2|3|1|{}|[{"name":"召唤风浪","energy_cost":0,"effect":"选择对方场上一张牌回到对方手牌。我方丢弃一张手牌"},{"name":"珍珠圣光","energy_cost":5,"effect":"给对方造成30点伤害"}]|pictures/pearl_girl.png|2025-09-14 15:22:32
 20250914-00023-166ef75c|江湖侠客|1|金|【人类种】女装大佬，枪法了得。|7|6|1|{"normal_attribute":"（一回合一次）将对方对此卡的攻击无效化。"}|[]|pictures/female_lancher.png|2025-09-14 15:12:32
-20250914-00046-def8536f|风灵真君|0|风|【天仙种】|6|2|0|{"responsive_attribute":"当场上有卡牌回到手牌时：此卡攻击+15直到该回合结束。"}|[{"name":"风卷残云","energy_cost":1,"effect":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png|2025-09-14 07:59:20
-20250914-00047-fed51b35|天使卫兵|0|光|【天使种】|2|3|1|{}|[{"name":"圣罚","energy_cost":0,"effect":"【攻击技能】被指定攻击的怪物无法发动技能直到对方回合结束。"},{"name":"天赐","energy_cost":1,"effect":"声明对方一张手牌，如果命中，获得该手牌。"}]|pictures/angle_guard.png|2025-09-14 07:59:20
-20250914-00050-aa34160b|树枝女|0|木|【植物人种】|2|3|1|{"responsive_attribute":"我方使用预言卡时：此卡灵力+1。"}|[{"name":"传输灵力","energy_cost":0,"effect":"从此卡移出最多2点灵力，可分配给一张或两张怪物。"}]|pictures/woodwoman.png|2025-09-14 07:59:20
 20250914-00052-e348d55e|森林仙子|0|木|【植物人种】|2|6|1|{}|[{"name":"充能","energy_cost":0,"effect":"灵力+1"}]|pictures/coreblossom.png|2025-09-14 07:59:20
 20250914-00053-908d8b7c|超级彩虹桉|1|木|【植物人种】|8|6|0.5|{"normal_attribute":"每点携带灵力给自身+1攻击力，+1防御力。"}|[]|pictures/rainbow_tree.png|2025-09-14 07:59:20
 20250914-00062-63793c4a|玄壳毒母|0|毒|【昆虫种】|4|5|0.5|{"normal_attribute":"攻击力+2"}|[]|pictures/poison.png|2025-09-14 07:59:20
@@ -219,8 +215,12 @@ card_id|card_title|level|monster_type|description|attack|defence|magic|attribute
 20251122-00243-2567e1b9|火翼骑士|0|火|【鸟人种】鸟人种里也算稀有分支，藏匿着生活在人类中。|4|6|0|{}|[]|pictures/wing_knight.png|2026-01-29 21:29:46
 20260117-00393-meda21ad|具身智能体.雷光|0|雷|【机器种】|6|2|0.5|{"responsive_attribute":"当此卡发动的攻击结算后：攻击力+1（可叠加）"}|[{"name":"触电","energy_cost":1,"effect":"对方信仰-对方场上卡片数量x2"}]|pictures/thunder_robot.png|2026-01-29 21:38:06
 20260124-00411-mfe1d060|双首暗蛇|0|暗|【动物种】穿行在暗洞中的刺客|4|2|1|{}|[{"name":"毒牙","energy_cost":0,"effect":"【攻击技能】被攻击怪物防御暂-6"}]|pictures/dark_snake.png|2026-02-07 11:10:41
-20260212-00439-m79963a4|高维电子|0|雷|【灵体种】|0|0|2|{"normal_attribute":"双方造成的伤害翻倍。","responsive_attribute":"当场上有卡牌被破坏时：此卡灵力+1"}|[{"name":"赋雷","energy_cost":0,"effect":"场上另一只怪物攻击力+10直到回合结束。"},{"name":"超载","energy_cost":2,"effect":"场上另一只怪物攻击力+20直到回合结束。"}]|pictures/electronics.png|2026-02-12 10:54:37
-20260212-00441-m08ec5eb|雷电法王|1|雷|【鬼人种】|5|0|2|{"normal_attribute":"可以通过丢弃一张预言手卡，以代替通常召唤此卡所需的灵力。以此方式召唤的此卡，当回合不能发起攻击。"}|[{"name":"雷障","energy_cost":0,"effect":"防御力+10直到对方回合结束。"},{"name":"雷鸣","energy_cost":1,"effect":"破坏我方场上一张盖牌，此卡攻击力+18直到该回合结束。"}]|pictures/lightking.png|2026-02-12 18:14:17
-20260221-00442-m8d8ecd3|独眼雷翼|0|雷|【鸟人种】|3|5|0.5|{}|[{"name":"雷眼","energy_cost":0,"effect":"覆盖一张牌，查看对方场上一张盖牌。"},{"name":"雷射","energy_cost":1,"effect":"我方场上一怪物发起一次额外攻击。对方信仰-3。"}]|pictures/eletro_birdman.png|2026-02-21 16:38:51
-20260221-00444-m2284ade|雷魔守卫|0|雷|【恶魔种】|1|7|0.5|{"responsive_attribute":"当我方进入怪物阶段时：锁定我方场上一只此卡外的怪物。锁定怪物若受到攻击，此卡可代为受到攻击；锁定怪物若被破坏，此卡可代为破坏。"}|[{"name":"探宝","energy_cost":1,"effect":"丢弃一张手牌，抽2张牌。"}]|pictures/thunder_protector.png|2026-02-21 19:10:01
-20250914-00057-a0e1d429|雷暴蜂后|1|雷|【昆虫人种】|9|4|1|{}|[{"name":"雷蛰","energy_cost":0,"effect":"对方信仰-5"}]|pictures/storm_hornet.png|2026-02-21 20:09:41
+20250914-00015-75357920|珍珠人鱼|0|水|【鱼人种】婴儿般大小的人鱼。|2|3|1|{}|[{"name":"召唤风浪","energy_cost":0,"effect":"将对方场上1怪物牌（或盖牌）返回对方手牌。我方丢弃一张手牌"},{"name":"珍珠圣光","energy_cost":5,"effect":"对方信仰-30"}]|pictures/pearl_girl.png|2026-02-22 15:55:29
+20250914-00046-def8536f|风灵真君|0|风|【天仙种】|6|2|0|{"normal_attribute":"我方可以选择被此卡战斗破坏的怪物放回所属者手牌。","responsive_attribute":"当场上有卡牌回到手牌时：此卡攻击+15直到该回合结束。"}|[{"name":"风卷残云","energy_cost":1,"effect":"【攻击技能】攻击破坏怪兽后，此卡防御力+（该被破坏怪物的原本防御力）直到对方回合结束。"}]|pictures/wind_xian.png|2026-02-22 16:00:29
+20250914-00047-fed51b35|天使卫兵|0|光|【天使种】|3|5|1|{}|[{"name":"圣罚","energy_cost":0,"effect":"【攻击技能】被指定攻击的怪物无法发动技能直到对方回合结束。"},{"name":"天赐","energy_cost":1,"effect":"声明对方一张手牌，如果命中，获得该手牌。"}]|pictures/angle_guard.png|2026-02-22 16:04:05
+20250914-00050-aa34160b|树枝女|0|木|【植物人种】|2|3|1|{"responsive_attribute":"我方使用预言卡时：此卡灵力+1。"}|[{"name":"传输灵力","energy_cost":0,"effect":"从此卡移出最多2点灵力，可任意分配到场上。"}]|pictures/woodwoman.png|2026-02-22 16:20:15
+20250914-00057-a0e1d429|雷暴蜂后|1|雷|【昆虫人种】|9|4|1|{}|[{"name":"雷蛰","energy_cost":0,"effect":"对方信仰-5"}]|pictures/storm_hornet.png|2026-02-22 16:41:41
+20260221-00444-m2284ade|雷魔守卫|0|雷|【恶魔种】|1|7|0.5|{"responsive_attribute":"当我方进入怪物阶段时：锁定我方场上一只此卡外的怪物。锁定怪物若受到攻击，此卡可代为受到攻击；锁定怪物若被破坏，此卡可代为破坏。"}|[{"name":"探宝","energy_cost":1,"effect":"丢弃一张手牌，抽2张牌。"}]|pictures/thunder_protector.png|2026-02-22 16:41:46
+20260221-00442-m8d8ecd3|独眼雷翼|0|雷|【鸟人种】|3|5|0.5|{}|[{"name":"雷眼","energy_cost":0,"effect":"覆盖一张牌，查看对方场上一张盖牌。"},{"name":"雷射","energy_cost":1,"effect":"我方场上一怪物发起一次额外攻击。对方信仰-3。"}]|pictures/eletro_birdman.png|2026-02-22 16:41:51
+20260212-00441-m08ec5eb|雷电法王|1|雷|【鬼人种】|5|0|2|{"normal_attribute":"可以通过丢弃一张预言手卡，以代替通常召唤此卡所需的灵力。以此方式召唤的此卡，当回合不能发起攻击。"}|[{"name":"雷障","energy_cost":0,"effect":"防御力+10直到对方回合结束。"},{"name":"雷鸣","energy_cost":1,"effect":"破坏我方场上一张盖牌，此卡攻击力+18直到该回合结束。"}]|pictures/lightking.png|2026-02-22 16:41:57
+20260212-00439-m79963a4|高维电子|0|雷|【灵体种】|0|0|2|{"normal_attribute":"双方造成的伤害翻倍。","responsive_attribute":"当场上有卡牌被破坏时：此卡灵力+1"}|[{"name":"赋雷","energy_cost":0,"effect":"场上另一只怪物攻击力+10直到回合结束。"},{"name":"超载","energy_cost":2,"effect":"场上另一只怪物攻击力+20直到回合结束。"}]|pictures/electronics.png|2026-02-22 16:42:04
