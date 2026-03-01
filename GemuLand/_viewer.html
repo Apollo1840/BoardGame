@@ -316,7 +316,7 @@
       const attrs=safeParse(obj.attributes,{});
       let skills=safeParse(obj.skills,[]); if(!Array.isArray(skills)) skills=[];
       skills=skills.map(sk=>({name:sk.name, energy_cost:sk.energy_cost, effect:sk.effect}));
-      const lvlIcons='❖'.repeat(Math.max(0,parseInt(obj.level)));
+      const lvlIcons='✦'.repeat(Math.max(0,parseInt(obj.level)));
       const l=(langOverride||lang);
       const labelNormal=l==='en'?'Attr':'通常属性';
       const labelReact=l==='en'?'RespAttr':'反应属性';
