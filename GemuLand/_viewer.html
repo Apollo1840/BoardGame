@@ -107,6 +107,10 @@
     .skill-power{ display:flex; flex-wrap:wrap; gap:2px; }
     .power-icon::before{ content:'✦'; font-size:10px; margin-right:1px; }
 
+    .content-box.skill-small .skill-name { font-size: 7px; }
+    .content-box.skill-small .skill-desc { font-size: 8px; }
+    .content-box.skill-small .power-icon::before { font-size: 8px; }
+
     .card.monster .stats{ position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
       font-size:10px; background:rgba(255,255,255,0.9); padding:1px 4px; border-radius:4px; z-index:4; }
     .stats .atk::before{ content:'▲'; margin-right:2px; }
@@ -115,6 +119,15 @@
     .responsive-effect .box-title{ color:red; }
     .reaction-attr .box-title{ color:red; }
     .normal-attr .box-title{ color:blue; }
+
+    .normal-attr .box-content,
+    .reaction-attr .box-content {
+        color: rgb(68, 68, 68);
+    }
+
+    .description .box-content {
+        color: gray;
+    }
 
     /* 侧边栏（含语言切换） */
     #lang-switch span{ user-select:none; border:1px solid #3b82f6; margin:0; cursor:pointer; }
@@ -327,12 +340,12 @@
                       <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
       const area=document.createElement('div'); area.className='card-content';
       const nl2br=s=>String(s).replace(/\n/g,'<br>');
-      if(obj.description){ area.innerHTML+=`<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.description)}</div></div>`; }
+      if(obj.description){ area.innerHTML+=`<div class="content-box attribute-box description"><div class="box-content">${nl2br(obj.description)}</div></div>`; }
       let normalChar=attrs.normal_attribute||'';
       let reactChar=attrs.responsive_attribute||'';
       if(normalChar){ area.innerHTML+=`<div class="content-box attribute-box normal-attr"><div class="box-title">${labelNormal}</div><div class="box-content">${nl2br(normalChar)}</div></div>`; }
       if(reactChar){ area.innerHTML+=`<div class="content-box attribute-box reaction-attr"><div class="box-title">${labelReact}</div><div class="box-content">${nl2br(reactChar)}</div></div>`; }
-      let skillBoxClass=(l==='en'&&skills.length>=3)?'content-box skill-small':'content-box';
+      let skillBoxClass=(skills.length>=3)?'content-box skill-small':'content-box';
       skills.forEach(sk=>{
         area.innerHTML+=`<div class="${skillBoxClass}"><div class="skill-box"><div><div class="skill-name">${sk.name||''}</div><div class="skill-power">${'<span class="power-icon"></span>'.repeat(sk.energy_cost||0)}</div></div><div class="skill-desc">${nl2br(sk.effect||'')}</div></div></div>`;
       });
