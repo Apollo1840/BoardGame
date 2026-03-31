@@ -18,8 +18,8 @@
 
 ## 怪兽卡设计规范 
 
-根据 **怪物设定表（´monster_design_table.csv´）** 选择怪物等级，攻防数值与效果品阶。然后根据品阶对应的效果总价，参照 **增损价值表（´effect_value_table.csv´）** 设计技能。
-
+根据 **怪物设定表（´monster_design_table.md´）** 选择怪物等级，攻防数值与效果品阶。然后根据品阶对应的效果总价，参照 **增损价值表（´effect_value_table.csv´）** 设计技能。
+  
 示例：
 1增配置：1
 
