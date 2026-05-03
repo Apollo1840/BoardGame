@@ -45,8 +45,9 @@
     #card-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(63mm,1fr));
-      gap: var(--gap); /* Use the same gap for both rows and columns */
-      justify-items:left; align-items:start;
+      gap: var(--gap);
+      justify-items:left;
+      align-items:start;
     }
 
     .card {
@@ -167,21 +168,26 @@
       opacity: 1;
     }
     #clan-buttons-container .btn {
-      padding: 4px 6px !important;
-      font-size: 11px !important;
-      background: #444 !important;
-      border: 1px solid #666 !important;
+      padding: 2px 4px !important;
+      font-size: 10px !important;
+      background: #4b4f57 !important;
+      border: 1px solid currentColor !important;
+      color: currentColor !important;
+      border-radius: 4px !important;
       transition: all 0.2s ease !important;
-      width: 100% !important;
+      width: auto !important;
+      min-width: 0 !important;
       margin: 0 !important;
+      justify-self: start;
     }
     #clan-buttons-container .btn:hover {
-      background: #555 !important;
+      background: #5a5f69 !important;
     }
     #clan-buttons-container .btn.selected {
-      background: #3b82f6 !important;
-      border-color: #0ea5e9 !important;
-      box-shadow: 0 0 6px rgba(14, 165, 233, 0.4) !important;
+      background: var(--clan-color) !important;
+      border-color: var(--clan-color) !important;
+      color: #fff !important;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.18) !important;
     }
     #clan-toggle-icon {
       transition: transform 0.2s ease;
@@ -195,6 +201,27 @@
       user-select: none;
     }
     #clan-header:hover {
+      opacity: 0.8;
+    }
+
+    /* 警告消息框 */
+    #alert-banner {
+      animation: slideDown 0.3s ease;
+    }
+    #alert-banner.visible {
+      margin-bottom: 12px;
+    }
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    #alert-close-btn:hover {
       opacity: 0.8;
     }
 
@@ -276,6 +303,7 @@
           <option value="description">描述</option>
           <option value="update_datetime" selected>更新时间</option>
               <option value="monster_type">怪物属性</option>
+          <option value="level">怪物等级</option>
           <option value="card_id">卡牌ID</option>
           <option value="point_atk_def">按照点数（攻防）排序</option>
           <option value="point_def_atk">按照点数（防攻）排序</option>
@@ -327,7 +355,16 @@
   </div>
 
   <div id="main-content" style="position:relative; margin-left:240px;">
-    <div id="card-container"></div>
+    <div id="alert-banner" style="display:none;position:fixed;top:0;left:240px;right:0;background:#ff6b6b;color:#fff;padding:12px 16px;border-bottom:2px solid #ff5252;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;max-width:100%;word-break:break-word;">
+        <div style="flex:1;padding-right:12px;">
+          <div style="font-weight:600;margin-bottom:4px;">⚠️ 卡牌检索失败</div>
+          <div id="alert-message" style="font-size:12px;line-height:1.4;"></div>
+        </div>
+        <button id="alert-close-btn" style="background:none;border:none;color:#fff;cursor:pointer;font-size:18px;padding:0;min-width:24px;flex-shrink:0;margin-top:-2px;">✕</button>
+      </div>
+    </div>
+    <div id="card-container" style="margin-top:0;"></div>
   </div>
 
   <script>
@@ -429,6 +466,7 @@
     let displayCount=9;
     let selectedClans=new Set(); // 存储选中的卡组
     let clanCardNames={}; // 存储每个卡组的卡牌名称
+    let missingCards={}; // 存储检索失败的卡牌：{clanName: [card1, card2, ...]}
 
     const getSortField=()=> (document.getElementById('sort-field')?.value || 'update_datetime');
     const getAltDisplay=()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
@@ -445,12 +483,22 @@
           const clanPath=`clans/${clanName}.md?t=${Date.now()}`;
           const txt=await (await fetch(clanPath)).text();
           const lines=txt.split('\n').map(line=>line.trim()).filter(line=>line);
-          clanCardNames[clanName]=lines;
+          // 去除重复卡牌
+          clanCardNames[clanName]=[...new Set(lines)];
         }
         createClanButtons();
       }catch(err){
         console.warn('加载卡组文件失败:', err);
       }
+    }
+
+    function hashStringToColor(str){
+      let hash = 0;
+      for (let i = 0; i < str.length; i++){
+        hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+      }
+      const hue = hash % 360;
+      return `hsl(${hue}, 65%, 52%)`;
     }
 
     // 创建卡组按钮
@@ -459,8 +507,12 @@
       container.innerHTML='';
       Object.keys(clanCardNames).forEach(clanName=>{
         const btn=document.createElement('button');
+        const color = hashStringToColor(clanName);
         btn.className='btn';
         btn.textContent=clanName;
+        btn.style.borderColor = color;
+        btn.style.color = color;
+        btn.style.setProperty('--clan-color', color);
         btn.onclick=function(){
           if(selectedClans.has(clanName)){
             selectedClans.delete(clanName);
@@ -470,6 +522,8 @@
             btn.classList.add('selected');
           }
           renderAllCards();
+          validateClanCards();
+          updateAlertBanner();
         };
         container.append(btn);
       });
@@ -505,13 +559,63 @@
       return false;
     }
 
+    // 验证卡组中的卡牌是否存在
+    function validateClanCards(){
+      missingCards={};
+      const allMonsterNames=new Set(allMonsterRows.map(row=>row[monsterHeader.indexOf('card_title')]||''));
+      const allProphecyNames=new Set(allProphecyRows.map(row=>row[prophecyHeader.indexOf('card_title')]||''));
+      
+      for(const clanName in clanCardNames){
+        const missing=[];
+        for(const cardName of clanCardNames[clanName]){
+          if(!allMonsterNames.has(cardName)&&!allProphecyNames.has(cardName)){
+            missing.push(cardName);
+          }
+        }
+        if(missing.length>0){
+          missingCards[clanName]=missing;
+        }
+      }
+    }
+
+    // 显示/隐藏警告消息
+    function updateAlertBanner(){
+      const banner=document.getElementById('alert-banner');
+      const msgDiv=document.getElementById('alert-message');
+      
+      if(Object.keys(missingCards).length===0){
+        banner.style.display='none';
+        banner.classList.remove('visible');
+        return;
+      }
+      
+      let totalMissing=0;
+      let msgText='';
+      for(const clanName in missingCards){
+        const cards=missingCards[clanName];
+        totalMissing+=cards.length;
+        msgText+=`【${clanName}】${cards.join('、')} `;
+      }
+      
+      msgDiv.textContent=`找不到 ${totalMissing} 张卡牌：${msgText}`;
+      banner.style.display='block';
+      banner.classList.add('visible');
+    }
+
     function sortRows(rows, header, field){
       const idx=header.indexOf(field); if(idx===-1 && field!=='point_atk_def' && field!=='point_def_atk' && field!=='effect' && field!=='skill_count') return rows.slice();
       return rows.slice().sort((a,b)=>{
-        if(field==='update_datetime'||field==='monster_type'){
+        if(field==='update_datetime'||field==='monster_type'||field==='level'){
           const aVal=a[idx]||'', bVal=b[idx]||'';
-          const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
-          if(!isNaN(aDate)&&!isNaN(bDate)) return aDate-bDate;
+          if(field==='update_datetime'){
+            const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
+            if(!isNaN(aDate)&&!isNaN(bDate)) return aDate-bDate;
+          }
+          const aNum=parseFloat(aVal)||0;
+          const bNum=parseFloat(bVal)||0;
+          if(field==='level' && !isNaN(aNum) && !isNaN(bNum)){
+            return aNum - bNum;
+          }
           return aVal.localeCompare(bVal);
         }else if(field==='point_atk_def'||field==='point_def_atk'){
           const atkIdx=header.indexOf('attack'), defIdx=header.indexOf('defence');
@@ -629,6 +733,13 @@
 
       // 为卡组标题添加点击事件
       document.getElementById('clan-header').onclick=toggleClanSection;
+
+      // 为警告消息框的关闭按钮添加事件
+      document.getElementById('alert-close-btn').onclick=function(){
+        const banner=document.getElementById('alert-banner');
+        banner.style.display='none';
+        banner.classList.remove('visible');
+      };
 
       document.getElementById('btn-refresh').onclick=reloadCSVsAndRender;
 
