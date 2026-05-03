@@ -146,6 +146,58 @@
     #sidebar-panel .divider{ border-bottom:1px solid #444; margin:10px 0; }
     #sidebar-panel .section-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 
+    /* 卡组按钮样式 */
+    #clan-buttons-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      opacity: 1;
+    }
+    #clan-buttons-container.collapsed {
+      max-height: 0;
+      opacity: 0;
+      display: none !important;
+    }
+    #clan-buttons-container.expanded {
+      display: grid;
+      max-height: 500px;
+      opacity: 1;
+    }
+    #clan-buttons-container .btn {
+      padding: 4px 6px !important;
+      font-size: 11px !important;
+      background: #444 !important;
+      border: 1px solid #666 !important;
+      transition: all 0.2s ease !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
+    #clan-buttons-container .btn:hover {
+      background: #555 !important;
+    }
+    #clan-buttons-container .btn.selected {
+      background: #3b82f6 !important;
+      border-color: #0ea5e9 !important;
+      box-shadow: 0 0 6px rgba(14, 165, 233, 0.4) !important;
+    }
+    #clan-toggle-icon {
+      transition: transform 0.2s ease;
+    }
+    #clan-toggle-icon.collapsed {
+      transform: rotate(-90deg);
+    }
+    #clan-header {
+      padding: 4px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+    #clan-header:hover {
+      opacity: 0.8;
+    }
+
     /* 主内容区 */
     #main-content{ margin-left:240px; position:relative; }
 
@@ -241,11 +293,14 @@
     <div class="divider"></div>
 
     <div class="section">
-      <label style="font-size:14px;font-weight:600;margin-bottom:8px;">推荐卡组</label>
-      <div id="clan-buttons-container" style="display:flex;flex-direction:column;gap:6px;">
+      <div id="clan-header" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;">
+        <label style="font-size:14px;font-weight:600;margin:0;">推荐卡组</label>
+        <span id="clan-toggle-icon" style="font-size:12px;">▼</span>
+      </div>
+      <div id="clan-buttons-container">
         <!-- 卡组按钮将动态生成 -->
       </div>
-      <span class="helper-text" style="color:#bbb;font-size:12px;margin-top:8px;">选择卡组以过滤卡牌，未选择时显示所有卡牌</span>
+      <span class="helper-text" style="color:#bbb;font-size:12px;margin-top:8px;" id="clan-helper">选择卡组以过滤卡牌，未选择时显示所有卡牌</span>
     </div>
 
     <div class="divider"></div>
@@ -372,9 +427,83 @@
     // --- 数据与渲染 ---
     let prophecyHeader=[], monsterHeader=[], allProphecyRows=[], allMonsterRows=[];
     let displayCount=9;
+    let selectedClans=new Set(); // 存储选中的卡组
+    let clanCardNames={}; // 存储每个卡组的卡牌名称
 
     const getSortField=()=> (document.getElementById('sort-field')?.value || 'update_datetime');
     const getAltDisplay=()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
+
+    // 加载卡组列表
+    async function loadClanFiles(){
+      try{
+        // 从 clans/_clans.json 动态加载卡组列表
+        const indexUrl=`clans/_clans.json?t=${Date.now()}`;
+        const indexTxt=await (await fetch(indexUrl)).text();
+        const clanNames=JSON.parse(indexTxt);
+        
+        for(const clanName of clanNames){
+          const clanPath=`clans/${clanName}.md?t=${Date.now()}`;
+          const txt=await (await fetch(clanPath)).text();
+          const lines=txt.split('\n').map(line=>line.trim()).filter(line=>line);
+          clanCardNames[clanName]=lines;
+        }
+        createClanButtons();
+      }catch(err){
+        console.warn('加载卡组文件失败:', err);
+      }
+    }
+
+    // 创建卡组按钮
+    function createClanButtons(){
+      const container=document.getElementById('clan-buttons-container');
+      container.innerHTML='';
+      Object.keys(clanCardNames).forEach(clanName=>{
+        const btn=document.createElement('button');
+        btn.className='btn';
+        btn.textContent=clanName;
+        btn.onclick=function(){
+          if(selectedClans.has(clanName)){
+            selectedClans.delete(clanName);
+            btn.classList.remove('selected');
+          }else{
+            selectedClans.add(clanName);
+            btn.classList.add('selected');
+          }
+          renderAllCards();
+        };
+        container.append(btn);
+      });
+    }
+
+    // 切换卡组分区展开/收缩
+    function toggleClanSection(){
+      const container=document.getElementById('clan-buttons-container');
+      const icon=document.getElementById('clan-toggle-icon');
+      const helper=document.getElementById('clan-helper');
+      
+      if(container.classList.contains('collapsed')){
+        container.classList.remove('collapsed');
+        container.classList.add('expanded');
+        icon.classList.remove('collapsed');
+        helper.style.display='block';
+      }else{
+        container.classList.add('collapsed');
+        container.classList.remove('expanded');
+        icon.classList.add('collapsed');
+        helper.style.display='none';
+      }
+    }
+
+    // 检查卡牌是否属于选中的卡组
+    function isCardInSelectedClans(cardName){
+      if(selectedClans.size===0) return true; // 没有选择时显示所有
+      for(const clanName of selectedClans){
+        if(clanCardNames[clanName]&&clanCardNames[clanName].includes(cardName)){
+          return true;
+        }
+      }
+      return false;
+    }
 
     function sortRows(rows, header, field){
       const idx=header.indexOf(field); if(idx===-1 && field!=='point_atk_def' && field!=='point_def_atk' && field!=='effect' && field!=='skill_count') return rows.slice();
@@ -434,10 +563,32 @@
       const ctr=document.getElementById('card-container');
       ctr.innerHTML='';
       const sortField=getSortField(), altDisplay=getAltDisplay();
-      const sortedProphecyRows=sortRows(allProphecyRows.slice(-displayCount), prophecyHeader, sortField);
-      const sortedMonsterRows =sortRows(allMonsterRows.slice(-displayCount),  monsterHeader,  sortField);
+      
+      // 1. 先进行卡组过滤
+      const cardTitleMonsterIdx=monsterHeader.indexOf('card_title');
+      const cardTitleProphecyIdx=prophecyHeader.indexOf('card_title');
+      
+      const clanFilteredMonsterRows=allMonsterRows.filter(row=>{
+        if(cardTitleMonsterIdx===-1) return true;
+        const cardName=row[cardTitleMonsterIdx]||'';
+        return isCardInSelectedClans(cardName);
+      });
+      const clanFilteredProphecyRows=allProphecyRows.filter(row=>{
+        if(cardTitleProphecyIdx===-1) return true;
+        const cardName=row[cardTitleProphecyIdx]||'';
+        return isCardInSelectedClans(cardName);
+      });
+      
+      // 2. 再进行卡数过滤
+      const cardCountFilteredMonsterRows=clanFilteredMonsterRows.slice(-displayCount);
+      const cardCountFilteredProphecyRows=clanFilteredProphecyRows.slice(-displayCount);
+      
+      // 3. 最后排序
+      const sortedProphecyRows=sortRows(cardCountFilteredProphecyRows, prophecyHeader, sortField);
+      const sortedMonsterRows =sortRows(cardCountFilteredMonsterRows,  monsterHeader,  sortField);
+      
       if(altDisplay){
-        const maxLen=Math.max(sortedProphecyRows.length, sortedMonsterRows.length);
+        const maxLen=Math.max(sortedMonsterRows.length, sortedProphecyRows.length);
         for(let i=0;i<maxLen;i++){
           if(i<sortedMonsterRows.length)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
           if(i<sortedProphecyRows.length) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
@@ -468,6 +619,16 @@
     document.addEventListener('DOMContentLoaded', ()=>{
       reloadCSVsAndRender();
       setLangClass();
+      loadClanFiles(); // 加载卡组
+
+      // 初始化卡组分区为收缩状态
+      const clanContainer=document.getElementById('clan-buttons-container');
+      clanContainer.classList.add('collapsed');
+      document.getElementById('clan-toggle-icon').classList.add('collapsed');
+      document.getElementById('clan-helper').style.display='none';
+
+      // 为卡组标题添加点击事件
+      document.getElementById('clan-header').onclick=toggleClanSection;
 
       document.getElementById('btn-refresh').onclick=reloadCSVsAndRender;
 
