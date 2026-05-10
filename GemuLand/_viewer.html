@@ -150,7 +150,7 @@
     /* 卡组按钮样式 */
     #clan-buttons-container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 4px;
       max-height: 500px;
       overflow: hidden;
@@ -171,8 +171,8 @@
       padding: 2px 4px !important;
       font-size: 10px !important;
       background: #4b4f57 !important;
-      border: 1px solid currentColor !important;
-      color: currentColor !important;
+      border: 1px solid var(--clan-color) !important;
+      color: #fff !important;
       border-radius: 4px !important;
       transition: all 0.2s ease !important;
       width: auto !important;
@@ -290,7 +290,7 @@
     <div class="section">
       <div class="section-row">
         <label for="card-count" style="flex-shrink:0;">显示卡牌数量</label>
-        <input id="card-count" type="number" min="1" value="9" style="flex:1;max-width:80px;min-width:60px;">
+        <input id="card-count" type="number" min="1" value="18" style="flex:1;max-width:80px;min-width:60px;">
         <button id="btn-refresh" class="btn" title="重新加载/排序"><span>🔄</span> 刷新</button>
       </div>
       <span class="helper-text" style="color:#bbb;font-size:12px;">可调整显示的卡牌对数</span>
@@ -300,8 +300,9 @@
       <div class="section-row">
         <label for="sort-field" style="flex-shrink:0;">排序方式</label>
         <select id="sort-field" style="flex:1;">
+          <option value="default" selected>默认</option>
           <option value="description">描述</option>
-          <option value="update_datetime" selected>更新时间</option>
+          <option value="update_datetime">更新时间</option>
               <option value="monster_type">怪物属性</option>
           <option value="level">怪物等级</option>
           <option value="card_id">卡牌ID</option>
@@ -309,6 +310,7 @@
           <option value="point_def_atk">按照点数（防攻）排序</option>
           <option value="effect">按照效果排序</option>
           <option value="skill_count">按技能数</option>
+          <option value="random">随机</option>
         </select>
       </div>
       <div class="section-row" style="margin-top:8px;">
@@ -463,7 +465,7 @@
 
     // --- 数据与渲染 ---
     let prophecyHeader=[], monsterHeader=[], allProphecyRows=[], allMonsterRows=[];
-    let displayCount=9;
+    let displayCount=18;
     let selectedClans=new Set(); // 存储选中的卡组
     let clanCardNames={}; // 存储每个卡组的卡牌名称
     let missingCards={}; // 存储检索失败的卡牌：{clanName: [card1, card2, ...]}
@@ -498,7 +500,9 @@
         hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
       }
       const hue = hash % 360;
-      return `hsl(${hue}, 65%, 52%)`;
+      const saturation = 72 + ((hash >>> 8) % 20); // 72% - 91%
+      const lightness = 42 + ((hash >>> 16) % 16); // 42% - 57%
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     }
 
     // 创建卡组按钮
@@ -603,9 +607,11 @@
     }
 
     function sortRows(rows, header, field){
-      const idx=header.indexOf(field); if(idx===-1 && field!=='point_atk_def' && field!=='point_def_atk' && field!=='effect' && field!=='skill_count') return rows.slice();
+      const idx=header.indexOf(field); if(idx===-1 && field!=='point_atk_def' && field!=='point_def_atk' && field!=='effect' && field!=='skill_count' && field!=='random') return rows.slice();
       return rows.slice().sort((a,b)=>{
-        if(field==='update_datetime'||field==='monster_type'||field==='level'){
+        if(field==='random'){
+          return Math.random() - 0.5;
+        }else if(field==='update_datetime'||field==='monster_type'||field==='level'){
           const aVal=a[idx]||'', bVal=b[idx]||'';
           if(field==='update_datetime'){
             const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
@@ -688,8 +694,42 @@
       const cardCountFilteredProphecyRows=clanFilteredProphecyRows.slice(-displayCount);
       
       // 3. 最后排序
-      const sortedProphecyRows=sortRows(cardCountFilteredProphecyRows, prophecyHeader, sortField);
-      const sortedMonsterRows =sortRows(cardCountFilteredMonsterRows,  monsterHeader,  sortField);
+      let sortedProphecyRows, sortedMonsterRows;
+      if(sortField === 'default'){
+        if(selectedClans.size === 0){
+          sortedProphecyRows = cardCountFilteredProphecyRows.slice();
+          sortedMonsterRows = cardCountFilteredMonsterRows.slice();
+        }else{
+          // 按照卡组顺序排序
+          let orderMap = new Map();
+          let index = 0;
+          for(const clanName of selectedClans){
+            const cards = clanCardNames[clanName] || [];
+            for(const cardName of cards){
+              if(!orderMap.has(cardName)){
+                orderMap.set(cardName, index++);
+              }
+            }
+          }
+          sortedMonsterRows = cardCountFilteredMonsterRows.slice().sort((a,b)=>{
+            const aName = a[cardTitleMonsterIdx] || '';
+            const bName = b[cardTitleMonsterIdx] || '';
+            const aOrder = orderMap.get(aName) ?? Infinity;
+            const bOrder = orderMap.get(bName) ?? Infinity;
+            return aOrder - bOrder;
+          });
+          sortedProphecyRows = cardCountFilteredProphecyRows.slice().sort((a,b)=>{
+            const aName = a[cardTitleProphecyIdx] || '';
+            const bName = b[cardTitleProphecyIdx] || '';
+            const aOrder = orderMap.get(aName) ?? Infinity;
+            const bOrder = orderMap.get(bName) ?? Infinity;
+            return aOrder - bOrder;
+          });
+        }
+      }else{
+        sortedProphecyRows = sortRows(cardCountFilteredProphecyRows, prophecyHeader, sortField);
+        sortedMonsterRows = sortRows(cardCountFilteredMonsterRows, monsterHeader, sortField);
+      }
       
       if(altDisplay){
         const maxLen=Math.max(sortedMonsterRows.length, sortedProphecyRows.length);
