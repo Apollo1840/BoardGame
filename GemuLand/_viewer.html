@@ -372,6 +372,8 @@
   <script>
     // Decode \n to real newlines
     function decodeText(s){ return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n'); }
+    // Escape HTML to prevent injection when inserting into innerHTML
+    function escapeHtml(s){ return String(s??'').replace(/[&<>\"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m])); }
     let lang = 'zh';
 
     /* ---------- CSV/解析 ---------- */
@@ -392,7 +394,18 @@
     }
     const parseCsvHeader=(line)=>parsePipeCsvLine(line);
     function mapCsvRowToObj(headerArr,rowArr){
-      const obj={}; for(let i=0;i<headerArr.length;i++){ obj[headerArr[i]]=rowArr[i]!==undefined?decodeText(rowArr[i]):''; }
+      const obj={};
+      for(let i=0;i<headerArr.length;i++){
+        const key = headerArr[i];
+        const raw = rowArr[i]!==undefined?rowArr[i]:'';
+        // 保持 JSON 字段（attributes, skills）内的转义序列不被转换为真实换行，
+        // 以便后续 JSON.parse 能正确解析 \n
+        if(key==='attributes' || key==='skills'){
+          obj[key]=raw;
+        }else{
+          obj[key]=decodeText(raw);
+        }
+      }
       return obj;
     }
     async function loadCSVWithHeader(path){
@@ -419,7 +432,7 @@
       const l=(langOverride||lang);
       const labelEffect=l==='en'?'Effect':'效果';
       const labelResponsive=l==='en'?'RespEffect':'响应效果';
-      const nl2br=s=>String(s).replace(/\n/g,'<br>');
+      const nl2br=s=>String(escapeHtml(s)).replace(/\n/g,'<br>');
       if(obj.introduction){ area.innerHTML+=`<div class="content-box attribute-box"><div class="box-content">${nl2br(obj.introduction)}</div></div>`; }
       if(obj.effect){ area.innerHTML+=`<div class="content-box"><div class="box-title">${labelEffect}</div><div class="box-content">${nl2br(obj.effect)}</div></div>`; }
       if(obj.responsive_effect){ area.innerHTML+=`<div class="content-box responsive-effect"><div class="box-title">${labelResponsive}</div><div class="box-content">${nl2br(obj.responsive_effect)}</div></div>`; }
@@ -443,7 +456,7 @@
       card.innerHTML=`<div class="card-title"><span class="level">${lvlIcons}</span><span class="name">${obj.card_title||''}</span><span class="type">${obj.monster_type||''}</span></div>
                       <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
       const area=document.createElement('div'); area.className='card-content';
-      const nl2br=s=>String(s).replace(/\n/g,'<br>');
+      const nl2br=s=>String(escapeHtml(s)).replace(/\n/g,'<br>');
       if(obj.description){ area.innerHTML+=`<div class="content-box attribute-box description"><div class="box-content">${nl2br(obj.description)}</div></div>`; }
       let normalChar=attrs.normal_attribute||'';
       let reactChar=attrs.responsive_attribute||'';

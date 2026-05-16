@@ -10,6 +10,8 @@
     .card-table { max-height: 75vh; overflow: auto; }
     .modal.d-block { display: block; }
     .file-badge { font-size: 12px; }
+    /* Make small textareas more usable for multi-line attribute/skill input */
+    .form-control-sm textarea { min-height: 3em; resize: vertical; }
   </style>
 </head>
 <body>
@@ -97,7 +99,8 @@
         cur += ch;
       }
       out.push(cur);
-      return out.map(decodeText);
+      // 返回原始字段（不做 \n -> 换行的全局替换），由 rowToCard 根据需要调用 decodeText
+      return out;
     });
   }
   function encodeField(v){
@@ -593,31 +596,34 @@
     const skillC = container.querySelector('#skill-container');
 
     const attrHtml = (k,v)=>`
-      <div class="d-flex align-items-center mb-1">
+      <div class="d-flex align-items-start mb-2">
         <select class="form-select form-select-sm me-2 attr-key" style="max-width:140px;">
           <option value="normal_attribute" ${k==='normal_attribute'?'selected':''}>通常属性</option>
           <option value="responsive_attribute"  ${k==='responsive_attribute'?'selected':''}>响应属性</option>
         </select>
-        <textarea class="form-control form-control-sm me-2 attr-val" rows="1">${escapeHtml(v)}</textarea>
+        <textarea class="form-control form-control-sm me-2 attr-val" rows="3">${escapeHtml(v)}</textarea>
         <button class="btn btn-sm btn-outline-danger" data-rm-attr="${k}" type="button">×</button>
       </div>`;
 
     const skillHtml = (i,s)=>`
-      <div class="d-flex align-items-center mb-1 skill-row">
+      <div class="d-flex align-items-start mb-2 skill-row">
    <input class="form-control form-control-sm me-2 skill-name"
      placeholder="技能名" style="max-width:120px;" value="${escapeHtml(s.name||'')}">
    <input type="number" min="0" class="form-control form-control-sm me-2 skill-power"
      placeholder="灵力消耗" style="max-width:90px;" value="${Number.isFinite(+s.energy_cost)?+s.energy_cost:0}">
-   <textarea class="form-control form-control-sm me-2 skill-text" rows="1"
+   <textarea class="form-control form-control-sm me-2 skill-text" rows="3"
         placeholder="描述">${escapeHtml(s.effect||'')}</textarea>
    <button class="btn btn-sm btn-outline-danger" data-rm-skill="${i}" type="button">×</button>
       </div>`;
 
+    function autoResizeTextarea(el){ if(!el) return; el.style.height='auto'; el.style.height = (el.scrollHeight)+'px'; }
     const renderAttrs = ()=>{
       attrC.innerHTML='';
       Object.entries(card.attributes).forEach(([k,v])=>{
         attrC.insertAdjacentHTML('beforeend',attrHtml(k,v));
       });
+      // autosize newly rendered textareas
+      $$('#attr-container .attr-val', container).forEach(t=>autoResizeTextarea(t));
     };
     const renderSkills = ()=>{
       // Before re-render, save current edits from DOM to card.skills
@@ -627,12 +633,14 @@
           card.skills[i] = {
             name: row.querySelector('.skill-name').value.trim(),
             energy_cost: +row.querySelector('.skill-power').value || 0,
-            effect: row.querySelector('.skill-text').value.trim()
+            effect: row.querySelector('.skill-text').value
           };
         });
       }
       skillC.innerHTML='';
       card.skills.forEach((s,i)=>skillC.insertAdjacentHTML('beforeend',skillHtml(i,s)));
+      // autosize newly rendered skill textareas
+      $$('#skill-container .skill-text', container).forEach(t=>autoResizeTextarea(t));
     };
 
     attrC.addEventListener('click',e=>{
@@ -640,6 +648,13 @@
     });
     skillC.addEventListener('click',e=>{
       if(e.target.dataset.rmSkill){ card.skills.splice(+e.target.dataset.rmSkill,1); renderSkills(); }
+    });
+
+    // Delegated input handler to autosize textareas while typing
+    container.addEventListener('input', e=>{
+      if(e.target.matches('.attr-val') || e.target.matches('.skill-text')){
+        autoResizeTextarea(e.target);
+      }
     });
 
     const ATTR_TYPES = ['normal_attribute','responsive_attribute'];
