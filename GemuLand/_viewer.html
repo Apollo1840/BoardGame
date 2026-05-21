@@ -497,7 +497,12 @@
         for(const clanName of clanNames){
           const clanPath=`clans/${clanName}.md?t=${Date.now()}`;
           const txt=await (await fetch(clanPath)).text();
-          const lines=txt.split('\n').map(line=>line.trim()).filter(line=>line);
+          const lines=txt.split('\n').map(line=>line.trim()).filter(line=>{
+            if(!line) return false;
+            if(line.startsWith('//')) return false;              // 支持 // 注释行
+            if(line.startsWith('<!--') && line.endsWith('-->')) return false; // 兼容 Markdown 注释
+            return true;
+          });
           // 去除重复卡牌
           clanCardNames[clanName]=[...new Set(lines)];
         }
