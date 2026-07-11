@@ -1,0 +1,84 @@
+card_title|introduction|effect|responsive_effect|image
+Fool’s Axe|[Continuous/Equip] Guided by the Seer, people discovered this magical axe.|Negate the equipped monster’s attributes; it cannot use skills. ATK and DEF +3.||pictures/fool_arc.png
+River God’s Sacrifice|The Seer said some must be offered for prosperity.|Destroy 1 of your monsters; draw 3 cards.||pictures/sacrifice.png
+Fearless Siege|The Seer said: “All in—what’s there to fear?”|All of your monsters that can attack perform one Joint Attack; ATK equals the sum of their ATK. The Joint Attack does not trigger any opponent effects. Monsters that joined the Joint Attack cannot attack again this turn.||pictures/siege.png
+Aggregation Effect||If you control a monster, you may perform two additional Summons.||pictures/follower.png
+Raging Party||All your monsters get ATK + (your number of monsters). All opponent monsters get DEF + (their number of monsters). Battle damage this turn is doubled.||pictures/outrage.png
+Army Expansion|[Quick]|Additionally Normal Summon up to two monsters. At the end of this turn, if they are still on the field, return them to your hand.||pictures/more_monster.png
+Ominous Draft||Inflict 10 damage to the opponent.||pictures/bad_sign.png
+Fine Armament|[Continuous/Equip]|ATK +1; DEF +4.||pictures/great_arm.png
+National Treasury||Discard 1 card (from hand or field) or remove 1 Energy; draw 2 cards.||pictures/land_gold.png
+Goblin Spirit|[Continuous] A once-in-a-century friendly goblin, slain by its kin and turned spirit.|After use, during your turn treat this as a Monster card: Spirit-kind, ATK 4, DEF 4.||pictures/goblin_gost.png
+Grand Book of Prophecy|[Continuous] The Seer said nothing—just quietly wrote a book.|During the turn this card leaves the field, you may play up to three additional Prophecies.||pictures/prophey_book.png
+Summoning Art|[Quick]|Additionally Summon 1 monster, then attach this card to it as 1 Energy.||pictures/summon.png
+Sell the Sacred Fish||The opponent chooses and destroys one of your monsters. Then draw until you have 5 cards in hand.||pictures/sale_god.png
+Sea Storm|[Continuous]|(Cannot be used the turn it is set; and you must have ≥8 total cards in hand + on your field.) Discard all cards from your hand and field; destroy all opponent cards on the field; then draw 5 cards.||pictures/seastrom.png
+Clairvoyant Eye||Look at one opponent set card and two cards in their hand; then return one set card to their hand.||pictures/sky_eye.png
+Immortal’s Ladder||Additionally Summon 1 monster (required Energy −1), then discard 1 random card.||pictures/god_land.png
+Heaven-Sent Elixir|[Quick]|Choose a monster; it gains +1 Energy. If it is [Heavenly-kind], it gains +1 additional Energy.||pictures/sudden_spirit.png
+Altar Offering|[Quick]|During the Set phase, when you Summon a high-level monster: required Energy −2.||pictures/offering.png
+Blend Under Pressure||Additionally Summon a level-0 monster; all your monsters’ base ATK becomes the (rounded-up) average of their base ATK.||pictures/integration.png
+Premature Birth Sign|[Quick] The Seer foretold your early arrival.|Additionally flip-Summon 1 monster. A monster flip-Summoned this way is unaffected by opponent card effects this turn.||pictures/premature_birth_sign.png
+Perfect Grotto|[Continuous] The Seer found a cave akin to a black hole.|At End Phase, you may place any number of monsters from your hand or field onto this card. During the Set phase, you may Summon up to two monsters from this card (the first counts as a Normal Summon, the second as an additional Summon). (Cards placed on this card are not considered on the field.)||pictures/goblin_cave.png
+Break From Stone||(Use only if you control no monsters.) [Directly Summon] one level ≤3 monster from your discard.||pictures/earth_breaking.png
+Cold and Starved|An ill-timed cold snap and hunger arrive together.||When the opponent’s last monster on the field is destroyed: destroy 2 cards from their hand or 1 Prophecy card.|pictures/cold_starve.png
+Power of the All-Seeing Eye|||At the end of your turn: name a card. If the opponent has it in hand or set, they must discard it. Then keep naming until you miss.|pictures/eye_power.png
+Consecutive Prophecies||You may play one additional Prophecy next; if it resolves successfully, you may flip a set Prophecy on the field and use it as an additional Prophecy.|After a [Chain] occurs on your turn: Prophecy plays this turn are unlimited.|pictures/continous_prophecy.png
+Uneven Allocation|||After you perform an additional Summon this turn: set one of your monsters face-down as a Monster Egg, then take two cards from the opponent’s hand.|pictures/inequal.png
+Desert Gale||Discard 1 card; return one opponent card on the field to their hand.|After an opponent monster finishes an attack: one of your monsters makes an attack.|pictures/wind_attack.png
+Golden Body Aegis|||When the opponent declares an attack: negate that attack; return a random opponent face-up card to their hand.|pictures/golden_protection.png
+Blessing or Bane|||When you draw a card: let the opponent guess its type (Monster/Prophecy). If they guess wrong, you may discard that draw and take one card from their hand or set zone; if they guess right, you may [Directly Summon] or use that card.|pictures/good_or_bad.png
+Tri-Effect||If you control exactly three monsters, choose one: (1) draw 3 cards; (2) destroy all opponent Prophecies.|When the opponent declares an attack and you control exactly three monsters: change the attack target to any of your monsters, then set this card face-down again.|pictures/tri_effect.png
+Offensive Trap|||After the opponent declares an attack: destroy 1 opponent Monster card.|pictures/attack_trap.png
+Energy Backlash|||When the opponent declares an attack: negate that attack; the attacked monster may pay 1 Energy to destroy one opponent monster.|pictures/spirit_back.png
+Lost Treasure|[Continuous]||(Once per turn) when you take damage from a card effect: choose 1 card in your discard and add it to your hand.|pictures/lost_treasure.png
+Forceful Snatch|||After the opponent draws: take that card or take one of their hand cards.|pictures/snatch.png
+Lightning Tribulation||Choose an opponent monster with a Normal Attribute and destroy it.|When the opponent plays a Prophecy: if you control no other Prophecies besides this, you may either negate and destroy that Prophecy, or destroy a different Prophecy.|pictures/lighting_destroy.png
+Holy Light Annihilation|Holy light descends as heaven’s punishment—the Mother Earth’s disdain foretold.||When a monster on the field is destroyed by battle: inflict damage to the opponent equal to twice that monster’s DEF.|pictures/light_boom.png
+Shared Experience|||When one of your monsters is destroyed by battle: next turn all your monsters get ATK + (the battle damage dealt).|pictures/share_exp.png
+Wind Spirit’s Guard|||When one of your monsters is targeted for effect destruction: cancel that destruction and look at all cards in the opponent’s hand.|pictures/wind_protection.png
+East Sea Dragon Palace|[Continuous/Field]|Pay 2 Energy and discard 1 card: destroy 1 opponent card on the field.|When a [Chain] occurs: this card gains +1 Energy.|pictures/dragon_palace.png
+Bounty for Assassination|||When you draw by a triggered effect: all battle damage you deal this turn is +10.|pictures/reward_attack.png
+Bubble Assault|||When you declare an attack: that attack gets +3 ATK and does not trigger opponent effects or get affected by their Continuous Prophecies; that monster refreshes its skill-use count.|pictures/bubble_attack.png
+Fortune Reversal|||When your hand cards are discarded by a card effect: gain 3 Energy to distribute among your field.|pictures/payback.png
+Counter Throw|||When the opponent issues an attack command: destroy one of your monsters; choose a monster you control—it gains +15 ATK and immediately makes one attack.|pictures/counter_attack.png
+Deadly Gift|Who could refuse an adorable kitten?|Choose one of your level ≤2 monsters; it attacks the opponent player directly.||pictures/dangerous_gift.png
+Heaven-Borrowed Power||Choose one monster on the field; it gets +10 ATK until end of turn.|When one of your monsters is attacked: that monster gets +10 DEF until end of turn.|pictures/temp_power.png
+Bloodthirsty Lineage||Choose a monster; its next attack this turn gets +15 ATK. After that attack, you lose 5 Faith.||pictures/blood_power.png
+Horn of Counterattack|At the perfect moment the Seer sounded the horn of victory.|All your monsters: any ATK/DEF buffs they receive this turn are doubled.|When the opponent declares an attack: all your monsters get +5 DEF this turn.|pictures/counterattack_horn.png
+Immortal Step||Choose a monster you control; it can attack two additional times this turn.|When you declare an attack: another of your monsters gets +10 ATK for its next attack this turn.|pictures/speedup.png
+New Nest||Discard your entire hand; keep drawing and revealing until you have drawn 2 Monster cards.||pictures/new_cave.png
+Holy Light Protection|[Continuous]|All your monsters get +3 DEF.||pictures/protection.png
+Speech Before Battle||This turn, all your monsters get +5 ATK.||pictures/fight_speech.png
+A Rain of Arrows||Deal 5 damage to the opponent for each monster you control.||pictures/arrows.png
+Flash of Insight||Gain +2 Energy, randomly distributed among your monsters.||pictures/spirit_shine.png
+Solemn Prophecy||You may additionally use one Prophecy that has been set since your previous turn (non-Equip, non-Continuous); that Prophecy’s effect resolves twice.||pictures/serious_prophecy.png
+Thunder-Trial Sacred Grove|[Continuous]||After you Summon a high-level monster: randomly destroy one opponent face-up card.|pictures/thunder_forest.png
+Oceanic Source||Choose a level-0 [Fish-kind] (or [Merfolk], or Water-attribute) monster; its next attack has ATK ×3.||pictures/stream.png
+Spirit-Pivot Holy Sword|[Continuous/Equip]|Equipped monster gets +5 ATK and +5 DEF. At each End Phase, remove 1 Energy from your field; otherwise destroy this card.||pictures/spring_altar.png
+All Spirits Converge||All Energy on both sides converges onto one monster you control.||pictures/sprint_return.png
+Wand of Hallucination|[Continuous/Equip]|The equipped monster gains the skill: [Mind Haze] Gain control of an opponent monster for 1 turn. (If the controlled monster can attack the player directly, it may do so.)||pictures/hollow.png
+Heaven-Summoned Cataclysm||You take 10 damage; the opponent takes 5 damage; one of your monsters gains +3 Energy.|When the opponent spends more than 2 Energy at once: they take 20 damage and you take 5 damage.|pictures/sky_prophecy.png
+Spirit Deer Charge||Remove 1 Energy from your field; treat it as a monster ATK 15 / DEF 0 that makes one attack. (If the opponent controls no monsters or Monster Eggs, it may attack directly.)||pictures/deer.png
+Immortal Herb Slope|[Continuous/Field]||When you would take effect damage: if ≤5, prevent it and put 1 Energy on this card; if >5, reduce it by 5.|pictures/nice_drug.png
+Avenue of Heroes|||When you draw a Monster card: take 5 damage, then [Directly Summon] it. It is unaffected by opponent card effects this turn.|pictures/hero_honor.png
+Chasing Orb|||When the attacked opponent monster is not destroyed by battle: if your attacker’s ATK exceeds that target’s original DEF, destroy that monster, recalculate battle damage (as effect damage), and gain its Energy.|pictures/targeted.png
+Return of the False Mirror|||When you would take effect damage: negate it and deal the same amount to the opponent.|pictures/magic_mirrow.png
+General’s Crab Claw|[Continuous/Equip]|ATK +3; DEF +2.|When you take damage: the equipped monster gains +1 Energy.|pictures/krebs_weapon.png
+Orb Rebound|||When the opponent declares an attack: negate the attack; the attacked monster pays 1 Energy to deal 14 damage to the opponent.|pictures/rebound.png
+Endure and Aspire|||When you take battle damage: discard X cards; draw (X + 2) cards.|pictures/oath.png
+Abyss of Heart-Demons|||After you deal damage to the opponent: all effect damage they take this turn is doubled.|pictures/abyss.png
+Dark Poison Fen|[Continuous/Field]||At the end of your turn: deal 5 damage to the opponent.|pictures/veilfen.png
+Ancestral Grudge|[Continuous] The Seer said: “Behold—your ancient feud.”|Condition: You may activate this only if last turn one of your X-kind monsters was destroyed by battle by a Y-kind monster.|When your X-kind fights a Y-kind: ATK +5.|pictures/generation_hate.png
+Spirit-Vein Activation|||When one of your monsters gains Energy: for its next two attacks, it gets +2 ATK; this turn it may attack one additional time and use its skill one additional time.|pictures/activate.png
+Enigmatic Fragrance|||After you spend Energy: one opponent monster permanently loses all skills, attributes, and effects.|pictures/smell.png
+End of the Arcane||All your monsters gain +1 Energy; then remove all Energy from all monsters; each monster gains ATK + (5 × the Energy it removed).||pictures/end_magic.png
+Emerald Flash|||When a card on the field is flipped: negate its effect and destroy that card.|pictures/green_laser.png
+Celestial Radiance|[Continuous/Equip]|At each End Phase, the equipped monster gains +1 Energy; if the opponent controls no set cards, it gains +1 more.||pictures/rainbow_protect.png
+Exquisite Codex||Remove 1 Energy from the field; swap this card with a Prophecy in your discard and immediately use that Prophecy.||pictures/magic_codex.png
+Ancient Spirit Cannon|[Continuous]|(Once per turn) Remove 2 Energy from your field (excluding Energy on this card) to destroy 1 opponent card; then put +1 Energy on this card.||pictures/forest_cannon.png
+Bloodthirsty Command||Choose one monster; it gets +3 ATK and the battle damage it deals this turn is doubled.||pictures/blood_kill.png
+Forest’s Blessed Greenblade||Choose one of your monsters: it gains +1 Energy; its next attack gets +5 ATK. After that attack resolves, the opponent takes the same amount of battle damage again (as effect damage), then the opponent draws 2 cards.||pictures/forest_sword.png
+Man-Eater Bloom Trap|||When the opponent declares an attack: pay 1 Energy to negate that attack and destroy the attacking monster; if destroyed, recover 3 Faith.|pictures/piranha.png
+Phantom of the Wondrous Vine|||When one of your monsters is destroyed by an effect: its Energy is not absorbed; instead, attach it to this card and this card persists temporarily. At the end of the turn, [Directly Summon] that monster to your field, return its Energy to it and give it +1 extra Energy; then destroy this card and attach it to that monster as Energy.|pictures/goost_plant.png
+Demon Tree Extraction||Destroy one of your monsters. Choose another of your monsters; it gains +5 ATK and Energy + (1 + the destroyed monster’s Energy).||pictures/tree_absorb.png
