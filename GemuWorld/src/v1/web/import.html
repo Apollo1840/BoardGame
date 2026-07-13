@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GemuWorld 批量导入</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#20242a;background:#f3f5f7}*{box-sizing:border-box}body{margin:0}.top{background:#17212b;color:#fff;padding:18px 24px;display:flex;justify-content:space-between}.top a{color:#fff}main{max-width:880px;margin:auto;padding:24px}.panel{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px #0001;margin-bottom:16px}label{display:grid;gap:7px;margin-bottom:16px}select,input,button{font:inherit;padding:10px;border:1px solid #ccd2d8;border-radius:7px}button{background:#1769aa;color:#fff;border:0;cursor:pointer;margin-right:8px}button.danger{background:#a82727}button:disabled{opacity:.55}pre{white-space:pre-wrap;word-break:break-word;background:#121820;color:#dce8f2;padding:16px;border-radius:8px;max-height:420px;overflow:auto}.note{color:#59636d;line-height:1.6}.ok{color:#18723b}.error{color:#b00020}
+  </style>
+</head>
+<body>
+  <header class="top"><strong>GemuWorld · 批量导入</strong><nav><a href="/viewer">返回 Viewer</a> · <a href="/stats">统计</a></nav></header>
+  <main>
+    <section class="panel">
+      <h2>导入卡牌 CSV</h2>
+      <p class="note">按中文卡名精确匹配。唯一同名卡会被覆盖，新卡名会新增；内部稳定 ID 和已有卡组关系会保留。建议先预检。任何错误都会令整批回滚。</p>
+      <label>卡牌类型<select id="type"><option value="monster">怪物卡 monster_cards.csv</option><option value="prophecy">预言卡 prophecy_cards.csv</option></select></label>
+      <label>CSV 文件<input id="file" type="file" accept=".csv,text/csv"></label>
+      <button id="dry">预检（不写数据库）</button><button id="apply" class="danger">确认导入</button>
+    </section>
+    <section class="panel"><div id="status" class="note">请选择文件。</div><pre id="result" hidden></pre></section>
+  </main>
+  <script>
+    const file=document.getElementById('file'),status=document.getElementById('status'),result=document.getElementById('result');
+    async function run(dryRun){
+      if(!file.files.length){status.textContent='请先选择 CSV 文件。';status.className='error';return;}
+      if(!dryRun&&!confirm('确认写入数据库？同名卡牌信息和效果将被覆盖。'))return;
+      const buttons=document.querySelectorAll('button');buttons.forEach(button=>button.disabled=true);status.textContent=dryRun?'正在预检……':'正在执行事务导入……';status.className='note';result.hidden=true;
+      try{
+        const response=await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({card_type:document.getElementById('type').value,csv:await file.files[0].text(),dry_run:dryRun})});
+        const payload=await response.json();if(!response.ok)throw new Error(payload.error||response.statusText);
+        status.textContent=dryRun?`预检通过：将新增 ${payload.created_count}，覆盖 ${payload.updated_count}`:`导入完成：新增 ${payload.created_count}，覆盖 ${payload.updated_count}`;status.className='ok';result.textContent=JSON.stringify(payload,null,2);result.hidden=false;
+      }catch(error){status.textContent='导入失败，数据库已回滚：'+error.message;status.className='error';}
+      finally{buttons.forEach(button=>button.disabled=false);}
+    }
+    document.getElementById('dry').onclick=()=>run(true);document.getElementById('apply').onclick=()=>run(false);
+  </script>
+</body>
+</html>

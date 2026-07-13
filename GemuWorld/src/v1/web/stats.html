@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GemuWorld 卡牌统计</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#20242a;background:#f3f5f7}*{box-sizing:border-box}
+    body{margin:0}.top{background:#17212b;color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}.top a{color:#fff}
+    main{max-width:1200px;margin:auto;padding:20px}.filters,.panel{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #00000010}
+    .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:end}label{display:grid;gap:5px;font-size:13px}select,input,button{font:inherit;padding:8px 10px;border:1px solid #ccd2d8;border-radius:7px}button{background:#1769aa;color:#fff;border:0;cursor:pointer}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.kpi{background:#edf4fa;border-radius:9px;padding:14px}.kpi strong{display:block;font-size:26px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+    h1,h2{margin:0 0 12px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:7px;border-bottom:1px solid #e7eaed}th{background:#f7f8f9}.error{color:#b00020}.muted{color:#68717a;font-size:13px}
+  </style>
+</head>
+<body>
+  <header class="top"><strong>GemuWorld · 数据库统计</strong><nav><a href="/viewer">返回卡牌 Viewer</a></nav></header>
+  <main>
+    <section class="filters">
+      <label>语言<select id="language"><option value="zh">中文</option><option value="en">English</option></select></label>
+      <label>卡牌类型<select id="card-type"><option value="all">全部</option><option value="monster">怪物卡</option><option value="prophecy">预言卡</option></select></label>
+      <label>卡组<select id="deck"><option value="">全部卡组</option></select></label>
+      <label>关键词<input id="keyword" placeholder="卡名、效果……"></label>
+      <button id="refresh">刷新统计</button>
+    </section>
+    <div id="status" class="muted">加载中……</div>
+    <section id="content" hidden>
+      <div class="panel"><h2>总览</h2><div id="kpis" class="kpis"></div></div>
+      <div class="grid">
+        <section class="panel"><h2>等级与平均数值</h2><div id="levels"></div></section>
+        <section class="panel"><h2>属性分布</h2><div id="attributes"></div></section>
+        <section class="panel"><h2>种族分布</h2><div id="races"></div></section>
+        <section class="panel"><h2>效果类型</h2><div id="effects"></div></section>
+        <section class="panel"><h2>卡组分布</h2><div id="decks"></div></section>
+      </div>
+    </section>
+  </main>
+  <script>
+    const $=id=>document.getElementById(id);
+    const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const table=(headers,rows)=>`<table><thead><tr>${headers.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    const distribution=data=>table(['项目','数量'],Object.entries(data||{}));
+    async function loadDecks(){
+      const language=$('language').value;
+      const result=await fetch(`/api/decks?language=${language}`).then(r=>r.json());
+      const current=$('deck').value;
+      $('deck').innerHTML='<option value="">全部卡组</option>'+result.items.map(d=>`<option value="${esc(d.code)}">${esc(d.name)} (${d.card_count})</option>`).join('');
+      $('deck').value=current;
+    }
+    async function refresh(){
+      $('status').textContent='加载中……';$('status').className='muted';$('content').hidden=true;
+      const params=new URLSearchParams({language:$('language').value,card_type:$('card-type').value});
+      if($('deck').value)params.set('deck',$('deck').value);if($('keyword').value)params.set('keyword',$('keyword').value);
+      try{
+        const response=await fetch('/api/statistics?'+params);const payload=await response.json();if(!response.ok)throw new Error(payload.error||response.statusText);
+        const s=payload.statistics;
+        $('kpis').innerHTML=[['全部卡牌',s.total],['怪物卡',s.monster_count],['预言卡',s.prophecy_count],['未加入卡组',s.cards_without_decks],['永续预言',s.prophecy.permanent]].map(([name,value])=>`<div class="kpi"><span>${esc(name)}</span><strong>${esc(value)}</strong></div>`).join('');
+        $('levels').innerHTML=table(['等级','数量','平均攻击','平均防御','平均魔力'],Object.entries(s.level_averages).map(([level,v])=>[level,v.count,v.attack,v.defence,v.magic]));
+        $('attributes').innerHTML=distribution(s.attribute_distribution);$('races').innerHTML=distribution(s.race_distribution);$('effects').innerHTML=distribution(s.effect_type_distribution);$('decks').innerHTML=distribution(s.deck_distribution);
+        $('status').textContent=`当前筛选共 ${s.total} 张卡牌`;$('content').hidden=false;
+      }catch(error){$('status').textContent='统计加载失败：'+error.message;$('status').className='error';}
+    }
+    $('refresh').onclick=refresh;$('language').onchange=async()=>{await loadDecks();refresh()};
+    loadDecks().then(refresh);
+  </script>
+</body>
+</html>

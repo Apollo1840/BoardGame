@@ -146,6 +146,22 @@
     #sidebar-panel .section{ display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
     #sidebar-panel .divider{ border-bottom:1px solid #444; margin:10px 0; }
     #sidebar-panel .section-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    #export-dialog{ border:0; border-radius:12px; padding:0; width:min(420px,calc(100vw - 32px)); box-shadow:0 18px 60px rgba(0,0,0,.35); }
+    #export-dialog::backdrop{ background:rgba(0,0,0,.5); }
+    #export-form{ padding:22px; display:grid; gap:16px; }
+    #export-form h2{ margin:0; }
+    #export-form .export-types{ display:flex; gap:20px; }
+    #export-form label{ display:grid; gap:6px; }
+    #export-form .export-types label{ display:flex; align-items:center; gap:6px; }
+    #export-form input[type="text"]{ padding:8px; border:1px solid #bbb; border-radius:6px; font:inherit; }
+    #export-form .dialog-actions{ display:flex; justify-content:flex-end; gap:8px; }
+    #export-form button{ padding:8px 16px; border:0; border-radius:6px; cursor:pointer; }
+    #export-confirm{ background:#3b82f6; color:#fff; }
+    #export-message{ min-height:20px; color:#b42318; font-size:13px; }
+    #data-version{ border:1px solid #667085; border-radius:999px; padding:3px 9px; background:#181b20; color:#d0d5dd; font-size:12px; cursor:pointer; }
+    #data-version:hover{ border-color:#3b82f6; color:#fff; }
+    .editor-shortcuts{ display:flex; gap:8px; }
+    #sidebar-panel .editor-shortcuts .btn{ width:calc(50% - 4px); font-size:13px; }
 
     /* 卡组按钮样式 */
     #clan-buttons-container {
@@ -283,6 +299,7 @@
       <h4 style="font-size:20px;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0;">
         <span style="font-size:22px;">🃏</span> 控制面板
       </h4>
+      <button id="data-version" type="button" title="点击修改当前数据版号">读取中…</button>
     </div>
 
     <div class="divider"></div>
@@ -336,7 +353,19 @@
     <div class="divider"></div>
 
     <div class="section">
-      <button id="btn-print" class="btn"><span>🖨️</span> 打印/导出 PDF</button>
+      <a href="/editor" target="_blank" rel="noopener" class="btn" style="text-align:center;text-decoration:none;"><span>✏️</span> 卡牌编辑</a>
+      <div class="editor-shortcuts">
+        <a href="/decks" target="_blank" rel="noopener" class="btn" style="text-align:center;text-decoration:none;"><span>🗂️</span> 卡组编辑</a>
+        <a href="/effects" target="_blank" rel="noopener" class="btn" style="text-align:center;text-decoration:none;"><span>✨</span> 卡效编辑</a>
+      </div>
+      <div class="divider"></div>
+      <a href="/stats" target="_blank" rel="noopener" class="btn" style="text-align:center;text-decoration:none;"><span>📊</span> 卡牌统计</a>
+      <a href="/design-guides" target="_blank" rel="noopener" class="btn" style="text-align:center;text-decoration:none;"><span>📐</span> 设计指南</a>
+      <div class="divider"></div>
+      <a href="/import" target="_blank" rel="noopener" class="btn" style="text-align:center;text-decoration:none;"><span>📥</span> 批量导入</a>
+      <button id="btn-export" class="btn"><span>📦</span> 批量导出</button>
+      <div class="divider"></div>
+      <button id="btn-print" class="btn"><span>🖨️</span> 打印（导出 PDF）</button>
       <div style="font-size:12px;color:#aaa;line-height:1.3;margin-top:6px;">
         打印时请勾选“打印背景图形 / Background graphics”
       </div>
@@ -356,6 +385,25 @@
     <div style="font-size:13px;color:#aaa;text-align:center;letter-spacing:1px;">© BoardGame 工具</div>
   </div>
 
+  <dialog id="export-dialog">
+    <form id="export-form">
+      <h2>导出数据版本</h2>
+      <div class="export-types">
+        <label><input type="radio" name="format" value="csv" checked> CSV</label>
+        <label><input type="radio" name="format" value="database"> 数据库</label>
+      </div>
+      <label id="export-version-field">数据版号
+        <input id="export-version" name="version" type="text" required pattern="v[0-9]+(?:\.[0-9]+)*" placeholder="例如 v3 或 v3.1">
+      </label>
+      <div id="export-version-info" style="font-size:13px;color:#666;"></div>
+      <div id="export-message"></div>
+      <div class="dialog-actions">
+        <button id="export-cancel" type="button">取消</button>
+        <button id="export-confirm" type="submit">导出</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="main-content" style="position:relative; margin-left:240px;">
     <div id="alert-banner" style="display:none;position:fixed;top:0;left:240px;right:0;background:#ff6b6b;color:#fff;padding:12px 16px;border-bottom:2px solid #ff5252;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;max-width:100%;word-break:break-word;">
@@ -370,49 +418,19 @@
   </div>
 
   <script>
-    // Decode \n to real newlines
-    function decodeText(s){ return String(s??'').replace(/\\\|/g,'|').replace(/\\n/g,'\n'); }
     // Escape HTML to prevent injection when inserting into innerHTML
     function escapeHtml(s){ return String(s??'').replace(/[&<>\"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m])); }
     let lang = 'zh';
 
-    /* ---------- CSV/解析 ---------- */
-    function parsePipeCsvLine(line){
-      const out=[]; let cur='';
-      for (let i=0;i<line.length;i++){
-        const ch=line[i];
-        if (ch==='\\'){
-          const next=line[i+1];
-          if (next==='|'){ cur+='|'; i++; continue; }
-          if (next==='\\'){ cur+='\\'; i++; continue; }
-          cur+='\\'; continue;
-        }
-        if (ch==='|'){ out.push(cur); cur=''; continue; }
-        cur+=ch;
-      }
-      out.push(cur); return out;
-    }
-    const parseCsvHeader=(line)=>parsePipeCsvLine(line);
-    function mapCsvRowToObj(headerArr,rowArr){
+    /* ---------- API 对象适配 ---------- */
+    function mapRowToObj(headerArr,rowArr){
       const obj={};
       for(let i=0;i<headerArr.length;i++){
         const key = headerArr[i];
         const raw = rowArr[i]!==undefined?rowArr[i]:'';
-        // 保持 JSON 字段（attributes, skills）内的转义序列不被转换为真实换行，
-        // 以便后续 JSON.parse 能正确解析 \n
-        if(key==='attributes' || key==='skills'){
-          obj[key]=raw;
-        }else{
-          obj[key]=decodeText(raw);
-        }
+        obj[key]=raw;
       }
       return obj;
-    }
-    async function loadCSVWithHeader(path){
-      const txt=await (await fetch(path)).text();
-      const lines=txt.split('\n').filter(r=>r.trim());
-      if (!lines.length) return {headerArr: [], rowsArr: []};
-      return {headerArr:parseCsvHeader(lines[0]), rowsArr:lines.slice(1).map(parsePipeCsvLine)};
     }
     function fixJsonQuotes(str){
       if (!str) return str;
@@ -424,7 +442,7 @@
     /* ---------- 卡片渲染 ---------- */
     function createProphecyCard(row,langOverride){
       let obj=Array.isArray(row)?(()=>{const [t,i,e,r='',img]=row.length===4?[row[0],row[1],row[2],'',row[3]]:row; return {card_title:t,introduction:i,effect:e,responsive_effect:r,image:img};})():row;
-      const card=document.createElement('div'); card.className='card prophecy';
+      const card=document.createElement('div'); card.className='card prophecy'; card.dataset.cardId=obj.card_id||''; card.dataset.cardType='prophecy';
       if(obj.image){ card.style.setProperty('--prophecy-bg',`url('${obj.image}')`);} else { card.style.removeProperty('--prophecy-bg');}
       card.innerHTML=`<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
                       <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
@@ -452,7 +470,7 @@
       const labelReact=l==='en'?'RespAttr':'反应属性';
       const labelAtk=l==='en'?'ATK':'攻击';
       const labelDef=l==='en'?'DEF':'防御';
-      const card=document.createElement('div'); card.className='card monster';
+      const card=document.createElement('div'); card.className='card monster'; card.dataset.cardId=obj.card_id||''; card.dataset.cardType='monster';
       card.innerHTML=`<div class="card-title"><span class="level">${lvlIcons}</span><span class="name">${obj.card_title||''}</span><span class="type">${obj.monster_type||''}</span></div>
                       <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
       const area=document.createElement('div'); area.className='card-content';
@@ -477,39 +495,37 @@
     }
 
     // --- 数据与渲染 ---
-    let prophecyHeader=[], monsterHeader=[], allProphecyRows=[], allMonsterRows=[];
+    const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','update_datetime'];
+    const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','update_datetime'];
+    let allProphecyRows=[], allMonsterRows=[];
     let displayCount=18;
     let selectedClans=new Set(); // 存储选中的卡组
-    let clanCardNames={}; // 存储每个卡组的卡牌名称
-    let missingCards={}; // 存储检索失败的卡牌：{clanName: [card1, card2, ...]}
+    let clanMetadata={};
+    let clanCardIds={}; // 数据库关系：卡组 code -> 有序 card_id
+    let missingCards={}; // 外键约束下应始终为空
 
     const getSortField=()=> (document.getElementById('sort-field')?.value || 'update_datetime');
     const getAltDisplay=()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
 
-    // 加载卡组列表
-    async function loadClanFiles(){
-      try{
-        // 从 clans/_clans.json 动态加载卡组列表
-        const indexUrl=`clans/_clans.json?t=${Date.now()}`;
-        const indexTxt=await (await fetch(indexUrl)).text();
-        const clanNames=JSON.parse(indexTxt);
-        
-        for(const clanName of clanNames){
-          const clanPath=`clans/${clanName}.md?t=${Date.now()}`;
-          const txt=await (await fetch(clanPath)).text();
-          const lines=txt.split('\n').map(line=>line.trim()).filter(line=>{
-            if(!line) return false;
-            if(line.startsWith('//')) return false;              // 支持 // 注释行
-            if(line.startsWith('<!--') && line.endsWith('-->')) return false; // 兼容 Markdown 注释
-            return true;
-          });
-          // 去除重复卡牌
-          clanCardNames[clanName]=[...new Set(lines)];
-        }
-        createClanButtons();
-      }catch(err){
-        console.warn('加载卡组文件失败:', err);
+    function apiCardToRow(card){
+      const effects=Object.fromEntries(card.effects.map(effect=>[effect.type,effect]));
+      if(card.type==='monster'){
+        const attributes={};
+        if(effects.monster_attribute) attributes.normal_attribute=effects.monster_attribute.text;
+        if(effects.monster_reactive_attribute) attributes.responsive_attribute=effects.monster_reactive_attribute.text;
+        const skills=card.effects.filter(effect=>effect.type==='monster_skill').sort((a,b)=>a.position-b.position).map(effect=>({name:effect.name,energy_cost:effect.energy_cost||0,effect:effect.text}));
+        return [card.card_id,card.title,card.level,card.monster_type,card.description,card.attack,card.defence,card.magic,JSON.stringify(attributes),JSON.stringify(skills),card.image,card.updated_at];
       }
+      return [card.card_id,card.title,card.introduction,effects.prophecy_effect?.text||'',effects.prophecy_reactive_effect?.text||'',card.image,card.updated_at];
+    }
+
+    async function loadDecksFromApi(){
+      const response=await fetch(`/api/decks?language=${encodeURIComponent(lang)}&t=${Date.now()}`,{cache:'no-store'});
+      if(!response.ok) throw new Error(`卡组 API ${response.status}`);
+      const payload=await response.json();
+      clanMetadata={};
+      for(const deck of payload.items) clanMetadata[deck.code]=deck;
+      createClanButtons();
     }
 
     function hashStringToColor(str){
@@ -527,14 +543,16 @@
     function createClanButtons(){
       const container=document.getElementById('clan-buttons-container');
       container.innerHTML='';
-      Object.keys(clanCardNames).forEach(clanName=>{
+      Object.keys(clanMetadata).forEach(clanName=>{
         const btn=document.createElement('button');
         const color = hashStringToColor(clanName);
         btn.className='btn';
         btn.textContent=clanName;
+        btn.title=clanMetadata[clanName].description||clanName;
         btn.style.borderColor = color;
         btn.style.color = color;
         btn.style.setProperty('--clan-color', color);
+        if(selectedClans.has(clanName)) btn.classList.add('selected');
         btn.onclick=function(){
           if(selectedClans.has(clanName)){
             selectedClans.delete(clanName);
@@ -571,10 +589,10 @@
     }
 
     // 检查卡牌是否属于选中的卡组
-    function isCardInSelectedClans(cardName){
+    function isCardInSelectedClans(cardId){
       if(selectedClans.size===0) return true; // 没有选择时显示所有
       for(const clanName of selectedClans){
-        if(clanCardNames[clanName]&&clanCardNames[clanName].includes(cardName)){
+        if(clanCardIds[clanName]&&clanCardIds[clanName].includes(cardId)){
           return true;
         }
       }
@@ -584,20 +602,7 @@
     // 验证卡组中的卡牌是否存在
     function validateClanCards(){
       missingCards={};
-      const allMonsterNames=new Set(allMonsterRows.map(row=>row[monsterHeader.indexOf('card_title')]||''));
-      const allProphecyNames=new Set(allProphecyRows.map(row=>row[prophecyHeader.indexOf('card_title')]||''));
-      
-      for(const clanName in clanCardNames){
-        const missing=[];
-        for(const cardName of clanCardNames[clanName]){
-          if(!allMonsterNames.has(cardName)&&!allProphecyNames.has(cardName)){
-            missing.push(cardName);
-          }
-        }
-        if(missing.length>0){
-          missingCards[clanName]=missing;
-        }
-      }
+      // 数据库外键保证卡组成员引用有效；导入异常在 V1.1 报告中处理。
     }
 
     // 显示/隐藏警告消息
@@ -695,16 +700,16 @@
       // 1. 先进行卡组过滤
       const cardTitleMonsterIdx=monsterHeader.indexOf('card_title');
       const cardTitleProphecyIdx=prophecyHeader.indexOf('card_title');
+      const cardIdMonsterIdx=monsterHeader.indexOf('card_id');
+      const cardIdProphecyIdx=prophecyHeader.indexOf('card_id');
       
       const clanFilteredMonsterRows=allMonsterRows.filter(row=>{
         if(cardTitleMonsterIdx===-1) return true;
-        const cardName=row[cardTitleMonsterIdx]||'';
-        return isCardInSelectedClans(cardName);
+        return isCardInSelectedClans(row[cardIdMonsterIdx]||'');
       });
       const clanFilteredProphecyRows=allProphecyRows.filter(row=>{
         if(cardTitleProphecyIdx===-1) return true;
-        const cardName=row[cardTitleProphecyIdx]||'';
-        return isCardInSelectedClans(cardName);
+        return isCardInSelectedClans(row[cardIdProphecyIdx]||'');
       });
       
       // 2. 再进行卡数过滤
@@ -722,25 +727,21 @@
           let orderMap = new Map();
           let index = 0;
           for(const clanName of selectedClans){
-            const cards = clanCardNames[clanName] || [];
-            for(const cardName of cards){
-              if(!orderMap.has(cardName)){
-                orderMap.set(cardName, index++);
+            const cards = clanCardIds[clanName] || [];
+            for(const cardId of cards){
+              if(!orderMap.has(cardId)){
+                orderMap.set(cardId, index++);
               }
             }
           }
           sortedMonsterRows = cardCountFilteredMonsterRows.slice().sort((a,b)=>{
-            const aName = a[cardTitleMonsterIdx] || '';
-            const bName = b[cardTitleMonsterIdx] || '';
-            const aOrder = orderMap.get(aName) ?? Infinity;
-            const bOrder = orderMap.get(bName) ?? Infinity;
+            const aOrder = orderMap.get(a[cardIdMonsterIdx] || '') ?? Infinity;
+            const bOrder = orderMap.get(b[cardIdMonsterIdx] || '') ?? Infinity;
             return aOrder - bOrder;
           });
           sortedProphecyRows = cardCountFilteredProphecyRows.slice().sort((a,b)=>{
-            const aName = a[cardTitleProphecyIdx] || '';
-            const bName = b[cardTitleProphecyIdx] || '';
-            const aOrder = orderMap.get(aName) ?? Infinity;
-            const bOrder = orderMap.get(bName) ?? Infinity;
+            const aOrder = orderMap.get(a[cardIdProphecyIdx] || '') ?? Infinity;
+            const bOrder = orderMap.get(b[cardIdProphecyIdx] || '') ?? Infinity;
             return aOrder - bOrder;
           });
         }
@@ -752,36 +753,53 @@
       if(altDisplay){
         const maxLen=Math.max(sortedMonsterRows.length, sortedProphecyRows.length);
         for(let i=0;i<maxLen;i++){
-          if(i<sortedMonsterRows.length)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
-          if(i<sortedProphecyRows.length) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
+          if(i<sortedMonsterRows.length)  ctr.append(createMonsterCard(mapRowToObj(monsterHeader,  sortedMonsterRows[i])));
+          if(i<sortedProphecyRows.length) ctr.append(createProphecyCard(mapRowToObj(prophecyHeader, sortedProphecyRows[i])));
         }
       }else{
-        for(let i=0;i<sortedMonsterRows.length;i++)  ctr.append(createMonsterCard(mapCsvRowToObj(monsterHeader,  sortedMonsterRows[i])));
-        for(let i=0;i<sortedProphecyRows.length;i++) ctr.append(createProphecyCard(mapCsvRowToObj(prophecyHeader, sortedProphecyRows[i])));
+        for(let i=0;i<sortedMonsterRows.length;i++)  ctr.append(createMonsterCard(mapRowToObj(monsterHeader,  sortedMonsterRows[i])));
+        for(let i=0;i<sortedProphecyRows.length;i++) ctr.append(createProphecyCard(mapRowToObj(prophecyHeader, sortedProphecyRows[i])));
       }
     }
 
-    async function reloadCSVsAndRender(){
-      let prophecy, monster; const ts=Date.now();
-      if(lang==='en'){
-        prophecy=await loadCSVWithHeader('prophecy_cards_en.csv?t='+ts);
-        monster =await loadCSVWithHeader('monster_cards_en.csv?t='+ts);
-      }else{
-        prophecy=await loadCSVWithHeader('prophecy_cards.csv?t='+ts);
-        monster =await loadCSVWithHeader('monster_cards.csv?t='+ts);
+    async function reloadCardsFromApi(){
+      const response=await fetch(`/api/cards?language=${encodeURIComponent(lang)}&card_type=all&sort_by=database_order&direction=asc&t=${Date.now()}`,{cache:'no-store'});
+      if(!response.ok) throw new Error(`卡牌 API ${response.status}`);
+      const payload=await response.json();
+      allMonsterRows=payload.items.filter(card=>card.type==='monster').map(apiCardToRow);
+      allProphecyRows=payload.items.filter(card=>card.type==='prophecy').map(apiCardToRow);
+      clanCardIds={};
+      for(const card of payload.items){
+        for(const deck of card.decks){
+          (clanCardIds[deck.code]??=[]).push({cardId:card.card_id,position:deck.position});
+        }
       }
-      prophecyHeader=prophecy.headerArr; allProphecyRows=prophecy.rowsArr;
-      monsterHeader =monster.headerArr;  allMonsterRows =monster.rowsArr;
+      for(const code in clanCardIds){
+        clanCardIds[code].sort((a,b)=>a.position-b.position);
+        clanCardIds[code]=clanCardIds[code].map(item=>item.cardId);
+      }
+      validateClanCards();
+      updateAlertBanner();
       await renderAllCards();
+    }
+
+    async function reloadViewerData(){
+      try{
+        await Promise.all([loadDecksFromApi(),reloadCardsFromApi()]);
+      }catch(error){
+        console.error('Viewer API 加载失败:',error);
+        const banner=document.getElementById('alert-banner');
+        document.getElementById('alert-message').textContent=`数据库 API 加载失败：${error.message}`;
+        banner.style.display='block';banner.classList.add('visible');
+      }
     }
 
     function setLangClass(){ document.body.classList.toggle('en-mode', lang==='en'); }
 
     /* ---------- 打印流程（背景网格 + 固定排版） ---------- */
     document.addEventListener('DOMContentLoaded', ()=>{
-      reloadCSVsAndRender();
+      reloadViewerData();
       setLangClass();
-      loadClanFiles(); // 加载卡组
 
       // 初始化卡组分区为收缩状态
       const clanContainer=document.getElementById('clan-buttons-container');
@@ -799,7 +817,7 @@
         banner.classList.remove('visible');
       };
 
-      document.getElementById('btn-refresh').onclick=reloadCSVsAndRender;
+      document.getElementById('btn-refresh').onclick=reloadViewerData;
 
       const cardCountInput=document.getElementById('card-count');
       cardCountInput.onchange=function(){
@@ -830,6 +848,49 @@
             document.querySelectorAll('.card').forEach(c=>c.classList.remove('card-print-size'));
           }, 50);
         }, 30);
+      };
+
+      const exportDialog=document.getElementById('export-dialog');
+      const dataVersion=document.getElementById('data-version');
+      const exportVersionField=document.getElementById('export-version-field');
+      function syncExportFields(){
+        const database=document.querySelector('#export-form [name="format"]:checked').value==='database';
+        exportVersionField.hidden=!database;document.getElementById('export-version').required=database;
+        document.getElementById('export-version-info').textContent=database?`数据库将写入 data/${dataVersion.dataset.version||'当前版号'}/`:'CSV 将覆盖写入 data/tmp/，不改变当前版号';
+      }
+      document.querySelectorAll('#export-form [name="format"]').forEach(input=>input.onchange=syncExportFields);
+      async function loadDataVersion(){
+        const response=await fetch('/api/export-info',{cache:'no-store'}),info=await response.json();
+        if(!response.ok)throw new Error(info.error||response.statusText);
+        dataVersion.textContent=info.current_version;dataVersion.dataset.version=info.current_version;return info;
+      }
+      loadDataVersion().catch(error=>{dataVersion.textContent='版号错误';dataVersion.title=error.message;});
+      dataVersion.onclick=async()=>{
+        const version=prompt('修改当前数据版号（例如 v3 或 v3.1）',dataVersion.dataset.version||'');if(version===null)return;
+        try{
+          const response=await fetch('/api/data-version',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:version.trim()})}),result=await response.json();
+          if(!response.ok)throw new Error(result.error||response.statusText);dataVersion.textContent=result.current_version;dataVersion.dataset.version=result.current_version;
+        }catch(error){alert('修改数据版号失败：'+error.message);}
+      };
+      document.getElementById('btn-export').onclick=async function(){
+        const message=document.getElementById('export-message');message.textContent='';
+        try{
+          const info=await loadDataVersion();
+          document.getElementById('export-version').value=info.default_version;
+          syncExportFields();
+          exportDialog.showModal();
+        }catch(error){alert('读取数据版号失败：'+error.message);}
+      };
+      document.getElementById('export-cancel').onclick=()=>exportDialog.close();
+      document.getElementById('export-form').onsubmit=async function(event){
+        event.preventDefault();const confirm=document.getElementById('export-confirm'),message=document.getElementById('export-message');message.textContent='';confirm.disabled=true;confirm.textContent='正在导出…';
+        try{
+          const response=await fetch('/api/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({snapshot:true,format:new FormData(this).get('format'),version:this.version.value.trim()})});
+          const result=await response.json();if(!response.ok)throw new Error(result.error||response.statusText);
+          exportDialog.close();
+          if(result.next_version){dataVersion.textContent=result.next_version;dataVersion.dataset.version=result.next_version;}
+          alert(`导出成功\n${result.version?'版号：'+result.version+'\n':''}路径：${result.path}\n文件：${result.files.join('、')}${result.next_version?'\n下一版号：'+result.next_version:''}`);
+        }catch(error){message.textContent='导出失败：'+error.message;}finally{confirm.disabled=false;confirm.textContent='导出';}
       };
 
       // Ctrl+P 直接打印时，自动套用/清理打印布局
@@ -892,7 +953,7 @@
       if(cnBtn) cnBtn.onclick=function(){
         if(lang!=='zh'){
           lang='zh';
-          reloadCSVsAndRender();
+          reloadViewerData();
           setLangClass();
           updateLangSwitch();
         }
@@ -900,7 +961,7 @@
       if(enBtn) enBtn.onclick=function(){
         if(lang!=='en'){
           lang='en';
-          reloadCSVsAndRender();
+          reloadViewerData();
           setLangClass();
           updateLangSwitch();
         }

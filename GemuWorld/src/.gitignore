@@ -1,3 +1,24 @@
-**/pictures/**
-**/pics/**
-**/**.pdf
+# Game data, databases, imports, exports, and version snapshots
+**/data/
+
+# Image asset directories
+**/pictures/
+**/pics/
+**/images/
+**/img/
+
+# Image files outside the standard asset directories
+**/*.[pP][nN][gG]
+**/*.[jJ][pP][gG]
+**/*.[jJ][pP][eE][gG]
+**/*.[gG][iI][fF]
+**/*.[wW][eE][bB][pP]
+**/*.[bB][mM][pP]
+**/*.[tT][iI][fF]
+**/*.[tT][iI][fF][fF]
+**/*.[sS][vV][gG]
+**/*.[iI][cC][oO]
+**/*.[aA][vV][iI][fF]
+
+# Generated print output
+**/*.[pP][dD][fF]
