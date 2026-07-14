@@ -1,5 +1,93 @@
 # GemuWorld source guide
 
+## V1.15.0 monster attributes and effect capacity
+
+The card editor now derives the English monster attribute from the selected Chinese attribute. Chinese values are chosen from every known Chinese/English attribute pair in the current database, exposed by `GET /api/monster-types`; the English field is no longer independently editable. The former `独占效果` section is named `属性与技能`.
+
+A monster card may contain at most one normal attribute, one reactive attribute, and three skills. The card editor chooses an available type when adding an effect, disables addition when every slot is full, and excludes full types from the unassigned-effect picker. Existing effect types remain editable, but an invalid combination is rejected transactionally with its specific reason. The same aggregate rule is enforced by card saves, direct effect edits and copies, CSV imports, and effect-backup restores. A save error remains visible until a later save succeeds.
+
+Profession tags, marker, and notes now form a separated design-metadata block at the bottom of effect detail cards in both editors.
+
+Deleting an effect from the card editor now means **unlink**: the stable effect row and all of its design data remain in SQLite and return to the unassigned effect library. Migration `013_allow_effect_detach.sql` permits attached-to-unassigned transitions while continuing to reject direct moves between cards. Only **永久删除卡效** in the standalone effect editor deletes the effect row itself. Permanent deletion is version-checked and, when the effect was attached, also updates the owning card's version. One-level card undo can reattach an effect under its original stable effect ID.
+
+## V1.14.0 automatic saving and one-level undo
+
+The card and effect editors no longer expose manual save buttons. Editing controls become dirty on input and save when focus leaves the field; selects, checkboxes, profession tags, effect additions/removals, and library attachments save immediately. Opening another card/effect waits for the current save queue to finish, preventing a late response from overwriting the newly opened form. Copy, archive, delete, effect export, and effect import also flush pending edits first.
+
+Each editor keeps exactly one pre-save snapshot. After a successful automatic save, **撤销上次更改** restores that snapshot using the current optimistic-lock versions, then clears itself. The button is disabled and gray before the first reversible save, after one undo, and after switching records. Initial creation of a new card/effect is not itself undoable. Autosaves are serialized and revision-aware so input entered while an earlier request is in flight remains dirty and is saved next.
+
+## V1.13.0 shared effect editing rules and searchable library picker
+
+The card editor and the standalone effect editor now load `web/effect_editor_shared.js` for their common effect labels, headings, profession styles, capability checks, and compact text summaries. The card editor continues to own its aggregate save workflow, but its embedded effect detail cards follow the same field rules and presentation logic as the standalone editor. “从卡效库添加” now provides live search plus a select box whose options contain the effect name/type and a shortened Chinese effect preview.
+
+Effect searches also index the user-facing Chinese type labels. For example, searching `技能` returns every matching unassigned monster skill rather than only effects whose name or body explicitly contains that word; `属性` and `效果` work the same way for their corresponding types.
+
+The current-list JSON import and export actions are displayed as compact gray text links on the first row of the left effect list, keeping the primary filter controls visually focused.
+
+Only monster skills may store or edit Mana cost and Chinese/English effect names. Normal attributes, reactive attributes, prophecy effects, and prophecy reactive effects omit those controls in both editors. Migration `012_effect_field_capabilities.sql`, the write APIs, JSON restore, and validation checks enforce the same rule and remove incompatible legacy values.
+
+## V1.12.0 card-detail effect editors
+
+Every effect card embedded in the card editor now follows the card-effect detail page: detail title, type, compact energy/valuation row, marker, removable profession tags, visible profession presets, bilingual names and effect text, and notes. Fields printed on cards use bold labels under the same rules as the standalone effect editor. The effect card keeps card-level transactional saving and adds only a compact delete button at its upper-right corner.
+
+## V1.11.0 card-ID artwork lock and transactional renamer
+
+Artwork paths are now a database invariant: every card must use `pics/<card_id>.png`. SQLite triggers reject direct writes that violate it, and the card editor no longer exposes an image-path field. Card CRUD, legacy import, and batch CSV import derive the path from the stable card ID and ignore incoming image-path values.
+
+Run `python scripts/rename_card_images.py` for a read-only preflight. Add `--verbose` to include every mapping. Run with `--apply` only after reviewing errors and warnings. The apply operation stages all source files in the artwork directory, creates one PNG per card (copying shared sources), updates SQLite in one transaction, writes a recovery manifest under `data/tmp/`, and restores original files if an operation fails. Cards without source artwork still receive their locked database path and are reported as warnings; unrelated orphan files are reported but never deleted.
+
+## V1.10.0 canonical artwork paths
+
+Card image paths have one portable database form: `pics/<filename>`, corresponding to files under `data/current/pics/`. Card-list API records expose both canonical `image_path` and browser-ready `image` (`/pics/<filename>`). The server serves `/pics/` directly and retains `/pictures/` as a legacy alias. Legacy CSV imports normalize `pictures/...` automatically, while CSV exports deliberately translate back to `pictures/...` for the unchanged legacy Viewer contract. This separation prepares an image-renaming utility to update files and canonical database paths without coupling data to a Windows absolute path.
+
+## V1.9.4 species-only description handling
+
+The monster description indicator and the `有描述` filter ignore one leading species marker such as `【龙种】`. A grey block now appears only when non-whitespace description text remains after that marker.
+
+## V1.9.3 compact single-line card summaries
+
+Monster rows now place a nonzero magic value in the leading purple capsule, show level as one star per level immediately after the card title, and render attack/defence as `(attack/defence)`. Level zero has no stars and zero magic has no capsule. Monster and prophecy effect indicators stay on the right side of the same row instead of occupying a second line.
+
+## V1.9.2 card-editor filtering and sorting
+
+The card editor sidebar has explicit `查询` and `添加卡牌` buttons. Monster lists can be filtered by level and by description/attribute/skill presence, then sorted by name, level, combat statistic, skill count, or update time. Prophecy lists can be filtered by the special kind parsed from their introduction and by introduction/effect presence, then sorted by name, special kind, effect count, response count, or update time. Pressing Enter in the card-name search also runs the query.
+
+## V1.9.1 card-editor list summaries
+
+The card editor list no longer exposes stable card IDs. Monster rows show a purple level capsule, title, attack/magic/defence values, and spaced color blocks for description, normal attributes, reactive attributes, and skills. Prophecy rows show the title, any leading special type such as `【永续/装备】`, and dark-blue or dark-red blocks for normal and responsive effects. Repeated blocks represent the number of matching effects.
+
+## V1.9.0 effect JSON backup and restore
+
+The effect editor exports the current filtered and sorted result list to an atomically written, timestamped JSON backup under `data/tmp/`. Each item contains its stable effect ID, exact owner card type and stable `card_id`, storage position, Mana cost, professions, valuation, marker, notes, version, timestamps, and every translation. The same page imports these backups transactionally, restoring missing effects under their original IDs or updating matching records; any validation or owner conflict rolls back the entire package. Imported attached effects also invalidate their parent card versions.
+
+## V1.8.6 live effect-list preview
+
+The selected effect row now previews visible right-hand edits immediately: Chinese skill name, Chinese effect text, valuation, and marker update as the user types. Profession changes synchronize after their existing auto-save path, and every successful save replaces the preview with the canonical API response. Preview changes alone do not write SQLite.
+
+## V1.8.5 effect-type title colors
+
+Effect-list titles use type-specific colors: monster skills black, normal attributes blue, reactive attributes red, prophecy effects dark blue, and prophecy reactive effects dark red. Detail headings and effect body text remain unchanged.
+
+## V1.8.4 compact valuation precision
+
+Effect-list valuation capsules round to one decimal place and omit a trailing `.0`. This display-only formatting leaves the full database valuation unchanged.
+
+## V1.8.3 coin-style valuation capsule
+
+Effect-list valuation capsules now contain only the numeric value. A bright highlighted gold gradient, gold border, and subtle inset shine give the capsule a coin-like appearance without displaying an `估值` label.
+
+## V1.8.2 effect creation draft
+
+Clicking **添加卡效** now opens an unsaved blank detail form immediately. Effect type is selected in that detail form and is required before save; only a successful save creates the standalone SQLite effect, so abandoning an untyped draft leaves no empty database record. Existing effects keep their type read-only.
+
+## V1.8.1 effect-list valuation and ownership indicators
+
+Non-empty effect valuations appear as gold capsules before profession tags; unset valuations render no placeholder. Unassigned effects show a small red ownership-status dot in the upper-right corner of their list row.
+
+## V1.8.0 unassigned effect library
+
+The effect editor can create a standalone card effect from a blank detail draft. Standalone effects keep their stable effect ID and all design fields in SQLite while showing `尚未链接卡牌`. The card editor can search unassigned, type-compatible effects by ID, name, or text and add one to the current card. Saving the card attaches that same database record atomically; an attached effect remains exclusive to one card and cannot later be moved or shared.
+
 ## V1.7.5 valuation in effect list
 
 Effect rows no longer show their effect ID beside the title. That gray metadata position now shows `估值：数值`, or `估值：未设置` when empty. IDs remain available in effect details, exact-ID search, duplicate notices, and same-text navigation.

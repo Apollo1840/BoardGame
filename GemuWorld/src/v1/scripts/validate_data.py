@@ -10,12 +10,26 @@ from gemuworld_db.database import connect, migrate
 
 CHECKS = {
     "foreign_keys": "PRAGMA foreign_key_check",
-    "ownerless_or_shared_effects": "SELECT id FROM effects WHERE (monster_card_id IS NULL) = (prophecy_card_id IS NULL)",
+    "shared_effects": "SELECT id FROM effects WHERE monster_card_id IS NOT NULL AND prophecy_card_id IS NOT NULL",
     "effect_type_owner_mismatch": "SELECT id FROM effects WHERE (monster_card_id IS NOT NULL AND effect_type NOT LIKE 'monster_%') OR (prophecy_card_id IS NOT NULL AND effect_type NOT LIKE 'prophecy_%')",
     "ownerless_or_shared_deck_cards": "SELECT deck_id,position FROM deck_cards WHERE (monster_card_id IS NULL) = (prophecy_card_id IS NULL)",
     "missing_zh_monster_translation": "SELECT id,card_id FROM monster_cards WHERE NOT EXISTS (SELECT 1 FROM monster_card_translations t WHERE t.monster_card_id=monster_cards.id AND language='zh')",
     "missing_zh_prophecy_translation": "SELECT id,card_id FROM prophecy_cards WHERE NOT EXISTS (SELECT 1 FROM prophecy_card_translations t WHERE t.prophecy_card_id=prophecy_cards.id AND language='zh')",
     "oversized_effect_marker": "SELECT id,marker FROM effects WHERE LENGTH(marker)>10",
+    "non_skill_energy_cost": "SELECT id,effect_type,energy_cost FROM effects WHERE effect_type<>'monster_skill' AND energy_cost IS NOT NULL",
+    "non_skill_effect_name": "SELECT t.effect_id,e.effect_type,t.language,t.name FROM effect_translations t JOIN effects e ON e.id=t.effect_id WHERE e.effect_type<>'monster_skill' AND t.name<>''",
+    "monster_effect_capacity": """
+        SELECT monster_card_id,effect_type,COUNT(*) AS effect_count
+        FROM effects
+        WHERE monster_card_id IS NOT NULL
+          AND effect_type IN ('monster_attribute','monster_reactive_attribute','monster_skill')
+        GROUP BY monster_card_id,effect_type
+        HAVING (effect_type='monster_attribute' AND COUNT(*)>1)
+            OR (effect_type='monster_reactive_attribute' AND COUNT(*)>1)
+            OR (effect_type='monster_skill' AND COUNT(*)>3)
+    """,
+    "noncanonical_monster_image_path": "SELECT id,card_id,image_path FROM monster_cards WHERE image_path <> 'pics/' || card_id || '.png'",
+    "noncanonical_prophecy_image_path": "SELECT id,card_id,image_path FROM prophecy_cards WHERE image_path <> 'pics/' || card_id || '.png'",
     "noncanonical_monster_skill_order": """
         WITH ordered AS (
             SELECT e.id, e.monster_card_id, e.position,
@@ -26,7 +40,7 @@ CHECKS = {
                    LAG(COALESCE(t.text, '')) OVER (PARTITION BY e.monster_card_id ORDER BY e.position) AS previous_text
             FROM effects e
             LEFT JOIN effect_translations t ON t.effect_id=e.id AND t.language='zh'
-            WHERE e.effect_type='monster_skill'
+            WHERE e.effect_type='monster_skill' AND e.monster_card_id IS NOT NULL
         )
         SELECT id, monster_card_id, position
         FROM ordered

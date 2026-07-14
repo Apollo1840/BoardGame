@@ -3,3 +3,4 @@ __pycache__/
 data/export/
 data/*.sqlite3-shm
 data/*.sqlite3-wal
+**/**.sql

@@ -5,6 +5,8 @@ import sqlite3
 import uuid
 from datetime import datetime
 
+from .image_paths import card_image_path
+
 
 class CardWriteError(ValueError):
     pass
@@ -18,6 +20,58 @@ ALLOWED_EFFECTS = {
     "monster": {"monster_skill", "monster_attribute", "monster_reactive_attribute"},
     "prophecy": {"prophecy_effect", "prophecy_reactive_effect"},
 }
+
+MONSTER_EFFECT_LIMITS = {
+    "monster_attribute": (1, "通常属性"),
+    "monster_reactive_attribute": (1, "反应属性"),
+    "monster_skill": (3, "技能"),
+}
+
+
+def list_monster_types(connection: sqlite3.Connection) -> list[dict[str, str]]:
+    rows = connection.execute(
+        "SELECT zh.monster_type AS zh,en.monster_type AS en,COUNT(*) AS uses "
+        "FROM monster_card_translations zh "
+        "JOIN monster_card_translations en ON en.monster_card_id=zh.monster_card_id AND en.language='en' "
+        "WHERE zh.language='zh' AND TRIM(zh.monster_type)<>'' AND TRIM(en.monster_type)<>'' "
+        "GROUP BY zh.monster_type,en.monster_type "
+        "ORDER BY zh.monster_type COLLATE NOCASE,uses DESC,en.monster_type COLLATE NOCASE"
+    )
+    result: dict[str, str] = {}
+    for row in rows:
+        result.setdefault(str(row["zh"]).strip(), str(row["en"]).strip())
+    return [{"zh": zh, "en": en} for zh, en in result.items()]
+
+
+def translate_monster_type(connection: sqlite3.Connection, chinese: object) -> str:
+    value = str(chinese or "").strip()
+    if not value:
+        return ""
+    translations = {item["zh"]: item["en"] for item in list_monster_types(connection)}
+    if value not in translations:
+        raise CardWriteError(f"未知中文属性：{value}")
+    return translations[value]
+
+
+def validate_monster_effect_counts(effect_types: list[str]) -> None:
+    for effect_type, (limit, label) in MONSTER_EFFECT_LIMITS.items():
+        count = effect_types.count(effect_type)
+        if count > limit:
+            raise CardWriteError(f"怪物卡最多只能有{limit}个{label}（当前为{count}个）")
+
+
+def ensure_monster_effect_capacity(connection: sqlite3.Connection, owner_id: int, effect_type: str, *, exclude_effect_id: int | None = None) -> None:
+    if effect_type not in MONSTER_EFFECT_LIMITS:
+        return
+    limit, label = MONSTER_EFFECT_LIMITS[effect_type]
+    sql = "SELECT COUNT(*) FROM effects WHERE monster_card_id=? AND effect_type=?"
+    parameters: list[object] = [owner_id, effect_type]
+    if exclude_effect_id is not None:
+        sql += " AND id<>?"
+        parameters.append(exclude_effect_id)
+    count = int(connection.execute(sql, parameters).fetchone()[0])
+    if count >= limit:
+        raise CardWriteError(f"怪物卡最多只能有{limit}个{label}")
 
 
 def get_effect_professions(connection: sqlite3.Connection, effect_id: int) -> list[str]:
@@ -40,6 +94,16 @@ def effect_marker(value: object) -> str:
     if len(marker) > 10:
         raise CardWriteError("effect marker must be at most 10 characters")
     return marker
+
+
+def effect_energy_cost(effect_type: str, value: object) -> object:
+    """Only monster skills have a meaningful Mana cost."""
+    return value if effect_type == "monster_skill" else None
+
+
+def effect_translation_name(effect_type: str, value: object) -> str:
+    """Only monster skills have a name rendered on a card face."""
+    return str(value or "") if effect_type == "monster_skill" else ""
 
 
 def _names(card_type: str) -> tuple[str, str, str]:
@@ -87,8 +151,9 @@ def _validate_title(connection: sqlite3.Connection, card_type: str, owner_id: in
         raise CardWriteError(f"Chinese title {title!r} already exists")
 
 
-def _sync_translations(connection: sqlite3.Connection, card_type: str, owner_id: int, translations: dict[str, object], timestamp: str) -> None:
+def _sync_translations(connection: sqlite3.Connection, card_type: str, owner_id: int, translations: dict[str, object], timestamp: str, monster_type_zh: str = "") -> None:
     _, table, owner_column = _names(card_type)
+    translated_monster_type = translate_monster_type(connection, monster_type_zh) if card_type == "monster" else ""
     for language in ("zh", "en"):
         value = translations.get(language)
         title = str(value.get("title", "")).strip() if isinstance(value, dict) else ""
@@ -98,7 +163,8 @@ def _sync_translations(connection: sqlite3.Connection, card_type: str, owner_id:
         if not title:
             raise CardWriteError("Chinese title is required")
         if card_type == "monster":
-            connection.execute(f"INSERT INTO {table}({owner_column},language,title,monster_type,description,source_updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT({owner_column},language) DO UPDATE SET title=excluded.title,monster_type=excluded.monster_type,description=excluded.description,source_updated_at=excluded.source_updated_at", (owner_id, language, title, str(value.get("monster_type", "")), str(value.get("description", "")), timestamp))
+            monster_type = monster_type_zh if language == "zh" else translated_monster_type
+            connection.execute(f"INSERT INTO {table}({owner_column},language,title,monster_type,description,source_updated_at) VALUES (?,?,?,?,?,?) ON CONFLICT({owner_column},language) DO UPDATE SET title=excluded.title,monster_type=excluded.monster_type,description=excluded.description,source_updated_at=excluded.source_updated_at", (owner_id, language, title, monster_type, str(value.get("description", "")), timestamp))
         else:
             connection.execute(f"INSERT INTO {table}({owner_column},language,title,introduction,source_updated_at) VALUES (?,?,?,?,?) ON CONFLICT({owner_column},language) DO UPDATE SET title=excluded.title,introduction=excluded.introduction,source_updated_at=excluded.source_updated_at", (owner_id, language, title, str(value.get("introduction", "")), timestamp))
 
@@ -118,9 +184,11 @@ def reorder_monster_skills(connection: sqlite3.Connection, owner_id: int) -> Non
         connection.execute("UPDATE effects SET position=? WHERE id=?", (position, row["id"]))
 
 
-def _sync_effects(connection: sqlite3.Connection, card_type: str, owner_id: int, effects: object) -> None:
+def _sync_effects(connection: sqlite3.Connection, card_type: str, owner_id: int, effects: object) -> list[dict[str, int]]:
     if not isinstance(effects, list):
         raise CardWriteError("effects must be an array")
+    if card_type == "monster":
+        validate_monster_effect_counts([str(value.get("type", "")) for value in effects if isinstance(value, dict)])
     owner_column = f"{card_type}_card_id"
     existing = {row["id"]: row for row in connection.execute(f"SELECT * FROM effects WHERE {owner_column}=?", (owner_id,))}
     # Free unique (owner,type,position) slots before arbitrary reordering.
@@ -142,13 +210,22 @@ def _sync_effects(connection: sqlite3.Connection, card_type: str, owner_id: int,
         effect_id = value.get("id")
         if effect_id is not None:
             effect_id = int(effect_id)
-            if effect_id not in existing:
-                raise CardWriteError(f"effect {effect_id} does not belong to this card")
-            if int(value.get("version", 0)) != existing[effect_id]["version"]:
+            effect_row = existing.get(effect_id)
+            if effect_row is None:
+                effect_row = connection.execute(
+                    "SELECT * FROM effects WHERE id=? AND monster_card_id IS NULL AND prophecy_card_id IS NULL",
+                    (effect_id,),
+                ).fetchone()
+                if effect_row is None:
+                    raise CardWriteError(f"effect {effect_id} does not belong to this card and is not available in the effect library")
+                if effect_type not in ALLOWED_EFFECTS[card_type]:
+                    raise CardWriteError(f"effect {effect_id} is incompatible with this card type")
+                connection.execute(f"UPDATE effects SET {owner_column}=?,effect_type=?,position=? WHERE id=?", (owner_id, effect_type, position, effect_id))
+            if int(value.get("version", 0)) != effect_row["version"]:
                 raise VersionConflict(f"effect {effect_id} changed since the card was opened")
-            connection.execute("UPDATE effects SET effect_type=?,position=?,energy_cost=?,valuation=?,marker=?,notes=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?", (effect_type, position, value.get("energy_cost"), value.get("valuation"), effect_marker(value.get("marker")), str(value.get("notes", "")), effect_id))
+            connection.execute("UPDATE effects SET effect_type=?,position=?,energy_cost=?,valuation=?,marker=?,notes=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?", (effect_type, position, effect_energy_cost(effect_type, value.get("energy_cost")), value.get("valuation"), effect_marker(value.get("marker")), str(value.get("notes", "")), effect_id))
         else:
-            effect_id = connection.execute(f"INSERT INTO effects({owner_column},effect_type,position,energy_cost,valuation,marker,notes) VALUES (?,?,?,?,?,?,?)", (owner_id, effect_type, position, value.get("energy_cost"), value.get("valuation"), effect_marker(value.get("marker")), str(value.get("notes", "")))).lastrowid
+            effect_id = connection.execute(f"INSERT INTO effects({owner_column},effect_type,position,energy_cost,valuation,marker,notes) VALUES (?,?,?,?,?,?,?)", (owner_id, effect_type, position, effect_energy_cost(effect_type, value.get("energy_cost")), value.get("valuation"), effect_marker(value.get("marker")), str(value.get("notes", "")))).lastrowid
         sync_effect_professions(connection, effect_id, value.get("professions", []))
         retained.add(effect_id)
         effect_translations = value.get("translations", {})
@@ -160,11 +237,18 @@ def _sync_effects(connection: sqlite3.Connection, card_type: str, owner_id: int,
                 if language == "en":
                     connection.execute("DELETE FROM effect_translations WHERE effect_id=? AND language='en'", (effect_id,))
                 continue
-            connection.execute("INSERT INTO effect_translations(effect_id,language,name,text) VALUES (?,?,?,?) ON CONFLICT(effect_id,language) DO UPDATE SET name=excluded.name,text=excluded.text", (effect_id, language, str(translated.get("name", "")), str(translated.get("text", ""))))
+            connection.execute("INSERT INTO effect_translations(effect_id,language,name,text) VALUES (?,?,?,?) ON CONFLICT(effect_id,language) DO UPDATE SET name=excluded.name,text=excluded.text", (effect_id, language, effect_translation_name(effect_type, translated.get("name")), str(translated.get("text", ""))))
+    detached = []
     for effect_id in set(existing) - retained:
-        connection.execute("DELETE FROM effects WHERE id=?", (effect_id,))
+        connection.execute(
+            f"UPDATE effects SET {owner_column}=NULL,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+            (effect_id,),
+        )
+        version = int(connection.execute("SELECT version FROM effects WHERE id=?", (effect_id,)).fetchone()[0])
+        detached.append({"id": effect_id, "version": version})
     if card_type == "monster":
         reorder_monster_skills(connection, owner_id)
+    return detached
 
 
 def _sync_decks(connection: sqlite3.Connection, card_type: str, owner_id: int, deck_codes: object) -> None:
@@ -205,7 +289,7 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         old_title = None
         if owner_id is not None:
-            current = connection.execute(f"SELECT c.version,t.title FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
+            current = connection.execute(f"SELECT c.version,c.card_id,t.title FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
             if not current:
                 raise CardWriteError("card not found")
             expected_version = int(payload.get("version", 0))
@@ -219,25 +303,28 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
                 if connection.execute(f"SELECT 1 FROM {table} WHERE card_id=?", (card_id,)).fetchone():
                     raise CardWriteError("card_id already exists")
             if card_type == "monster":
-                owner_id = connection.execute("INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,source_updated_at) VALUES (?,?,?,?,?,?,?,?)", (card_id, int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), str(base.get("image", "")), timestamp)).lastrowid
+                owner_id = connection.execute("INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,source_updated_at) VALUES (?,?,?,?,?,?,?,?)", (card_id, int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), card_image_path(card_id), timestamp)).lastrowid
             else:
-                owner_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path,source_updated_at) VALUES (?,?,?)", (card_id, str(base.get("image", "")), timestamp)).lastrowid
+                owner_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path,source_updated_at) VALUES (?,?,?)", (card_id, card_image_path(card_id), timestamp)).lastrowid
             action = "create"
         else:
             if card_type == "monster":
-                connection.execute("UPDATE monster_cards SET level=?,monster_type=?,attack=?,defence=?,magic=?,image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), str(base.get("image", "")), timestamp, owner_id))
+                connection.execute("UPDATE monster_cards SET level=?,monster_type=?,attack=?,defence=?,magic=?,image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), card_image_path(current["card_id"]), timestamp, owner_id))
             else:
-                connection.execute("UPDATE prophecy_cards SET image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (str(base.get("image", "")), timestamp, owner_id))
+                connection.execute("UPDATE prophecy_cards SET image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (card_image_path(current["card_id"]), timestamp, owner_id))
             action = "update"
-        _sync_translations(connection, card_type, owner_id, translations, timestamp)
-        _sync_effects(connection, card_type, owner_id, payload.get("effects", []))
+        monster_type_zh = str(base.get("monster_type", "")).strip() if card_type == "monster" else ""
+        _sync_translations(connection, card_type, owner_id, translations, timestamp, monster_type_zh)
+        detached_effects = _sync_effects(connection, card_type, owner_id, payload.get("effects", []))
         _sync_decks(connection, card_type, owner_id, payload.get("deck_codes", []))
         connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES (?,?,?,?)", (f"{card_type}_card", owner_id, action, json.dumps({"title": title}, ensure_ascii=False)))
         connection.commit()
     except Exception:
         connection.rollback()
         raise
-    return get_card(connection, card_type, owner_id)
+    result = get_card(connection, card_type, owner_id)
+    result["detached_effects"] = detached_effects
+    return result
 
 
 def delete_card(connection: sqlite3.Connection, card_type: str, owner_id: int, *, permanent: bool, version: int) -> None:

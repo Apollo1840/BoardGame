@@ -6,7 +6,9 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from .cards import CardWriteError, validate_monster_effect_counts
 from .legacy import MONSTER_HEADER, PROPHECY_HEADER
+from .image_paths import card_image_path
 from .pipe_csv import parse_records
 
 
@@ -108,6 +110,10 @@ def _monster_specs(row: dict[str, str], context: str) -> list[dict[str, object]]
         if not isinstance(skill, dict):
             raise BatchImportError(f"{context}: skill {position + 1} must be an object")
         specs.append({"type": "monster_skill", "position": position, "name": str(skill.get("name", "")), "energy_cost": _float(str(skill.get("energy_cost", 0) or 0), context), "text": str(skill.get("effect", ""))})
+    try:
+        validate_monster_effect_counts([str(spec["type"]) for spec in specs])
+    except CardWriteError as error:
+        raise BatchImportError(f"{context}: {error}") from error
     return specs
 
 
@@ -144,10 +150,10 @@ def import_cards(connection: sqlite3.Connection, card_type: str, csv_text: str, 
                 card_id = incoming_id or _generated_card_id(card_type)
                 _assert_card_id_available(connection, card_id)
                 if card_type == "monster":
-                    owner_id = connection.execute("INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,source_updated_at) VALUES (?,?,?,?,?,?,?,?)", (card_id, int(_float(row["level"], context)), row["monster_type"], _float(row["attack"], context), _float(row["defence"], context), _float(row["magic"], context), row["image"], timestamp)).lastrowid
+                    owner_id = connection.execute("INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,source_updated_at) VALUES (?,?,?,?,?,?,?,?)", (card_id, int(_float(row["level"], context)), row["monster_type"], _float(row["attack"], context), _float(row["defence"], context), _float(row["magic"], context), card_image_path(card_id), timestamp)).lastrowid
                     connection.execute("INSERT INTO monster_card_translations(monster_card_id,language,title,monster_type,description,source_updated_at) VALUES (?,?,?,?,?,?)", (owner_id, "zh", title, row["monster_type"], row["description"].replace("\\n", "\n"), timestamp))
                 else:
-                    owner_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path,source_updated_at) VALUES (?,?,?)", (card_id, row["image"], timestamp)).lastrowid
+                    owner_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path,source_updated_at) VALUES (?,?,?)", (card_id, card_image_path(card_id), timestamp)).lastrowid
                     connection.execute("INSERT INTO prophecy_card_translations(prophecy_card_id,language,title,introduction,source_updated_at) VALUES (?,?,?,?,?)", (owner_id, "zh", title, row["introduction"].replace("\\n", "\n"), timestamp))
                 result.created.append({"card_id": card_id, "title": title})
                 action = "create"
@@ -157,10 +163,10 @@ def import_cards(connection: sqlite3.Connection, card_type: str, csv_text: str, 
                 if incoming_id and incoming_id != stable_id:
                     result.warnings.append(f"{title}: incoming card_id {incoming_id} ignored; preserved {stable_id}")
                 if card_type == "monster":
-                    connection.execute("UPDATE monster_cards SET level=?,monster_type=?,attack=?,defence=?,magic=?,image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (int(_float(row["level"], context)), row["monster_type"], _float(row["attack"], context), _float(row["defence"], context), _float(row["magic"], context), row["image"], timestamp, owner_id))
+                    connection.execute("UPDATE monster_cards SET level=?,monster_type=?,attack=?,defence=?,magic=?,image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (int(_float(row["level"], context)), row["monster_type"], _float(row["attack"], context), _float(row["defence"], context), _float(row["magic"], context), card_image_path(stable_id), timestamp, owner_id))
                     connection.execute("UPDATE monster_card_translations SET title=?,monster_type=?,description=?,source_updated_at=? WHERE monster_card_id=? AND language='zh'", (title, row["monster_type"], row["description"].replace("\\n", "\n"), timestamp, owner_id))
                 else:
-                    connection.execute("UPDATE prophecy_cards SET image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (row["image"], timestamp, owner_id))
+                    connection.execute("UPDATE prophecy_cards SET image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (card_image_path(stable_id), timestamp, owner_id))
                     connection.execute("UPDATE prophecy_card_translations SET title=?,introduction=?,source_updated_at=? WHERE prophecy_card_id=? AND language='zh'", (title, row["introduction"].replace("\\n", "\n"), timestamp, owner_id))
                 result.updated.append({"card_id": stable_id, "title": title})
                 action = "update"

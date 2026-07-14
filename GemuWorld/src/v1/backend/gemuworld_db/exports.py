@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 from .legacy import MONSTER_HEADER, PROPHECY_HEADER
+from .image_paths import legacy_image_path
 from .pipe_csv import render_records
 from .queries import list_cards
 
@@ -112,9 +113,9 @@ def cards_to_records(cards: list[dict[str, object]]) -> tuple[list[dict[str, obj
                 attributes["responsive_attribute"] = effect_types["monster_reactive_attribute"]["text"]
             skills = [effect for effect in card["effects"] if effect["type"] == "monster_skill"]
             skills.sort(key=lambda effect: (effect["position"], effect["id"]))
-            monsters.append({"card_id": card["card_id"], "card_title": card["title"], "level": card["level"], "monster_type": card["monster_type"], "description": card["description"], "attack": card["attack"], "defence": card["defence"], "magic": card["magic"], "attributes": json.dumps(attributes, ensure_ascii=False, separators=(",", ":")), "skills": json.dumps([{"name": effect["name"], "energy_cost": effect["energy_cost"] or 0, "effect": effect["text"]} for effect in skills], ensure_ascii=False, separators=(",", ":")), "image": card["image"], "last_update_datetime": card["updated_at"]})
+            monsters.append({"card_id": card["card_id"], "card_title": card["title"], "level": card["level"], "monster_type": card["monster_type"], "description": card["description"], "attack": card["attack"], "defence": card["defence"], "magic": card["magic"], "attributes": json.dumps(attributes, ensure_ascii=False, separators=(",", ":")), "skills": json.dumps([{"name": effect["name"], "energy_cost": effect["energy_cost"] or 0, "effect": effect["text"]} for effect in skills], ensure_ascii=False, separators=(",", ":")), "image": legacy_image_path(card.get("image_path", card["image"])), "last_update_datetime": card["updated_at"]})
         else:
-            prophecies.append({"card_id": card["card_id"], "card_title": card["title"], "introduction": card["introduction"], "effect": effect_types.get("prophecy_effect", {}).get("text", ""), "responsive_effect": effect_types.get("prophecy_reactive_effect", {}).get("text", ""), "image": card["image"], "last_update_datetime": card["updated_at"]})
+            prophecies.append({"card_id": card["card_id"], "card_title": card["title"], "introduction": card["introduction"], "effect": effect_types.get("prophecy_effect", {}).get("text", ""), "responsive_effect": effect_types.get("prophecy_reactive_effect", {}).get("text", ""), "image": legacy_image_path(card.get("image_path", card["image"])), "last_update_datetime": card["updated_at"]})
     return monsters, prophecies
 
 

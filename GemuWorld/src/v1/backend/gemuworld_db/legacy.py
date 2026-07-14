@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .cards import reorder_monster_skills
+from .image_paths import card_image_path, legacy_image_path
 from .pipe_csv import read_records, write_records
 
 
@@ -99,7 +100,7 @@ def _import_monsters(connection: sqlite3.Connection, zh_path: Path, en_path: Pat
         card_id = row["card_id"]
         cursor = connection.execute(
             "INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,source_updated_at) VALUES (?,?,?,?,?,?,?,?)",
-            (card_id, int(_number(row["level"], card_id)), row["monster_type"], _number(row["attack"], card_id), _number(row["defence"], card_id), _number(row["magic"], card_id), row["image"], row["last_update_datetime"]),
+            (card_id, int(_number(row["level"], card_id)), row["monster_type"], _number(row["attack"], card_id), _number(row["defence"], card_id), _number(row["magic"], card_id), card_image_path(card_id), row["last_update_datetime"]),
         )
         owner_id = cursor.lastrowid
         _upsert_translation(connection, "monster_card_translations", "monster_card_id", owner_id, "zh", {"title": _text(row["card_title"]), "monster_type": _text(row["monster_type"]), "description": _text(row["description"]), "source_updated_at": row["last_update_datetime"]})
@@ -152,7 +153,7 @@ def _import_prophecies(connection: sqlite3.Connection, zh_path: Path, en_path: P
         card_id = row["card_id"]
         cursor = connection.execute(
             "INSERT INTO prophecy_cards(card_id,image_path,source_updated_at) VALUES (?,?,?)",
-            (card_id, row["image"], row["last_update_datetime"]),
+            (card_id, card_image_path(card_id), row["last_update_datetime"]),
         )
         owner_id = cursor.lastrowid
         _upsert_translation(connection, "prophecy_card_translations", "prophecy_card_id", owner_id, "zh", {"title": _text(row["card_title"]), "introduction": _text(row["introduction"]), "source_updated_at": row["last_update_datetime"]})
@@ -341,7 +342,7 @@ def export_legacy_cards(connection: sqlite3.Connection, output_dir: Path) -> Non
                 if effect["effect_type"] == "monster_attribute": attrs["normal_attribute"] = text["text"] if text else ""
                 elif effect["effect_type"] == "monster_reactive_attribute": attrs["responsive_attribute"] = text["text"] if text else ""
                 elif effect["effect_type"] == "monster_skill": skills.append({"name": text["name"] if text else "", "energy_cost": effect["energy_cost"] or 0, "effect": text["text"] if text else ""})
-            monster_rows.append({"card_id": card["card_id"], "card_title": translation["title"], "level": card["level"], "monster_type": translation["monster_type"], "description": translation["description"], "attack": card["attack"], "defence": card["defence"], "magic": card["magic"], "attributes": json.dumps(attrs, ensure_ascii=False, separators=(",", ":")), "skills": json.dumps(skills, ensure_ascii=False, separators=(",", ":")), "image": card["image_path"], "last_update_datetime": translation["source_updated_at"]})
+            monster_rows.append({"card_id": card["card_id"], "card_title": translation["title"], "level": card["level"], "monster_type": translation["monster_type"], "description": translation["description"], "attack": card["attack"], "defence": card["defence"], "magic": card["magic"], "attributes": json.dumps(attrs, ensure_ascii=False, separators=(",", ":")), "skills": json.dumps(skills, ensure_ascii=False, separators=(",", ":")), "image": legacy_image_path(card["image_path"]), "last_update_datetime": translation["source_updated_at"]})
         write_records(output_dir / f"monster_cards{suffix}.csv", MONSTER_HEADER, monster_rows)
 
         pt = _translations(connection, "prophecy_card_translations", "prophecy_card_id", language)
@@ -351,7 +352,7 @@ def export_legacy_cards(connection: sqlite3.Connection, output_dir: Path) -> Non
             if not translation:
                 continue
             effects = {row["effect_type"]: et.get(row["id"])["text"] if et.get(row["id"]) else "" for row in connection.execute("SELECT * FROM effects WHERE prophecy_card_id=?", (card["id"],))}
-            prophecy_rows.append({"card_id": card["card_id"], "card_title": translation["title"], "introduction": translation["introduction"], "effect": effects.get("prophecy_effect", ""), "responsive_effect": effects.get("prophecy_reactive_effect", ""), "image": card["image_path"], "last_update_datetime": translation["source_updated_at"]})
+            prophecy_rows.append({"card_id": card["card_id"], "card_title": translation["title"], "introduction": translation["introduction"], "effect": effects.get("prophecy_effect", ""), "responsive_effect": effects.get("prophecy_reactive_effect", ""), "image": legacy_image_path(card["image_path"]), "last_update_datetime": translation["source_updated_at"]})
         write_records(output_dir / f"prophecy_cards{suffix}.csv", PROPHECY_HEADER, prophecy_rows)
 
 

@@ -26,10 +26,13 @@ from gemuworld_db.server import ViewerServer  # noqa: E402
 from gemuworld_db.exports import available_versions, current_data_version, export_cards, export_version_snapshot, next_version, set_data_version  # noqa: E402
 from gemuworld_db.statistics import compute_statistics  # noqa: E402
 from gemuworld_db.batch_import import BatchImportError, import_cards  # noqa: E402
-from gemuworld_db.cards import CardWriteError, VersionConflict, copy_card, delete_card, get_card, save_card  # noqa: E402
+from gemuworld_db.cards import CardWriteError, VersionConflict, copy_card, delete_card, get_card, list_monster_types, save_card  # noqa: E402
 from gemuworld_db.decks import DeckWriteError, delete_deck, get_deck, save_deck  # noqa: E402
-from gemuworld_db.effects import EffectWriteError, copy_effect, get_effect, list_effects, list_professions, profession_counts, update_effect  # noqa: E402
+from gemuworld_db.effect_backups import export_effect_backup, import_effect_backup  # noqa: E402
+from gemuworld_db.effects import EffectWriteError, copy_effect, create_effect, delete_effect, get_effect, list_effects, list_professions, profession_counts, update_effect  # noqa: E402
 from gemuworld_db.guides import list_benchmarks, list_guides, update_benchmark, update_guide  # noqa: E402
+from gemuworld_db.image_paths import card_image_path, image_url, legacy_image_path, normalize_image_path  # noqa: E402
+from gemuworld_db.image_renamer import PNG_SIGNATURE, apply_image_renames, plan_image_renames  # noqa: E402
 from gemuworld_db.legacy import MONSTER_HEADER, PROPHECY_HEADER  # noqa: E402
 
 
@@ -42,13 +45,55 @@ class MigrationTests(unittest.TestCase):
     def test_migrations_are_repeatable_and_effect_owner_is_immutable(self):
         with tempfile.TemporaryDirectory() as directory:
             connection = connect(Path(directory) / "test.sqlite3")
-            self.assertEqual(migrate(connection), ["001_initial.sql", "002_deck_versions.sql", "003_effect_guide_versions.sql", "004_effect_role_valuation.sql", "005_app_settings.sql", "006_effect_profession.sql", "007_effect_professions.sql", "008_effect_marker_notes.sql"])
+            self.assertEqual(migrate(connection), ["001_initial.sql", "002_deck_versions.sql", "003_effect_guide_versions.sql", "004_effect_role_valuation.sql", "005_app_settings.sql", "006_effect_profession.sql", "007_effect_professions.sql", "008_effect_marker_notes.sql", "009_unassigned_effect_library.sql", "010_canonical_image_paths.sql", "011_lock_card_image_paths.sql", "012_effect_field_capabilities.sql", "013_allow_effect_detach.sql"])
             self.assertEqual(migrate(connection), [])
-            monster = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic) VALUES ('m1',0,1,1,1)").lastrowid
-            other = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic) VALUES ('m2',0,1,1,1)").lastrowid
+            monster = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic,image_path) VALUES ('m1',0,1,1,1,'pics/m1.png')").lastrowid
+            other = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic,image_path) VALUES ('m2',0,1,1,1,'pics/m2.png')").lastrowid
             effect = connection.execute("INSERT INTO effects(monster_card_id,effect_type) VALUES (?, 'monster_skill')", (monster,)).lastrowid
             with self.assertRaises(sqlite3.IntegrityError):
                 connection.execute("UPDATE effects SET monster_card_id=? WHERE id=?", (other, effect))
+            connection.execute("UPDATE effects SET monster_card_id=NULL WHERE id=?", (effect,))
+            self.assertIsNone(connection.execute("SELECT monster_card_id FROM effects WHERE id=?", (effect,)).fetchone()[0])
+            connection.close()
+
+    def test_image_paths_have_one_canonical_database_form(self):
+        self.assertEqual(normalize_image_path("pictures/coreblossom.png"), "pics/coreblossom.png")
+        self.assertEqual(normalize_image_path(r"D:\anywhere\data\current\pics\coreblossom.png"), "pics/coreblossom.png")
+        self.assertEqual(normalize_image_path("coreblossom.png"), "pics/coreblossom.png")
+        self.assertEqual(image_url("pics/coreblossom.png"), "/pics/coreblossom.png")
+        self.assertEqual(legacy_image_path("pics/coreblossom.png"), "pictures/coreblossom.png")
+        self.assertEqual(card_image_path("card-123"), "pics/card-123.png")
+        with self.assertRaises(ValueError):
+            normalize_image_path("pics/../outside.png")
+
+    def test_image_rename_batch_copies_shared_sources_and_locks_missing_images(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pics = root / "pics"
+            pics.mkdir()
+            connection = connect(root / "test.sqlite3")
+            migrate(connection)
+            monster_id = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic,image_path) VALUES ('monster-a',0,1,1,0,'pics/monster-a.png')").lastrowid
+            prophecy_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path) VALUES ('prophecy-a','pics/prophecy-a.png')").lastrowid
+            missing_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path) VALUES ('prophecy-missing','pics/prophecy-missing.png')").lastrowid
+            connection.execute("DROP TRIGGER monster_card_image_path_locked_update")
+            connection.execute("DROP TRIGGER prophecy_card_image_path_locked_update")
+            connection.execute("UPDATE monster_cards SET image_path='pics/shared.png' WHERE id=?", (monster_id,))
+            connection.execute("UPDATE prophecy_cards SET image_path='pics/shared.png' WHERE id=?", (prophecy_id,))
+            connection.commit()
+            (pics / "shared.png").write_bytes(PNG_SIGNATURE + b"test")
+            plan = plan_image_renames(connection, pics)
+            self.assertFalse(plan["errors"])
+            self.assertEqual(plan["copy_count"], 2)
+            self.assertEqual(plan["missing_count"], 1)
+            result = apply_image_renames(connection, pics, root / "tmp")
+            self.assertEqual(result["copied"], 2)
+            self.assertTrue((pics / "monster-a.png").is_file())
+            self.assertTrue((pics / "prophecy-a.png").is_file())
+            self.assertFalse((pics / "shared.png").exists())
+            self.assertFalse((pics / "prophecy-missing.png").exists())
+            self.assertEqual(connection.execute("SELECT image_path FROM monster_cards WHERE id=?", (monster_id,)).fetchone()[0], "pics/monster-a.png")
+            self.assertEqual(connection.execute("SELECT image_path FROM prophecy_cards WHERE id=?", (missing_id,)).fetchone()[0], "pics/prophecy-missing.png")
             connection.close()
 
 
@@ -112,8 +157,8 @@ class LegacyRoundTripTests(unittest.TestCase):
                             elif key in ("attack", "defence", "magic", "level"):
                                 canonical = canonical_monsters[card_id][key] if filename == "monster_cards_en.csv" else expected_row[key]
                                 self.assertEqual(float(canonical), float(actual_row[key]), f"{filename}:{card_id}:{key}")
-                            elif key == "image" and filename == "monster_cards_en.csv":
-                                self.assertEqual(canonical_monsters[card_id][key], actual_row[key], f"{filename}:{card_id}:{key}")
+                            elif key == "image":
+                                self.assertEqual(f"pictures/{card_id}.png", actual_row[key], f"{filename}:{card_id}:{key}")
                             else:
                                 self.assertEqual(expected_row[key], actual_row[key], f"{filename}:{card_id}:{key}")
                 clan_source = V1_ROOT / "data" / "current" / "clans"
@@ -207,7 +252,7 @@ class ReadOnlyApiTests(unittest.TestCase):
         base = f"http://127.0.0.1:{server.server_port}"
         try:
             with urllib.request.urlopen(base + "/api/health") as response:
-                self.assertEqual(json.load(response)["version"], "1.7.5")
+                self.assertEqual(json.load(response)["version"], "1.15.0")
             with urllib.request.urlopen(base + "/api/export-info") as response:
                 export_info = json.load(response)
                 self.assertEqual(export_info["versions"], ["v2.1", "v2.2"])
@@ -221,6 +266,12 @@ class ReadOnlyApiTests(unittest.TestCase):
                 payload = json.load(response)
                 self.assertEqual(payload["count"], 3)
                 self.assertTrue(all(card["type"] == "prophecy" for card in payload["items"]))
+                self.assertTrue(all(card["image_path"].startswith("pics/") for card in payload["items"]))
+                self.assertTrue(all(card["image"].startswith("/pics/") for card in payload["items"]))
+            with urllib.request.urlopen(base + "/api/cards?language=zh&card_type=monster") as response:
+                monster_payload = json.load(response)
+                listed_effect = next(effect for card in monster_payload["items"] for effect in card["effects"])
+                self.assertIn("valuation", listed_effect)
             with urllib.request.urlopen(base + "/viewer") as response:
                 html = response.read().decode("utf-8")
                 self.assertIn("--cols: 3", html)
@@ -228,15 +279,22 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("grid-template-columns: repeat(var(--cols), var(--card-w))", html)
                 self.assertIn("/api/cards", html)
                 self.assertIn("/api/decks", html)
+                self.assertIn("${obj.attack??''}", html)
+                self.assertIn("${obj.defence??''}", html)
+                self.assertNotIn("${obj.attack||''}", html)
+                self.assertNotIn("${obj.defence||''}", html)
                 self.assertNotIn("loadCSVWithHeader", html)
                 self.assertNotIn("prophecy_cards_en.csv?t=", html)
                 self.assertNotIn("clans/_clans.json", html)
             with urllib.request.urlopen(base + "/monster_cards.csv") as response:
                 self.assertEqual(response.readline().decode("utf-8").strip().split("|")[0], "card_id")
-            with urllib.request.urlopen(base + "/pictures/coreblossom.png") as response:
+            with urllib.request.urlopen(base + "/pictures/20250914-00052-e348d55e.png") as response:
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.headers.get_content_type(), "image/png")
                 self.assertGreater(int(response.headers["Content-Length"]), 0)
+            with urllib.request.urlopen(base + "/pics/20250914-00052-e348d55e.png") as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers.get_content_type(), "image/png")
             with urllib.request.urlopen(base + "/api/statistics?language=zh&deck=Intro") as response:
                 statistics = json.load(response)["statistics"]
                 self.assertGreater(statistics["total"], 0)
@@ -268,7 +326,7 @@ class ReadOnlyApiTests(unittest.TestCase):
             with urllib.request.urlopen(base + "/stats") as response:
                 stats_html = response.read().decode("utf-8")
                 self.assertIn("/api/statistics", stats_html)
-                self.assertIn("返回卡牌 Viewer", stats_html)
+                self.assertIn('href="/viewer"', stats_html)
             with urllib.request.urlopen(base + "/import") as response:
                 import_html = response.read().decode("utf-8")
                 self.assertIn("/api/import", import_html)
@@ -277,6 +335,80 @@ class ReadOnlyApiTests(unittest.TestCase):
                 editor_html = response.read().decode("utf-8")
                 self.assertIn("卡牌编辑器", editor_html)
                 self.assertIn("/api/cards/", editor_html)
+                self.assertIn('class="magic-pill" title="实效魔力">${esc(formatEstimate(effectiveMagic))}', editor_html)
+                self.assertIn("function cardEffectiveMagic(card)", editor_html)
+                self.assertIn("effectiveMagic!==0", editor_html)
+                self.assertIn("['effective_magic:desc','实效魔力从高到低']", editor_html)
+                self.assertIn("['effective_magic:asc','实效魔力从低到高']", editor_html)
+                self.assertIn("sortKey==='effective_magic'", editor_html)
+                self.assertIn("'★'.repeat(Math.max(0,Math.floor(Number(card.level)||0)))", editor_html)
+                self.assertIn('class="level-stars" title="Lv${esc(card.level)}"', editor_html)
+                self.assertIn("(${esc(card.attack)}/${esc(card.defence)})", editor_html)
+                self.assertIn('class="indicator-row">${indicators}</div></div></div>', editor_html)
+                self.assertIn("function hasMonsterDescription(description)", editor_html)
+                self.assertIn("replace(/^\\s*【[^】]*种】\\s*/,'')", editor_html)
+                self.assertIn("hasMonsterDescription(card.description)?indicator('description'", editor_html)
+                self.assertIn("if(content==='description')return hasMonsterDescription(card.description)", editor_html)
+                self.assertIn("function prophecyKind(introduction)", editor_html)
+                self.assertIn("effectIndicators(card,'monster_attribute','attribute','通常属性')", editor_html)
+                self.assertIn("effectIndicators(card,'monster_reactive_attribute','reactive','反应属性')", editor_html)
+                self.assertIn("effectIndicators(card,'monster_skill','skill','技能')", editor_html)
+                self.assertIn("effectIndicators(card,'prophecy_effect','prophecy','预言效果')", editor_html)
+                self.assertIn("effectIndicators(card,'prophecy_reactive_effect','prophecy-reactive','预言响应效果')", editor_html)
+                self.assertNotIn('<div class="muted">${esc(c.card_id)}</div>', editor_html)
+                self.assertIn('id="filter-value"', editor_html)
+                self.assertIn('id="filter-content"', editor_html)
+                self.assertIn('id="sort"', editor_html)
+                self.assertIn('id="query">查询</button>', editor_html)
+                self.assertIn('id="new">添加卡牌</button>', editor_html)
+                self.assertIn("function filteredCards()", editor_html)
+                self.assertIn("图片路径已锁定为 pics/", editor_html)
+                self.assertNotIn('name="image"', editor_html)
+                self.assertNotIn("form.image", editor_html)
+                self.assertIn('class="effect-head"><h3 class="effect-title"', editor_html)
+                self.assertIn("linkedEffectHtml(...args).replace('>删除</button>','>解除链接</button>')", editor_html)
+                self.assertIn('class="effect-detail-grid"', editor_html)
+                self.assertIn('class="profession-tags selected-professions"', editor_html)
+                self.assertIn('class="profession-tags preset-professions"', editor_html)
+                self.assertIn("function bindEffectRow(row)", editor_html)
+                self.assertIn('id="undo-card"', editor_html)
+                self.assertIn("function requestCardSave", editor_html)
+                self.assertIn("function flushCardSave", editor_html)
+                self.assertIn("addEventListener('focusout'", editor_html)
+                self.assertNotIn('<button type="submit">保存</button>', editor_html)
+                self.assertIn("function addRowProfessions(row,text)", editor_html)
+                self.assertIn("professions:rowProfessions(row)", editor_html)
+                self.assertIn("loadProfessions()", editor_html)
+                self.assertNotIn('class="profession" value=', editor_html)
+                self.assertIn("['monster_skill','有技能']", editor_html)
+                self.assertIn("['prophecy_reactive_effect','有响应效果']", editor_html)
+                self.assertIn("['kind:asc','特殊种类正序']", editor_html)
+                self.assertIn('src="/effect-editor-shared.js"', editor_html)
+                self.assertIn('id="effect-library-select"', editor_html)
+                self.assertIn('effectEditor.compactText(zh.text,36)', editor_html)
+                self.assertIn('function effectFromRow(row)', editor_html)
+                self.assertIn('中文属性<select name="monster_type">', editor_html)
+                self.assertIn("monsterTypeOptions(b.monster_type)", editor_html)
+                self.assertNotIn('name="en_monster_type"', editor_html)
+                self.assertIn("英文属性将依据中文属性自动翻译", editor_html)
+                self.assertIn("<h2>属性与技能</h2>", editor_html)
+                self.assertIn('实效魔力<input id="effective-magic-estimate" class="computed-field" readonly>', editor_html)
+                self.assertIn('技力估值<input id="skill-valuation-estimate" class="computed-field" readonly>', editor_html)
+                self.assertIn('主职业<input id="primary-professions" class="computed-field" readonly>', editor_html)
+                self.assertIn('副职业<input id="secondary-professions" class="computed-field" readonly>', editor_html)
+                self.assertIn('.computed-field{background:#e5e7eb;color:#59636c', editor_html)
+                self.assertIn('cursor:not-allowed', editor_html)
+                self.assertIn("function effectEstimateValues(effects)", editor_html)
+                self.assertIn("effect.type==='monster_attribute'||effect.type==='monster_reactive_attribute'", editor_html)
+                self.assertIn("Math.max(...skillValues)", editor_html)
+                self.assertIn("attributeValuation+skillValuation", editor_html)
+                self.assertIn("function effectProfessionGroups(effects)", editor_html)
+                self.assertIn("effect.type==='monster_attribute'||effect.type==='monster_skill'", editor_html)
+                self.assertIn("effect.type==='monster_reactive_attribute'||effect.type==='monster_skill'", editor_html)
+                self.assertIn("updateCardEffectSummary()", editor_html)
+                self.assertIn("monsterEffectLimits={monster_attribute:1,monster_reactive_attribute:1,monster_skill:3}", editor_html)
+                self.assertIn("添加效果（已达上限）", editor_html)
+                self.assertIn("cardHasSaveError", editor_html)
             with urllib.request.urlopen(base + "/decks") as response:
                 decks_html = response.read().decode("utf-8")
                 self.assertIn("卡组管理", decks_html)
@@ -290,28 +422,52 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn('id="profession"', effects_html)
                 self.assertIn("effectLabels", effects_html)
                 self.assertIn("detailTitle", effects_html)
-                self.assertIn("<strong>${esc(detailTitle(e))}</strong>", effects_html)
-                self.assertIn("估值：${e.valuation??'未设置'}", effects_html)
+                self.assertIn("effectTitleColors", effects_html)
+                self.assertIn("<strong style=\"color:${effectTitleColors[e.type]||'#111827'}\">${esc(detailTitle(e))}</strong>", effects_html)
+                self.assertIn("function previewCurrentListItem(event)", effects_html)
+                self.assertIn("addEventListener('input',previewCurrentListItem)", effects_html)
+                self.assertIn("导出当前列表 JSON", effects_html)
+                self.assertIn("<strong>卡效列表</strong>", effects_html)
+                self.assertIn("$('list-actions').append(exportEffectsButton,importEffectsButton,importEffectsInput)", effects_html)
+                self.assertIn("font-size:12px", effects_html)
+                self.assertIn("color:#7b838c", effects_html)
+                self.assertIn("导入卡效 JSON", effects_html)
+                self.assertIn("/api/effects/export", effects_html)
+                self.assertIn("/api/effects/import", effects_html)
+                self.assertIn("e.valuation!=null", effects_html)
+                self.assertIn("function formatValuation(value)", effects_html)
+                self.assertIn(">${esc(formatValuation(e.valuation))}</span>", effects_html)
+                self.assertIn("linear-gradient(135deg,#fff8b8 0%,#ffd84d 42%,#f4b400 100%)", effects_html)
+                self.assertNotIn("估值 ${esc(e.valuation)}", effects_html)
+                self.assertNotIn('title="估值"', effects_html)
+                self.assertIn('title="未绑定卡牌"', effects_html)
+                self.assertNotIn("估值：${e.valuation??'未设置'}", effects_html)
+                self.assertIn('请选择效果类型', effects_html)
+                self.assertIn("method:isNew?'POST':'PUT'", effects_html)
                 self.assertNotIn('<span class="muted">#${e.id}</span>', effects_html)
                 self.assertIn("所属卡牌：", effects_html)
                 self.assertIn('class="profession-tags"', effects_html)
                 self.assertIn('id="editing-professions"', effects_html)
                 self.assertIn('style="display:flex;gap:12px"', effects_html)
-                self.assertIn('<label style="width:140px">${fieldLabel(\'灵力消耗\',skill)}', effects_html)
+                self.assertIn('<label style="width:140px">${fieldLabel(\'灵力消耗\',true)}', effects_html)
                 self.assertIn('<label style="width:140px">估值', effects_html)
                 self.assertIn('<label class="wide">职业标签', effects_html)
                 self.assertIn('name="marker" maxlength="10"', effects_html)
                 self.assertIn('name="notes"', effects_html)
                 self.assertIn("function fieldLabel(label,onCard)", effects_html)
-                self.assertIn("fieldLabel('灵力消耗',skill)", effects_html)
-                self.assertIn("fieldLabel('中文名称',skill)", effects_html)
+                self.assertIn("effectEditor.supportsEnergy(current.type)", effects_html)
+                self.assertIn("supportsName=effectEditor.supportsName(type)", effects_html)
                 self.assertIn("fieldLabel('中文效果',true)", effects_html)
                 self.assertIn("e.marker?` <span class=\"muted\">", effects_html)
                 self.assertIn("data-profession=\"${esc(profession)}\"", effects_html)
-                self.assertIn("professions:editingProfessions", effects_html)
+                self.assertIn("professions:[...editingProfessions]", effects_html)
                 self.assertIn("addEditingProfessions", effects_html)
                 self.assertIn("async function navigateEffect", effects_html)
-                self.assertIn("await persistCurrent(false)", effects_html)
+                self.assertIn("await openEffect(effects[targetIndex].id)", effects_html)
+                self.assertIn('id="undo-effect"', effects_html)
+                self.assertIn("function requestEffectSave", effects_html)
+                self.assertIn("function flushEffectSave", effects_html)
+                self.assertNotIn('<button type="submit">保存效果</button>', effects_html)
                 self.assertIn("['ArrowUp','ArrowDown'].includes(event.key)", effects_html)
                 self.assertIn("scrollIntoView({block:'nearest'})", effects_html)
                 self.assertIn("/api/effect-professions", effects_html)
@@ -321,7 +477,7 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("function toggleProfession", effects_html)
                 self.assertIn("q.append('profession',profession)", effects_html)
                 self.assertNotIn("['刺客','坦克','射手','法师','辅助'].map", effects_html)
-                self.assertIn("const FIXED_PROFESSIONS=['刺客','坦克','射手','法师','辅助']", effects_html)
+                self.assertIn("FIXED_PROFESSIONS=effectEditor.fixedProfessions", effects_html)
                 self.assertIn("...stored.filter(profession=>!FIXED_PROFESSIONS.includes(profession))", effects_html)
                 self.assertIn("(e.professions||[]).map", effects_html)
                 self.assertIn("profession-assassin", effects_html)
@@ -333,6 +489,17 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("function renderTargets", effects_html)
                 self.assertIn("c.card_id", effects_html)
                 self.assertIn("/api/effects", effects_html)
+                self.assertIn('src="/effect-editor-shared.js"', effects_html)
+                self.assertIn("border-top:1px solid #d9dee3", effects_html)
+                self.assertIn("effectHasSaveError", effects_html)
+                self.assertIn("永久删除卡效", effects_html)
+                self.assertIn("method:'DELETE'", effects_html)
+                self.assertIn("function deleteCurrentEffect()", effects_html)
+            with urllib.request.urlopen(base + "/effect-editor-shared.js") as response:
+                shared_effect_editor = response.read().decode("utf-8")
+                self.assertIn("supportsEnergy", shared_effect_editor)
+                self.assertIn("supportsName", shared_effect_editor)
+                self.assertIn("compactText", shared_effect_editor)
             with urllib.request.urlopen(base + "/design-guides") as response:
                 guides_html = response.read().decode("utf-8")
                 self.assertIn("设计指南", guides_html)
@@ -347,6 +514,10 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertTrue(all(value >= 0 for value in profession_payload["counts"].values()))
                 self.assertGreater(effect_payload["count"], 0)
                 self.assertTrue(all(effect["type"] == "monster_skill" for effect in effect_payload["items"]))
+            with urllib.request.urlopen(base + "/api/monster-types") as response:
+                monster_types = json.load(response)
+                self.assertEqual(monster_types["count"], 13)
+                self.assertIn({"zh": "光", "en": "Light"}, monster_types["items"])
             with urllib.request.urlopen(base + "/api/design-guides") as response:
                 self.assertGreater(json.load(response)["count"], 0)
             with urllib.request.urlopen(base + "/api/monster-benchmarks") as response:
@@ -519,6 +690,65 @@ class CardCrudTests(unittest.TestCase):
         with self.assertRaises(VersionConflict):
             save_card(self.connection, "monster", payload, owner_id)
 
+    def test_monster_type_translation_and_effect_limits(self):
+        payload = self.payload("属性翻译与容量测试")
+        payload["base"]["card_id"] = "monster-limits-test"
+        payload["translations"]["en"]["monster_type"] = "Wrong value must be ignored"
+        skill = payload["effects"][0]
+        payload["effects"] = [
+            {**json.loads(json.dumps(skill)), "position": position, "translations": {"zh": {"name": f"技能{position}", "text": f"技能文本{position}"}}}
+            for position in range(3)
+        ] + [{"type": "monster_attribute", "position": 0, "translations": {"zh": {"name": "", "text": "通常属性文本"}}}]
+        created = save_card(self.connection, "monster", payload)
+        self.assertEqual(created["translations"]["en"]["monster_type"], "Light")
+        self.assertIn({"zh": "光", "en": "Light"}, list_monster_types(self.connection))
+
+        too_many = self.payload("技能超限测试")
+        too_many["base"]["card_id"] = "monster-too-many-skills"
+        too_many["effects"] = [
+            {**json.loads(json.dumps(skill)), "position": position, "translations": {"zh": {"name": f"超限{position}", "text": "测试"}}}
+            for position in range(4)
+        ]
+        with self.assertRaisesRegex(CardWriteError, "最多只能有3个技能"):
+            save_card(self.connection, "monster", too_many)
+
+        duplicate_attributes = self.payload("属性超限测试")
+        duplicate_attributes["base"]["card_id"] = "monster-too-many-attributes"
+        duplicate_attributes["effects"] = [
+            {"type": "monster_attribute", "position": position, "translations": {"zh": {"name": "", "text": f"属性{position}"}}}
+            for position in range(2)
+        ]
+        with self.assertRaisesRegex(CardWriteError, "最多只能有1个通常属性"):
+            save_card(self.connection, "monster", duplicate_attributes)
+
+        attribute = next(effect for effect in created["effects"] if effect["type"] == "monster_attribute")
+        with self.assertRaisesRegex(EffectWriteError, "最多只能有3个技能"):
+            update_effect(self.connection, attribute["id"], {
+                "version": attribute["version"],
+                "type": "monster_skill",
+                "energy_cost": 1,
+                "translations": {"zh": {"name": "第四技能", "text": "不应保存"}},
+            })
+
+    def test_card_save_detaches_effect_without_deleting_it(self):
+        created = save_card(self.connection, "monster", self.payload("解除链接测试"))
+        effect = created["effects"][0]
+        payload = self.payload("解除链接测试")
+        payload["version"] = created["base"]["version"]
+        payload["effects"] = []
+        detached_card = save_card(self.connection, "monster", payload, created["base"]["id"])
+        self.assertEqual(detached_card["effects"], [])
+        self.assertEqual(detached_card["detached_effects"], [{"id": effect["id"], "version": effect["version"] + 1}])
+        detached = get_effect(self.connection, effect["id"])
+        self.assertIsNone(detached["owner"])
+        self.assertEqual(detached["translations"], effect["translations"])
+
+        payload["version"] = detached_card["base"]["version"]
+        payload["effects"] = [{**detached, "position": 0}]
+        restored = save_card(self.connection, "monster", payload, created["base"]["id"])
+        self.assertEqual(restored["effects"][0]["id"], effect["id"])
+        self.assertEqual(get_effect(self.connection, effect["id"])["owner"]["id"], created["base"]["id"])
+
     def test_invalid_deck_rolls_back_aggregate(self):
         created = save_card(self.connection, "monster", self.payload())
         owner_id = created["base"]["id"]
@@ -633,6 +863,126 @@ class EffectGuideTests(unittest.TestCase):
     def tearDown(self):
         self.connection.close()
         self.temp.cleanup()
+
+    def test_non_skill_effects_reject_names_and_energy_costs(self):
+        created = create_effect(self.connection, {
+            "type": "prophecy_effect",
+            "energy_cost": 9,
+            "translations": {
+                "zh": {"name": "不应保存", "text": "预言效果文本"},
+                "en": {"name": "Must disappear", "text": "Prophecy text"},
+            },
+        })
+        self.assertIsNone(created["energy_cost"])
+        self.assertEqual(created["translations"]["zh"]["name"], "")
+        self.assertEqual(created["translations"]["en"]["name"], "")
+
+        updated = update_effect(self.connection, created["id"], {
+            **created,
+            "energy_cost": 3,
+            "translations": {"zh": {"name": "仍不应保存", "text": "已更新"}},
+        })
+        self.assertIsNone(updated["energy_cost"])
+        self.assertEqual(updated["translations"]["zh"]["name"], "")
+
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.connection.execute("INSERT INTO effects(effect_type,energy_cost) VALUES ('monster_attribute',1)")
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.connection.execute("UPDATE effect_translations SET name='非法名称' WHERE effect_id=? AND language='zh'", (created["id"],))
+
+    def test_effect_editor_delete_permanently_removes_record(self):
+        row = self.connection.execute("SELECT id,monster_card_id FROM effects WHERE monster_card_id IS NOT NULL ORDER BY id LIMIT 1").fetchone()
+        effect = get_effect(self.connection, row["id"])
+        card_version = self.connection.execute("SELECT version FROM monster_cards WHERE id=?", (row["monster_card_id"],)).fetchone()[0]
+        delete_effect(self.connection, effect["id"], version=effect["version"])
+        with self.assertRaisesRegex(EffectWriteError, "effect not found"):
+            get_effect(self.connection, effect["id"])
+        self.assertEqual(
+            self.connection.execute("SELECT version FROM monster_cards WHERE id=?", (row["monster_card_id"],)).fetchone()[0],
+            card_version + 1,
+        )
+
+    def test_create_unassigned_effect_and_attach_from_card_editor(self):
+        created = create_effect(self.connection, {
+            "type": "monster_skill",
+            "energy_cost": 2,
+            "professions": ["法师"],
+            "valuation": 4.5,
+            "marker": "待采用",
+            "notes": "独立卡效库",
+            "translations": {"zh": {"name": "候选技能", "text": "抽一张牌。"}},
+        })
+        self.assertIsNone(created["owner"])
+        available = list_effects(self.connection, unassigned=True, available_for="monster", keyword="候选技能")
+        self.assertEqual([effect["id"] for effect in available], [created["id"]])
+        self.assertEqual(list_effects(self.connection, unassigned=True, available_for="prophecy", keyword="候选技能"), [])
+
+        second_skill = create_effect(self.connection, {
+            "type": "monster_skill",
+            "energy_cost": 1,
+            "translations": {"zh": {"name": "候选招式", "text": "获得一点魔力。"}},
+        })
+        skill_type_matches = list_effects(self.connection, unassigned=True, available_for="monster", keyword="技能")
+        self.assertTrue({created["id"], second_skill["id"]}.issubset({effect["id"] for effect in skill_type_matches}))
+        self.assertTrue(all(effect["type"] == "monster_skill" for effect in skill_type_matches))
+
+        card_id = self.connection.execute("SELECT id FROM monster_cards WHERE status='active' ORDER BY id LIMIT 1").fetchone()[0]
+        card = get_card(self.connection, "monster", card_id)
+        payload = {
+            "version": card["base"]["version"],
+            "base": {**card["base"], "image": card["base"]["image_path"]},
+            "translations": card["translations"],
+            "effects": [{**effect, "position": index} for index, effect in enumerate(card["effects"] + [created])],
+            "deck_codes": [deck["code"] for deck in card["decks"]],
+        }
+        attached = save_card(self.connection, "monster", payload, card_id)
+        same_effect = next(effect for effect in attached["effects"] if effect["id"] == created["id"])
+        self.assertEqual(same_effect["translations"]["zh"]["name"], "候选技能")
+        self.assertEqual(get_effect(self.connection, created["id"])["owner"]["id"], card_id)
+        self.assertEqual(list_effects(self.connection, unassigned=True, keyword=str(created["id"])), [])
+
+        other_card_id = self.connection.execute("SELECT id FROM monster_cards WHERE id<>? AND status='active' ORDER BY id LIMIT 1", (card_id,)).fetchone()[0]
+        other = get_card(self.connection, "monster", other_card_id)
+        other_payload = {
+            "version": other["base"]["version"],
+            "base": {**other["base"], "image": other["base"]["image_path"]},
+            "translations": other["translations"],
+            "effects": [{**effect, "position": index} for index, effect in enumerate(other["effects"] + [same_effect])],
+            "deck_codes": [deck["code"] for deck in other["decks"]],
+        }
+        with self.assertRaises(CardWriteError):
+            save_card(self.connection, "monster", other_payload, other_card_id)
+
+    def test_effect_json_backup_restores_deleted_effects_with_stable_ids(self):
+        effect_ids = [row["id"] for row in self.connection.execute("SELECT id FROM effects ORDER BY id LIMIT 5")]
+        originals = {effect_id: get_effect(self.connection, effect_id) for effect_id in effect_ids}
+        output_dir = Path(self.temp.name) / "tmp"
+        result = export_effect_backup(self.connection, effect_ids, output_dir, {"effect_type": "", "sort_by": "id"})
+        backup_path = Path(result["path"])
+        self.assertEqual(backup_path.parent, output_dir.resolve())
+        backup = json.loads(backup_path.read_text(encoding="utf-8"))
+        self.assertEqual(backup["format"], "gemuworld.effect-backup")
+        self.assertEqual(backup["schema_version"], 1)
+        self.assertEqual(backup["count"], len(effect_ids))
+        self.assertEqual([item["id"] for item in backup["items"]], effect_ids)
+        self.assertIn("card_id", backup["items"][0]["owner"])
+        self.assertIn("translations", backup["items"][0])
+        self.assertIn("professions", backup["items"][0])
+
+        placeholders = ",".join("?" for _ in effect_ids)
+        self.connection.execute(f"DELETE FROM effects WHERE id IN ({placeholders})", effect_ids)
+        self.connection.commit()
+        self.assertEqual(self.connection.execute(f"SELECT COUNT(*) FROM effects WHERE id IN ({placeholders})", effect_ids).fetchone()[0], 0)
+
+        restored = import_effect_backup(self.connection, backup)
+        self.assertEqual(restored["created"], len(effect_ids))
+        self.assertEqual(restored["updated"], 0)
+        for effect_id in effect_ids:
+            effect = get_effect(self.connection, effect_id)
+            original = originals[effect_id]
+            for key in ("id", "type", "position", "energy_cost", "professions", "valuation", "marker", "notes", "version", "translations", "created_at", "updated_at"):
+                self.assertEqual(effect[key], original[key], (effect_id, key))
+            self.assertEqual(effect["owner"]["card_id"] if effect["owner"] else None, original["owner"]["card_id"] if original["owner"] else None)
 
     def test_effect_update_conflict_and_owner_immutability(self):
         row = self.connection.execute("SELECT id FROM effects WHERE monster_card_id IS NOT NULL AND effect_type='monster_skill' LIMIT 1").fetchone()

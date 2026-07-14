@@ -4,6 +4,8 @@ import json
 import sqlite3
 from typing import Iterable
 
+from .image_paths import image_url, normalize_image_path
+
 
 LANGUAGES = {"zh", "en"}
 CARD_TYPES = {"monster", "prophecy"}
@@ -26,6 +28,7 @@ def _effect_map(connection: sqlite3.Connection, language: str) -> dict[tuple[str
                 "type": row["effect_type"],
                 "position": row["position"],
                 "energy_cost": row["energy_cost"],
+                "valuation": row["valuation"],
                 "name": row["name"],
                 "text": row["text"],
             }
@@ -79,7 +82,8 @@ def list_cards(
             (language, status),
         )
         for row in rows:
-            cards.append({"type": "monster", "id": row["id"], "card_id": row["card_id"], "title": row["title"], "level": row["level"], "monster_type": row["translated_monster_type"], "description": row["description"], "attack": row["attack"], "defence": row["defence"], "magic": row["magic"], "image": row["image_path"], "updated_at": row["source_updated_at"], "effects": effects.get(("monster", row["id"]), []), "decks": decks.get(("monster", row["id"]), [])})
+            image_path = normalize_image_path(row["image_path"])
+            cards.append({"type": "monster", "id": row["id"], "card_id": row["card_id"], "title": row["title"], "level": row["level"], "monster_type": row["translated_monster_type"], "description": row["description"], "attack": row["attack"], "defence": row["defence"], "magic": row["magic"], "image_path": image_path, "image": image_url(image_path), "updated_at": row["source_updated_at"], "effects": effects.get(("monster", row["id"]), []), "decks": decks.get(("monster", row["id"]), [])})
     if card_type in ("all", "prophecy"):
         rows = connection.execute(
             "SELECT c.*,t.title,t.introduction FROM prophecy_cards c "
@@ -88,7 +92,8 @@ def list_cards(
             (language, status),
         )
         for row in rows:
-            cards.append({"type": "prophecy", "id": row["id"], "card_id": row["card_id"], "title": row["title"], "introduction": row["introduction"], "image": row["image_path"], "updated_at": row["source_updated_at"], "effects": effects.get(("prophecy", row["id"]), []), "decks": decks.get(("prophecy", row["id"]), [])})
+            image_path = normalize_image_path(row["image_path"])
+            cards.append({"type": "prophecy", "id": row["id"], "card_id": row["card_id"], "title": row["title"], "introduction": row["introduction"], "image_path": image_path, "image": image_url(image_path), "updated_at": row["source_updated_at"], "effects": effects.get(("prophecy", row["id"]), []), "decks": decks.get(("prophecy", row["id"]), [])})
     selected = set(deck_codes)
     if selected:
         def included(card: dict[str, object]) -> bool:

@@ -10,9 +10,10 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from .database import connect, migrate
 from .batch_import import BatchImportError, import_cards
-from .cards import CardWriteError, VersionConflict, copy_card, delete_card, get_card, save_card
+from .cards import CardWriteError, VersionConflict, copy_card, delete_card, get_card, list_monster_types, save_card
 from .decks import DeckWriteError, delete_deck, get_deck, save_deck
-from .effects import EffectWriteError, copy_effect, get_effect, list_effects, list_professions, profession_counts, update_effect
+from .effect_backups import export_effect_backup, import_effect_backup
+from .effects import EffectWriteError, copy_effect, create_effect, delete_effect, get_effect, list_effects, list_professions, profession_counts, update_effect
 from .guides import GuideWriteError, list_benchmarks, list_guides, update_benchmark, update_guide
 from .exports import available_versions, current_data_version, export_cards, export_version_snapshot, next_version, order_cards, set_data_version
 from .queries import list_cards, list_decks
@@ -82,7 +83,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
         query = parse_qs(parsed.query)
         try:
             if path == "/api/health":
-                self._json({"status": "ok", "version": "1.7.5"})
+                self._json({"status": "ok", "version": "1.15.0"})
                 return
             if path == "/api/export-info":
                 connection = connect(self.server.database)
@@ -118,10 +119,18 @@ class ViewerHandler(BaseHTTPRequestHandler):
                     connection.close()
                 self._json({"items": professions, "count": len(professions), "counts": counts})
                 return
+            if path == "/api/monster-types":
+                connection = connect(self.server.database)
+                try:
+                    monster_types = list_monster_types(connection)
+                finally:
+                    connection.close()
+                self._json({"items": monster_types, "count": len(monster_types)})
+                return
             if path == "/api/effects":
                 connection = connect(self.server.database)
                 try:
-                    effects = list_effects(connection, effect_type=query.get("effect_type", [""])[0], keyword=query.get("keyword", [""])[0], card_type=query.get("card_type", [""])[0], profession=query.get("profession", []), sort_by=query.get("sort_by", ["id"])[0], direction=query.get("direction", ["asc"])[0])
+                    effects = list_effects(connection, effect_type=query.get("effect_type", [""])[0], keyword=query.get("keyword", [""])[0], card_type=query.get("card_type", [""])[0], profession=query.get("profession", []), sort_by=query.get("sort_by", ["id"])[0], direction=query.get("direction", ["asc"])[0], unassigned=query.get("unassigned", ["false"])[0].lower() == "true", available_for=query.get("available_for", [""])[0])
                 finally:
                     connection.close()
                 self._json({"items": effects, "count": len(effects)})
@@ -178,6 +187,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 return
             if path in ("/stats", "/stats.html"):
                 self._file(V1_ROOT / "web" / "stats.html", "text/html; charset=utf-8")
+                return
+            if path == "/effect-editor-shared.js":
+                self._file(V1_ROOT / "web" / "effect_editor_shared.js", "application/javascript; charset=utf-8")
                 return
             if path in ("/import", "/import.html"):
                 self._file(V1_ROOT / "web" / "import.html", "text/html; charset=utf-8")
@@ -239,11 +251,11 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 else:
                     self.send_error(HTTPStatus.NOT_FOUND)
                 return
-            if path.startswith("/pictures/"):
-                # Legacy CSV values use pictures/<name>, while the maintained
-                # artwork source lives in data/current/pics.
+            if path.startswith("/pics/") or path.startswith("/pictures/"):
+                # /pics is canonical; /pictures remains a legacy Viewer alias.
                 picture_root = (V1_ROOT / "data" / "current" / "pics").resolve()
-                picture = (picture_root / path.removeprefix("/pictures/")).resolve()
+                relative = path.removeprefix("/pics/") if path.startswith("/pics/") else path.removeprefix("/pictures/")
+                picture = (picture_root / relative).resolve()
                 if picture_root in picture.parents and picture.is_file():
                     self._file(picture)
                 else:
@@ -259,8 +271,11 @@ class ViewerHandler(BaseHTTPRequestHandler):
         is_card_create = len(card_route) == 3 and card_route[:2] == ["api", "cards"]
         is_card_copy = len(card_route) == 5 and card_route[:2] == ["api", "cards"] and card_route[4] == "copy"
         is_deck_create = card_route == ["api", "decks"]
+        is_effect_create = card_route == ["api", "effects"]
+        is_effect_export = card_route == ["api", "effects", "export"]
+        is_effect_import = card_route == ["api", "effects", "import"]
         is_effect_copy = len(card_route) == 4 and card_route[:2] == ["api", "effects"] and card_route[3] == "copy"
-        if parsed.path not in {"/api/export", "/api/import", "/api/data-version"} and not is_card_create and not is_card_copy and not is_deck_create and not is_effect_copy:
+        if parsed.path not in {"/api/export", "/api/import", "/api/data-version"} and not is_card_create and not is_card_copy and not is_deck_create and not is_effect_create and not is_effect_export and not is_effect_import and not is_effect_copy:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         try:
@@ -292,6 +307,30 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 finally:
                     connection.close()
                 self._json(deck, HTTPStatus.CREATED)
+                return
+            if is_effect_create:
+                connection = connect(self.server.database)
+                try:
+                    effect = create_effect(connection, payload)
+                finally:
+                    connection.close()
+                self._json(effect, HTTPStatus.CREATED)
+                return
+            if is_effect_export:
+                connection = connect(self.server.database)
+                try:
+                    result = export_effect_backup(connection, payload.get("effect_ids"), self.server.data_root / "tmp", payload.get("filters"))
+                finally:
+                    connection.close()
+                self._json(result, HTTPStatus.CREATED)
+                return
+            if is_effect_import:
+                connection = connect(self.server.database)
+                try:
+                    result = import_effect_backup(connection, payload.get("backup"))
+                finally:
+                    connection.close()
+                self._json(result, HTTPStatus.CREATED)
                 return
             if is_effect_copy:
                 connection = connect(self.server.database)
@@ -382,7 +421,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
         card_route = parsed.path.strip("/").split("/")
         is_card = len(card_route) == 4 and card_route[:2] == ["api", "cards"]
         is_deck = len(card_route) == 3 and card_route[:2] == ["api", "decks"]
-        if not is_card and not is_deck:
+        is_effect = len(card_route) == 3 and card_route[:2] == ["api", "effects"]
+        if not is_card and not is_deck and not is_effect:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         query = parse_qs(parsed.query)
@@ -393,14 +433,16 @@ class ViewerHandler(BaseHTTPRequestHandler):
             try:
                 if is_card:
                     delete_card(connection, card_route[2], int(card_route[3]), permanent=permanent, version=version)
-                else:
+                elif is_deck:
                     delete_deck(connection, int(card_route[2]), permanent=permanent, version=version)
+                else:
+                    delete_effect(connection, int(card_route[2]), version=version)
             finally:
                 connection.close()
-            self._json({"deleted": True, "permanent": permanent})
+            self._json({"deleted": True, "permanent": True if is_effect else permanent})
         except VersionConflict as exc:
             self._json({"error": str(exc)}, HTTPStatus.CONFLICT)
-        except (CardWriteError, DeckWriteError, ValueError) as exc:
+        except (CardWriteError, DeckWriteError, EffectWriteError, ValueError) as exc:
             self._json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
 
     def log_message(self, format: str, *args: object) -> None:
@@ -408,13 +450,13 @@ class ViewerHandler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Serve the read-only GemuWorld V1.2 API and viewer.")
+    parser = argparse.ArgumentParser(description="Serve the GemuWorld V1.15 API and web tools.")
     parser.add_argument("--database", type=Path, default=V1_ROOT / "data" / "gemuworld.sqlite3")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     server = ViewerServer((args.host, args.port), args.database)
-    print(f"GemuWorld V1.2: http://{args.host}:{args.port}/viewer")
+    print(f"GemuWorld V1.15: http://{args.host}:{args.port}/viewer")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
