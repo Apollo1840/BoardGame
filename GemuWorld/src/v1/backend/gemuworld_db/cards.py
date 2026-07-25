@@ -89,6 +89,21 @@ def sync_effect_professions(connection: sqlite3.Connection, effect_id: int, valu
         connection.execute("INSERT INTO effect_professions(effect_id,profession,position) VALUES (?,?,?)", (effect_id, profession, position))
 
 
+def get_effect_tactical_tags(connection: sqlite3.Connection, effect_id: int) -> list[str]:
+    return [row["tactical_tag"] for row in connection.execute("SELECT tactical_tag FROM effect_tactical_tags WHERE effect_id=? ORDER BY position", (effect_id,))]
+
+
+def sync_effect_tactical_tags(connection: sqlite3.Connection, effect_id: int, values: object) -> None:
+    if not isinstance(values, list):
+        raise CardWriteError("effect tactical tags must be an array")
+    tactical_tags = [str(value).strip() for value in values]
+    if any(not value for value in tactical_tags) or len(tactical_tags) != len(set(tactical_tags)):
+        raise CardWriteError("effect tactical tags must be unique non-empty strings")
+    connection.execute("DELETE FROM effect_tactical_tags WHERE effect_id=?", (effect_id,))
+    for position, tactical_tag in enumerate(tactical_tags):
+        connection.execute("INSERT INTO effect_tactical_tags(effect_id,tactical_tag,position) VALUES (?,?,?)", (effect_id, tactical_tag, position))
+
+
 def effect_marker(value: object) -> str:
     marker = str(value or "").strip()
     if len(marker) > 10:
@@ -131,9 +146,9 @@ def get_card(connection: sqlite3.Connection, card_type: str, owner_id: int) -> d
     effects = []
     for effect in connection.execute(f"SELECT * FROM effects WHERE {owner_column}=? ORDER BY effect_type,position,id", (owner_id,)):
         effect_translations = {row["language"]: {"name": row["name"], "text": row["text"]} for row in connection.execute("SELECT * FROM effect_translations WHERE effect_id=?", (effect["id"],))}
-        effects.append({"id": effect["id"], "type": effect["effect_type"], "position": effect["position"], "energy_cost": effect["energy_cost"], "professions": get_effect_professions(connection, effect["id"]), "valuation": effect["valuation"], "marker": effect["marker"], "notes": effect["notes"], "version": effect["version"], "translations": effect_translations})
+        effects.append({"id": effect["id"], "type": effect["effect_type"], "position": effect["position"], "energy_cost": effect["energy_cost"], "professions": get_effect_professions(connection, effect["id"]), "tactical_tags": get_effect_tactical_tags(connection, effect["id"]), "valuation": effect["valuation"], "marker": effect["marker"], "notes": effect["notes"], "version": effect["version"], "translations": effect_translations})
     decks = [dict(row) for row in connection.execute(
-        f"SELECT d.id,d.code,d.deck_type,dc.position,dc.section FROM deck_cards dc JOIN decks d ON d.id=dc.deck_id WHERE dc.{owner_column}=? ORDER BY d.display_order,dc.position",
+        f"SELECT d.id,d.deck_id,d.code,d.deck_type,dc.position,dc.section FROM deck_cards dc JOIN decks d ON d.id=dc.deck_id WHERE dc.{owner_column}=? ORDER BY d.display_order,dc.position",
         (owner_id,),
     )]
     base = {key: card[key] for key in card.keys() if key not in {"created_at", "updated_at"}}
@@ -227,6 +242,7 @@ def _sync_effects(connection: sqlite3.Connection, card_type: str, owner_id: int,
         else:
             effect_id = connection.execute(f"INSERT INTO effects({owner_column},effect_type,position,energy_cost,valuation,marker,notes) VALUES (?,?,?,?,?,?,?)", (owner_id, effect_type, position, effect_energy_cost(effect_type, value.get("energy_cost")), value.get("valuation"), effect_marker(value.get("marker")), str(value.get("notes", "")))).lastrowid
         sync_effect_professions(connection, effect_id, value.get("professions", []))
+        sync_effect_tactical_tags(connection, effect_id, value.get("tactical_tags", []))
         retained.add(effect_id)
         effect_translations = value.get("translations", {})
         if not isinstance(effect_translations, dict):
@@ -251,22 +267,25 @@ def _sync_effects(connection: sqlite3.Connection, card_type: str, owner_id: int,
     return detached
 
 
-def _sync_decks(connection: sqlite3.Connection, card_type: str, owner_id: int, deck_codes: object) -> None:
-    if not isinstance(deck_codes, list) or any(not isinstance(code, str) for code in deck_codes):
-        raise CardWriteError("deck_codes must be an array of strings")
-    if len(deck_codes) != len(set(deck_codes)):
-        raise CardWriteError("deck_codes contains duplicates")
+def _sync_decks(connection: sqlite3.Connection, card_type: str, owner_id: int, deck_identifiers: object) -> None:
+    if not isinstance(deck_identifiers, list) or any(not isinstance(identifier, str) for identifier in deck_identifiers):
+        raise CardWriteError("deck_ids must be an array of strings")
+    if len(deck_identifiers) != len(set(deck_identifiers)):
+        raise CardWriteError("deck_ids contains duplicates")
     owner_column = f"{card_type}_card_id"
-    decks = {row["code"]: row for row in connection.execute("SELECT id,code FROM decks WHERE status='active'")}
-    missing = [code for code in deck_codes if code not in decks]
+    rows = list(connection.execute("SELECT id,deck_id,code FROM decks WHERE status='active'"))
+    decks = {identifier: row for row in rows for identifier in (row["deck_id"], row["code"])}
+    missing = [identifier for identifier in deck_identifiers if identifier not in decks]
     if missing:
         raise CardWriteError(f"unknown decks: {', '.join(missing)}")
     existing = {row["deck_id"]: row for row in connection.execute(f"SELECT * FROM deck_cards WHERE {owner_column}=?", (owner_id,))}
-    selected_ids = {decks[code]["id"] for code in deck_codes}
+    selected_id_list = [decks[identifier]["id"] for identifier in deck_identifiers]
+    selected_ids = set(selected_id_list)
+    if len(selected_id_list) != len(selected_ids):
+        raise CardWriteError("deck_ids resolves to duplicate decks")
     for deck_id in set(existing) - selected_ids:
         connection.execute(f"DELETE FROM deck_cards WHERE deck_id=? AND {owner_column}=?", (deck_id, owner_id))
-    for code in deck_codes:
-        deck_id = decks[code]["id"]
+    for deck_id in selected_id_list:
         if deck_id in existing:
             continue
         position = connection.execute("SELECT COALESCE(MAX(position),-1)+1 FROM deck_cards WHERE deck_id=?", (deck_id,)).fetchone()[0]
@@ -289,7 +308,7 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         old_title = None
         if owner_id is not None:
-            current = connection.execute(f"SELECT c.version,c.card_id,t.title FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
+            current = connection.execute(f"SELECT c.version,c.card_id,c.design_notes,t.title FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
             if not current:
                 raise CardWriteError("card not found")
             expected_version = int(payload.get("version", 0))
@@ -303,20 +322,20 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
                 if connection.execute(f"SELECT 1 FROM {table} WHERE card_id=?", (card_id,)).fetchone():
                     raise CardWriteError("card_id already exists")
             if card_type == "monster":
-                owner_id = connection.execute("INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,source_updated_at) VALUES (?,?,?,?,?,?,?,?)", (card_id, int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), card_image_path(card_id), timestamp)).lastrowid
+                owner_id = connection.execute("INSERT INTO monster_cards(card_id,level,monster_type,attack,defence,magic,image_path,design_notes,source_updated_at) VALUES (?,?,?,?,?,?,?,?,?)", (card_id, int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), card_image_path(card_id), str(base.get("design_notes", "")), timestamp)).lastrowid
             else:
-                owner_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path,source_updated_at) VALUES (?,?,?)", (card_id, card_image_path(card_id), timestamp)).lastrowid
+                owner_id = connection.execute("INSERT INTO prophecy_cards(card_id,image_path,design_notes,source_updated_at) VALUES (?,?,?,?)", (card_id, card_image_path(card_id), str(base.get("design_notes", "")), timestamp)).lastrowid
             action = "create"
         else:
             if card_type == "monster":
-                connection.execute("UPDATE monster_cards SET level=?,monster_type=?,attack=?,defence=?,magic=?,image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), card_image_path(current["card_id"]), timestamp, owner_id))
+                connection.execute("UPDATE monster_cards SET level=?,monster_type=?,attack=?,defence=?,magic=?,image_path=?,design_notes=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (int(base.get("level", 0)), str(base.get("monster_type", "")), float(base.get("attack", 0)), float(base.get("defence", 0)), float(base.get("magic", 0)), card_image_path(current["card_id"]), str(base.get("design_notes", current["design_notes"])), timestamp, owner_id))
             else:
-                connection.execute("UPDATE prophecy_cards SET image_path=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (card_image_path(current["card_id"]), timestamp, owner_id))
+                connection.execute("UPDATE prophecy_cards SET image_path=?,design_notes=?,source_updated_at=?,updated_at=CURRENT_TIMESTAMP,version=version+1 WHERE id=?", (card_image_path(current["card_id"]), str(base.get("design_notes", current["design_notes"])), timestamp, owner_id))
             action = "update"
         monster_type_zh = str(base.get("monster_type", "")).strip() if card_type == "monster" else ""
         _sync_translations(connection, card_type, owner_id, translations, timestamp, monster_type_zh)
         detached_effects = _sync_effects(connection, card_type, owner_id, payload.get("effects", []))
-        _sync_decks(connection, card_type, owner_id, payload.get("deck_codes", []))
+        _sync_decks(connection, card_type, owner_id, payload.get("deck_ids", payload.get("deck_codes", [])))
         connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES (?,?,?,?)", (f"{card_type}_card", owner_id, action, json.dumps({"title": title}, ensure_ascii=False)))
         connection.commit()
     except Exception:
@@ -351,7 +370,7 @@ def delete_card(connection: sqlite3.Connection, card_type: str, owner_id: int, *
 
 def copy_card(connection: sqlite3.Connection, card_type: str, owner_id: int) -> dict[str, object]:
     source = get_card(connection, card_type, owner_id)
-    payload = {"base": dict(source["base"]), "translations": json.loads(json.dumps(source["translations"], ensure_ascii=False)), "effects": [], "deck_codes": [deck["code"] for deck in source["decks"]]}
+    payload = {"base": dict(source["base"]), "translations": json.loads(json.dumps(source["translations"], ensure_ascii=False)), "effects": [], "deck_ids": [deck["deck_id"] for deck in source["decks"]]}
     payload["base"].pop("id", None)
     payload["base"].pop("version", None)
     payload["base"]["card_id"] = ""

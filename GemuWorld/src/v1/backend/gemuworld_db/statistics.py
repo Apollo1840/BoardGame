@@ -23,7 +23,7 @@ def compute_statistics(cards: list[dict[str, object]]) -> dict[str, Any]:
     level_stats: dict[str, dict[str, float]] = defaultdict(lambda: {"count": 0, "attack_total": 0, "defence_total": 0, "magic_total": 0})
     for card in cards:
         for deck in card["decks"]:
-            deck_counts[str(deck["code"])] += 1
+            deck_counts[str(deck["name"])] += 1
         for effect in card["effects"]:
             effect_types[str(effect["type"])] += 1
     for card in monsters:
@@ -95,7 +95,7 @@ def compute_statistics(cards: list[dict[str, object]]) -> dict[str, Any]:
         "total": len(cards),
         "monster_count": len(monsters),
         "prophecy_count": len(prophecies),
-        "cards_without_decks": sum(1 for card in cards if not card["decks"]),
+        "cards_without_decks": sum(1 for card in cards if not any(deck.get("type") != "role" for deck in card["decks"])),
         "level_distribution": dict(sorted(levels.items(), key=lambda item: float(item[0]))),
         "attribute_distribution": dict(attributes.most_common()),
         "race_distribution": dict(races.most_common()),

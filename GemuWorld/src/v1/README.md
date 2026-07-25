@@ -253,7 +253,7 @@ V1.5 replaces manual clan-file maintenance with transactional deck management at
 
 The page supports:
 
-- creating and editing deck code, display order, and type;
+- creating and editing Chinese/English deck names, display order, and type; the English name is mirrored to the legacy `code` field while an immutable hidden `deck_id` carries identity;
 - `default`, `role`, `tutorial`, and `temporary` deck types;
 - Chinese and English names, summaries, and Markdown descriptions;
 - adding monster and prophecy cards by stable database identity;
@@ -262,7 +262,7 @@ The page supports:
 - archiving and permanent deletion;
 - optimistic version conflict protection.
 
-Deck metadata, translations, and the complete ordered member list save in one transaction. Any invalid or archived member, duplicate member, unknown card, duplicate deck code, or version conflict rolls back the whole edit. Saving from the deck page updates the same `deck_cards` relationships used by the card editor, Viewer, statistics, and exports, so no synchronization job is required.
+Deck metadata, translations, and the complete ordered member list save in one transaction. Any invalid or archived member, duplicate member, unknown card, duplicate English name, or version conflict rolls back the whole edit. Chinese names default to the English name when left blank. Saving from the deck page updates the same `deck_cards` relationships used by the card editor, Viewer, statistics, and exports, so no synchronization job is required.
 
 Five role decks use the normal deck/member tables with `deck_type=role`. They retain their ordering and section metadata without a separate special-case database.
 
@@ -365,7 +365,7 @@ POST /api/export
 GET /pictures/<asset>
 ```
 
-The API response is adapted in memory to the established card-rendering objects, preserving the existing DOM, CSS, special client-side sort modes, 63 × 88 mm cards, and 3×3 print behavior. Deck membership and default deck order use stable card IDs and deck codes instead of matching localized titles.
+The API response is adapted in memory to the established card-rendering objects, preserving the existing DOM, CSS, special client-side sort modes, 63 × 88 mm cards, and 3×3 print behavior. Deck membership and default deck order use stable card IDs and hidden deck IDs instead of matching editable names.
 
 Database commits are visible after refreshing the Viewer; the service does not need to restart and no CSV cache is rebuilt. Automated HTTP coverage commits a title change while the server is running and verifies that the next API query returns it.
 

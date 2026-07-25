@@ -30,14 +30,21 @@ def migrate(connection: sqlite3.Connection) -> list[str]:
         if migration.name in applied:
             continue
         script = migration.read_text(encoding="utf-8")
+        foreign_keys_off = script.startswith("-- migrate: foreign_keys_off")
+        if foreign_keys_off:
+            connection.commit()
+            connection.execute("PRAGMA foreign_keys = OFF")
         # executescript controls its own transaction; the migration itself is atomic.
-        connection.executescript(
-            "BEGIN IMMEDIATE;\n"
-            + script
-            + "\nINSERT INTO schema_migrations(version) VALUES ("
-            + repr(migration.name)
-            + ");\nCOMMIT;"
-        )
+        try:
+            connection.executescript(
+                "BEGIN IMMEDIATE;\n"
+                + script
+                + "\nINSERT INTO schema_migrations(version) VALUES ("
+                + repr(migration.name)
+                + ");\nCOMMIT;"
+            )
+        finally:
+            if foreign_keys_off:
+                connection.execute("PRAGMA foreign_keys = ON")
         installed.append(migration.name)
     return installed
-

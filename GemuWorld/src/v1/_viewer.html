@@ -138,7 +138,8 @@
     #sidebar-panel{
       border-radius:0!important; box-shadow:2px 0 12px rgba(0,0,0,0.12);
       padding:28px 18px 18px; display:flex; flex-direction:column; gap:18px;
-      background:#23272f; color:#fff; z-index:100; position:fixed; left:0; top:0; height:100vh; width:240px;
+      background:#23272f; color:#fff; z-index:100; position:fixed; left:0; top:0; height:100vh; height:100dvh; width:280px;
+      box-sizing:border-box; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable;
     }
     #sidebar-panel input[type="number"]{ width:100%; margin-bottom:4px; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; outline:none; font-size:15px; box-sizing:border-box; }
     #sidebar-panel select{ width:100%; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; font-size:15px; }
@@ -319,7 +320,7 @@
         <select id="sort-field" style="flex:1;">
           <option value="default" selected>默认</option>
           <option value="description">描述</option>
-          <option value="update_datetime">更新时间</option>
+          <option value="updated_at">最近更新</option>
               <option value="monster_type">怪物属性</option>
           <option value="level">怪物等级</option>
           <option value="card_id">卡牌ID</option>
@@ -404,7 +405,7 @@
     </form>
   </dialog>
 
-  <div id="main-content" style="position:relative; margin-left:240px;">
+  <div id="main-content" style="position:relative; margin-left:280px;">
     <div id="alert-banner" style="display:none;position:fixed;top:0;left:240px;right:0;background:#ff6b6b;color:#fff;padding:12px 16px;border-bottom:2px solid #ff5252;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;max-width:100%;word-break:break-word;">
         <div style="flex:1;padding-right:12px;">
@@ -495,16 +496,16 @@
     }
 
     // --- 数据与渲染 ---
-    const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','update_datetime'];
-    const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','update_datetime'];
+    const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','updated_at'];
+    const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','updated_at'];
     let allProphecyRows=[], allMonsterRows=[];
     let displayCount=18;
     let selectedClans=new Set(); // 存储选中的卡组
     let clanMetadata={};
-    let clanCardIds={}; // 数据库关系：卡组 code -> 有序 card_id
+    let clanCardIds={}; // 数据库关系：隐藏 deck_id -> 有序 card_id
     let missingCards={}; // 外键约束下应始终为空
 
-    const getSortField=()=> (document.getElementById('sort-field')?.value || 'update_datetime');
+    const getSortField=()=> (document.getElementById('sort-field')?.value || 'updated_at');
     const getAltDisplay=()=> (document.getElementById('alt-display-toggle')?.checked ?? true);
 
     function apiCardToRow(card){
@@ -520,11 +521,11 @@
     }
 
     async function loadDecksFromApi(){
-      const response=await fetch(`/api/decks?language=${encodeURIComponent(lang)}&t=${Date.now()}`,{cache:'no-store'});
+      const response=await fetch(`/api/decks?language=zh&t=${Date.now()}`,{cache:'no-store'});
       if(!response.ok) throw new Error(`卡组 API ${response.status}`);
       const payload=await response.json();
       clanMetadata={};
-      for(const deck of payload.items) clanMetadata[deck.code]=deck;
+      for(const deck of payload.items) clanMetadata[deck.deck_id]=deck;
       createClanButtons();
     }
 
@@ -547,7 +548,7 @@
         const btn=document.createElement('button');
         const color = hashStringToColor(clanName);
         btn.className='btn';
-        btn.textContent=clanName;
+        btn.textContent=clanMetadata[clanName].name;
         btn.title=clanMetadata[clanName].description||clanName;
         btn.style.borderColor = color;
         btn.style.color = color;
@@ -634,11 +635,11 @@
       return rows.slice().sort((a,b)=>{
         if(field==='random'){
           return Math.random() - 0.5;
-        }else if(field==='update_datetime'||field==='monster_type'||field==='level'){
+        }else if(field==='updated_at'||field==='monster_type'||field==='level'){
           const aVal=a[idx]||'', bVal=b[idx]||'';
-          if(field==='update_datetime'){
+          if(field==='updated_at'){
             const aDate=Date.parse(aVal), bDate=Date.parse(bVal);
-            if(!isNaN(aDate)&&!isNaN(bDate)) return aDate-bDate;
+            if(!isNaN(aDate)&&!isNaN(bDate)) return bDate-aDate;
           }
           const aNum=parseFloat(aVal)||0;
           const bNum=parseFloat(bVal)||0;
@@ -713,8 +714,12 @@
       });
       
       // 2. 再进行卡数过滤
-      const cardCountFilteredMonsterRows=clanFilteredMonsterRows.slice(-displayCount);
-      const cardCountFilteredProphecyRows=clanFilteredProphecyRows.slice(-displayCount);
+      const cardCountFilteredMonsterRows=sortField==='updated_at'
+        ? sortRows(clanFilteredMonsterRows,monsterHeader,sortField).slice(0,displayCount)
+        : clanFilteredMonsterRows.slice(-displayCount);
+      const cardCountFilteredProphecyRows=sortField==='updated_at'
+        ? sortRows(clanFilteredProphecyRows,prophecyHeader,sortField).slice(0,displayCount)
+        : clanFilteredProphecyRows.slice(-displayCount);
       
       // 3. 最后排序
       let sortedProphecyRows, sortedMonsterRows;
@@ -771,7 +776,7 @@
       clanCardIds={};
       for(const card of payload.items){
         for(const deck of card.decks){
-          (clanCardIds[deck.code]??=[]).push({cardId:card.card_id,position:deck.position});
+          (clanCardIds[deck.deck_id]??=[]).push({cardId:card.card_id,position:deck.position});
         }
       }
       for(const code in clanCardIds){

@@ -4,6 +4,7 @@ import csv
 import json
 import re
 import sqlite3
+from uuid import uuid4
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -15,6 +16,51 @@ from .pipe_csv import read_records, write_records
 MONSTER_HEADER = ["card_id", "card_title", "level", "monster_type", "description", "attack", "defence", "magic", "attributes", "skills", "image", "last_update_datetime"]
 PROPHECY_HEADER = ["card_id", "card_title", "introduction", "effect", "responsive_effect", "image", "last_update_datetime"]
 ROLE_CODES = {"⚔️assassin", "🛡️tank", "🏹shooter", "🧠strategy", "🪄magician"}
+GUIDE_TITLES = {"monster_design_table": "怪物设计表"}
+DECK_TYPE_BY_CODE = {
+    "Intro": "story",
+    "Wind": "attribute",
+    "Rock": "attribute",
+    "Thunder": "attribute",
+    "Wood": "attribute",
+    "Sea": "attribute",
+    "Fire": "attribute",
+    "Frost": "tribe",
+    "Human": "tribe",
+    "Goblin": "race",
+    "Immortal": "race",
+    "WalkingDead": "race",
+    "Poker": "culture",
+    "3kings": "culture",
+    "FairyTell": "culture",
+    "Animal": "race",
+    "Dragon": "race",
+    "Insects": "race",
+    "Robot": "race",
+    "Party": "story",
+}
+DECK_ZH_NAME_BY_CODE = {
+    "Intro": "灵坛村",
+    "Wind": "风",
+    "Rock": "岩",
+    "Thunder": "雷",
+    "Wood": "木",
+    "Sea": "水",
+    "Fire": "火",
+    "Frost": "北境霜毒",
+    "Human": "将军城",
+    "Goblin": "哥布林族",
+    "Immortal": "仙族",
+    "WalkingDead": "不死族",
+    "Poker": "扑克牌",
+    "3kings": "三国",
+    "FairyTell": "邪恶童话",
+    "Animal": "兽族",
+    "Dragon": "龙族",
+    "Insects": "虫族",
+    "Robot": "机器人族",
+    "Party": "梦汐岛",
+}
 
 
 def _text(value: str) -> str:
@@ -187,7 +233,7 @@ def _deck_type(code: str) -> str:
         return "tutorial"
     if code == "_temp_":
         return "temporary"
-    return "default"
+    return DECK_TYPE_BY_CODE.get(code, "tribe")
 
 
 def _card_title_maps(connection: sqlite3.Connection) -> tuple[dict[str, list[int]], dict[str, list[int]]]:
@@ -224,11 +270,12 @@ def _import_decks(connection: sqlite3.Connection, clan_dir: Path, report: Import
         path = candidates[0]
         markdown = path.read_text(encoding="utf-8-sig")
         cursor = connection.execute(
-            "INSERT INTO decks(code,deck_type,display_order,source_filename,source_markdown_zh) VALUES (?,?,?,?,?)",
-            (code, _deck_type(code), display_order, path.name, markdown),
+            "INSERT INTO decks(deck_id,code,deck_type,display_order,source_filename,source_markdown_zh) VALUES (?,?,?,?,?,?)",
+            (f"deck-{uuid4()}", code, _deck_type(code), display_order, path.name, markdown),
         )
         deck_id = cursor.lastrowid
-        connection.execute("INSERT INTO deck_translations(deck_id,language,name,description) VALUES (?,?,?,?)", (deck_id, "zh", code, markdown))
+        connection.execute("INSERT INTO deck_translations(deck_id,language,name,description) VALUES (?,?,?,?)", (deck_id, "zh", DECK_ZH_NAME_BY_CODE.get(code, code), markdown))
+        connection.execute("INSERT INTO deck_translations(deck_id,language,name) VALUES (?,?,?)", (deck_id, "en", code))
         section = ""
         position = 0
         seen: set[tuple[str, int]] = set()
@@ -275,7 +322,7 @@ def _import_guides(connection: sqlite3.Connection, manual_dir: Path, report: Imp
     for path in sorted(manual_dir.glob("*.md")):
         connection.execute(
             "INSERT INTO design_guides(code,guide_type,title,content,source_path) VALUES (?,?,?,?,?)",
-            (path.stem, "markdown", path.stem, path.read_text(encoding="utf-8-sig"), path.name),
+            (path.stem, "markdown", GUIDE_TITLES.get(path.stem, path.stem), path.read_text(encoding="utf-8-sig"), path.name),
         )
     benchmark_path = manual_dir / "monster_design_table.csv"
     with benchmark_path.open(encoding="utf-8-sig", newline="") as handle:

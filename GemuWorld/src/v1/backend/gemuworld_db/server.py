@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import sqlite3
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -12,9 +13,9 @@ from .database import connect, migrate
 from .batch_import import BatchImportError, import_cards
 from .cards import CardWriteError, VersionConflict, copy_card, delete_card, get_card, list_monster_types, save_card
 from .decks import DeckWriteError, delete_deck, get_deck, save_deck
-from .effect_backups import export_effect_backup, import_effect_backup
+from .effect_backups import export_effect_backup, export_pure_effects, import_effect_backup, import_pure_effects
 from .effects import EffectWriteError, copy_effect, create_effect, delete_effect, get_effect, list_effects, list_professions, profession_counts, update_effect
-from .guides import GuideWriteError, list_benchmarks, list_guides, update_benchmark, update_guide
+from .guides import GuideWriteError, list_benchmarks, list_guides, list_monster_design_rows, update_benchmark, update_guide
 from .exports import available_versions, current_data_version, export_cards, export_version_snapshot, next_version, order_cards, set_data_version
 from .queries import list_cards, list_decks
 from .statistics import compute_statistics
@@ -160,6 +161,14 @@ class ViewerHandler(BaseHTTPRequestHandler):
                     connection.close()
                 self._json({"items": benchmarks, "count": len(benchmarks)})
                 return
+            if path == "/api/monster-design-table":
+                connection = connect(self.server.database)
+                try:
+                    rows = list_monster_design_rows(connection)
+                finally:
+                    connection.close()
+                self._json({"items": rows, "count": len(rows)})
+                return
             if path == "/api/export":
                 cards, language = self._query_cards(query)
                 body, filename, content_type = export_cards(cards, language)
@@ -274,8 +283,10 @@ class ViewerHandler(BaseHTTPRequestHandler):
         is_effect_create = card_route == ["api", "effects"]
         is_effect_export = card_route == ["api", "effects", "export"]
         is_effect_import = card_route == ["api", "effects", "import"]
+        is_pure_effect_export = card_route == ["api", "effects", "pure-export"]
+        is_pure_effect_import = card_route == ["api", "effects", "pure-import"]
         is_effect_copy = len(card_route) == 4 and card_route[:2] == ["api", "effects"] and card_route[3] == "copy"
-        if parsed.path not in {"/api/export", "/api/import", "/api/data-version"} and not is_card_create and not is_card_copy and not is_deck_create and not is_effect_create and not is_effect_export and not is_effect_import and not is_effect_copy:
+        if parsed.path not in {"/api/export", "/api/import", "/api/data-version"} and not is_card_create and not is_card_copy and not is_deck_create and not is_effect_create and not is_effect_export and not is_effect_import and not is_pure_effect_export and not is_pure_effect_import and not is_effect_copy:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         try:
@@ -332,6 +343,22 @@ class ViewerHandler(BaseHTTPRequestHandler):
                     connection.close()
                 self._json(result, HTTPStatus.CREATED)
                 return
+            if is_pure_effect_export:
+                connection = connect(self.server.database)
+                try:
+                    result = export_pure_effects(connection, payload.get("effect_ids"), self.server.data_root / "tmp", payload.get("filters"))
+                finally:
+                    connection.close()
+                self._json(result, HTTPStatus.CREATED)
+                return
+            if is_pure_effect_import:
+                connection = connect(self.server.database)
+                try:
+                    result = import_pure_effects(connection, payload.get("backup"))
+                finally:
+                    connection.close()
+                self._json(result, HTTPStatus.CREATED)
+                return
             if is_effect_copy:
                 connection = connect(self.server.database)
                 try:
@@ -380,6 +407,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
             selected = order_cards(cards, card_ids)
             body, filename, content_type = export_cards(selected, language)
             self._download(body, filename, content_type)
+        except sqlite3.IntegrityError as exc:
+            self._json({"error": f"database constraint error: {exc}"}, HTTPStatus.BAD_REQUEST)
         except (BatchImportError, CardWriteError, DeckWriteError, EffectWriteError, GuideWriteError, ValueError, TypeError, json.JSONDecodeError) as exc:
             self._json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
 

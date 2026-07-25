@@ -1,18 +1,32 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import sqlite3
 import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from .cards import ALLOWED_EFFECTS, CardWriteError, effect_energy_cost, effect_marker, effect_translation_name, sync_effect_professions, validate_monster_effect_counts
+from .cards import ALLOWED_EFFECTS, CardWriteError, effect_energy_cost, effect_marker, effect_translation_name, sync_effect_professions, sync_effect_tactical_tags, validate_monster_effect_counts
 from .effects import EffectWriteError, get_effect
 
 
 BACKUP_FORMAT = "gemuworld.effect-backup"
 BACKUP_SCHEMA_VERSION = 1
+PURE_EFFECT_FORMAT = "gemuworld.pure-effects"
+PURE_EFFECT_SCHEMA_VERSION = 1
+
+
+def _effect_valuation(value: object, effect_id: int) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise EffectWriteError(f"effect {effect_id} valuation must be a finite number or null")
+    valuation = float(value)
+    if not math.isfinite(valuation):
+        raise EffectWriteError(f"effect {effect_id} valuation must be a finite number or null")
+    return valuation
 
 
 def _backup_effect(effect: dict[str, object]) -> dict[str, object]:
@@ -29,6 +43,7 @@ def _backup_effect(effect: dict[str, object]) -> dict[str, object]:
         "position": effect["position"],
         "energy_cost": effect["energy_cost"],
         "professions": effect["professions"],
+        "tactical_tags": effect["tactical_tags"],
         "valuation": effect["valuation"],
         "marker": effect["marker"],
         "notes": effect["notes"],
@@ -86,6 +101,120 @@ def export_effect_backup(
     return {"filename": filename, "path": str(destination.resolve()), "count": len(items), "exported_at": exported_at}
 
 
+def export_pure_effects(
+    connection: sqlite3.Connection,
+    effect_ids: object,
+    output_dir: Path,
+    filters: object = None,
+) -> dict[str, object]:
+    if not isinstance(effect_ids, list) or not effect_ids:
+        raise EffectWriteError("effect_ids must be a non-empty array")
+    try:
+        ids = [int(value) for value in effect_ids]
+    except (TypeError, ValueError) as error:
+        raise EffectWriteError("effect_ids must contain integers") from error
+    if len(ids) != len(set(ids)):
+        raise EffectWriteError("effect_ids contains duplicates")
+    if filters is not None and not isinstance(filters, dict):
+        raise EffectWriteError("filters must be an object")
+
+    items = []
+    for effect_id in ids:
+        effect = get_effect(connection, effect_id)
+        zh = effect["translations"].get("zh", {})
+        items.append({"id": effect_id, "zh_text": str(zh.get("text", "")), "valuation": effect["valuation"]})
+    exported_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    backup = {
+        "format": PURE_EFFECT_FORMAT,
+        "schema_version": PURE_EFFECT_SCHEMA_VERSION,
+        "exported_at": exported_at,
+        "scope": "current_effect_list",
+        "filters": filters or {},
+        "count": len(items),
+        "items": items,
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"pure_effects_{datetime.now():%Y%m%d_%H%M%S_%f}.json"
+    destination = output_dir / filename
+    temporary_name = ""
+    try:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", dir=output_dir, prefix=".pure_effects_", suffix=".tmp", delete=False) as temporary:
+            temporary_name = temporary.name
+            json.dump(backup, temporary, ensure_ascii=False, indent=2)
+            temporary.write("\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_name, destination)
+    finally:
+        if temporary_name and Path(temporary_name).exists():
+            Path(temporary_name).unlink()
+    return {"filename": filename, "path": str(destination.resolve()), "count": len(items), "exported_at": exported_at}
+
+
+def import_pure_effects(connection: sqlite3.Connection, backup: object) -> dict[str, object]:
+    if not isinstance(backup, dict) or backup.get("format") != PURE_EFFECT_FORMAT or backup.get("schema_version") != PURE_EFFECT_SCHEMA_VERSION:
+        raise EffectWriteError("unsupported pure effect format or schema version")
+    items = backup.get("items")
+    if not isinstance(items, list) or not items:
+        raise EffectWriteError("pure effect backup contains no items")
+
+    ids: list[int] = []
+    texts: list[str] = []
+    valuations: list[float | None] = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise EffectWriteError("every pure effect item must be an object")
+        try:
+            effect_id = int(item.get("id"))
+        except (TypeError, ValueError) as error:
+            raise EffectWriteError("every pure effect item requires an integer id") from error
+        if not isinstance(item.get("zh_text"), str):
+            raise EffectWriteError(f"effect {effect_id} zh_text must be a string")
+        ids.append(effect_id)
+        texts.append(item["zh_text"])
+        valuations.append(_effect_valuation(item.get("valuation"), effect_id))
+    if len(ids) != len(set(ids)):
+        raise EffectWriteError("pure effect backup contains duplicate ids")
+
+    touched_cards: set[tuple[str, int]] = set()
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        for effect_id in ids:
+            row = connection.execute("SELECT * FROM effects WHERE id=?", (effect_id,)).fetchone()
+            if not row:
+                raise EffectWriteError(f"pure effect id not found: {effect_id}")
+            if row["monster_card_id"] is not None:
+                touched_cards.add(("monster", int(row["monster_card_id"])))
+            elif row["prophecy_card_id"] is not None:
+                touched_cards.add(("prophecy", int(row["prophecy_card_id"])))
+
+        for effect_id, text, valuation in zip(ids, texts, valuations, strict=True):
+            translated = connection.execute(
+                "UPDATE effect_translations SET text=? WHERE effect_id=? AND language='zh'",
+                (text, effect_id),
+            )
+            if translated.rowcount != 1:
+                raise EffectWriteError(f"effect {effect_id} is missing its Chinese translation")
+            connection.execute(
+                "UPDATE effects SET valuation=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                (valuation, effect_id),
+            )
+        for card_type, owner_id in touched_cards:
+            connection.execute(
+                f"UPDATE {card_type}_cards SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                (owner_id,),
+            )
+        connection.execute(
+            "INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES ('pure_effect_backup',0,'import',?)",
+            (json.dumps({"updated": len(ids), "effect_ids": ids}, ensure_ascii=False),),
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    return {"updated": len(ids), "count": len(ids), "effect_ids": ids}
+
+
 def _resolve_owner(connection: sqlite3.Connection, owner: object, effect_type: str) -> tuple[int | None, int | None, tuple[str, int] | None]:
     if owner is None:
         return None, None, None
@@ -121,22 +250,44 @@ def import_effect_backup(connection: sqlite3.Connection, backup: object) -> dict
     if len(ids) != len(set(ids)):
         raise EffectWriteError("effect backup contains duplicate ids")
 
+    positions: list[int] = []
+    valuations: list[float | None] = []
+    for effect_id, item in zip(ids, items, strict=True):
+        try:
+            position = int(item.get("position", 0))
+        except (TypeError, ValueError) as error:
+            raise EffectWriteError(f"effect {effect_id} position must be an integer") from error
+        if position < 0:
+            raise EffectWriteError("effect position must be non-negative")
+        positions.append(position)
+        valuations.append(_effect_valuation(item.get("valuation"), effect_id))
+
     created = 0
     updated = 0
     touched_cards: set[tuple[str, int]] = set()
     connection.execute("BEGIN IMMEDIATE")
     try:
-        for effect_id, item in zip(ids, items, strict=True):
+        # Vacate every imported existing effect's current slot before applying
+        # final positions. This permits valid swaps such as 0 <-> 1 while still
+        # allowing the unique indexes to reject collisions with non-imported
+        # effects in the requested final state.
+        current_max_position = int(connection.execute("SELECT COALESCE(MAX(position),-1) FROM effects").fetchone()[0])
+        staging_position = max(current_max_position, *positions) + 1
+        for offset, effect_id in enumerate(ids):
+            connection.execute(
+                "UPDATE effects SET position=? WHERE id=?",
+                (staging_position + offset, effect_id),
+            )
+
+        for effect_id, item, position, valuation in zip(ids, items, positions, valuations, strict=True):
             effect_type = str(item.get("type", ""))
             if effect_type not in set().union(*ALLOWED_EFFECTS.values()):
                 raise EffectWriteError(f"invalid effect type in backup: {effect_type!r}")
-            position = int(item.get("position", 0))
-            if position < 0:
-                raise EffectWriteError("effect position must be non-negative")
             monster_id, prophecy_id, touched = _resolve_owner(connection, item.get("owner"), effect_type)
             if touched:
                 touched_cards.add(touched)
             professions = item.get("professions", [])
+            tactical_tags = item.get("tactical_tags", [])
             translations = item.get("translations")
             if not isinstance(translations, dict) or not isinstance(translations.get("zh"), dict):
                 raise EffectWriteError(f"effect {effect_id} is missing its Chinese translation")
@@ -149,18 +300,19 @@ def import_effect_backup(connection: sqlite3.Connection, backup: object) -> dict
                 if (existing["monster_card_id"], existing["prophecy_card_id"]) != (monster_id, prophecy_id):
                     raise EffectWriteError(f"effect {effect_id} already exists with a different owner")
                 connection.execute(
-                    "UPDATE effects SET effect_type=?,position=?,energy_cost=?,valuation=?,marker=?,notes=?,version=?,created_at=?,updated_at=? WHERE id=?",
-                    (effect_type, position, effect_energy_cost(effect_type, item.get("energy_cost")), item.get("valuation"), marker, str(item.get("notes", "")), max(1, int(item.get("version", 1))), str(item.get("created_at", "")) or datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(item.get("updated_at", "")) or datetime.now().strftime("%Y-%m-%d %H:%M:%S"), effect_id),
+                    "UPDATE effects SET effect_type=?,position=?,energy_cost=?,valuation=?,marker=?,notes=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                    (effect_type, position, effect_energy_cost(effect_type, item.get("energy_cost")), valuation, marker, str(item.get("notes", "")), effect_id),
                 )
                 updated += 1
             else:
                 connection.execute(
                     "INSERT INTO effects(id,monster_card_id,prophecy_card_id,effect_type,position,energy_cost,valuation,marker,notes,version,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (effect_id, monster_id, prophecy_id, effect_type, position, effect_energy_cost(effect_type, item.get("energy_cost")), item.get("valuation"), marker, str(item.get("notes", "")), max(1, int(item.get("version", 1))), str(item.get("created_at", "")) or datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(item.get("updated_at", "")) or datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                    (effect_id, monster_id, prophecy_id, effect_type, position, effect_energy_cost(effect_type, item.get("energy_cost")), valuation, marker, str(item.get("notes", "")), max(1, int(item.get("version", 1))), str(item.get("created_at", "")) or datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(item.get("updated_at", "")) or datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
                 )
                 created += 1
             try:
                 sync_effect_professions(connection, effect_id, professions)
+                sync_effect_tactical_tags(connection, effect_id, tactical_tags)
             except CardWriteError as error:
                 raise EffectWriteError(str(error)) from error
             connection.execute("DELETE FROM effect_translations WHERE effect_id=?", (effect_id,))

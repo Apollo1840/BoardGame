@@ -4,7 +4,7 @@ import json
 import re
 import sqlite3
 
-from .cards import ALLOWED_EFFECTS, CardWriteError, VersionConflict, effect_energy_cost, effect_marker, effect_translation_name, ensure_monster_effect_capacity, get_effect_professions, reorder_monster_skills, sync_effect_professions
+from .cards import ALLOWED_EFFECTS, CardWriteError, VersionConflict, effect_energy_cost, effect_marker, effect_translation_name, ensure_monster_effect_capacity, get_effect_professions, get_effect_tactical_tags, reorder_monster_skills, sync_effect_professions, sync_effect_tactical_tags
 
 
 class EffectWriteError(ValueError):
@@ -20,6 +20,11 @@ EFFECT_SEARCH_LABELS = {
 }
 
 
+def _is_permanent_prophecy(introduction: str) -> bool:
+    match = re.match(r"^\s*【([^】]+)】", introduction or "")
+    return bool(match and "永续" in match.group(1).split("/"))
+
+
 def _row_to_effect(connection: sqlite3.Connection, row: sqlite3.Row) -> dict[str, object]:
     owner = None
     if row["monster_card_id"] is not None or row["prophecy_card_id"] is not None:
@@ -28,10 +33,11 @@ def _row_to_effect(connection: sqlite3.Connection, row: sqlite3.Row) -> dict[str
         card_table = f"{owner_type}_cards"
         translation_table = f"{owner_type}_card_translations"
         owner_column = f"{owner_type}_card_id"
-        card = connection.execute(f"SELECT c.card_id,t.title FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
-        owner = {"card_type": owner_type, "id": owner_id, "card_id": card["card_id"], "title": card["title"]}
+        introduction_field = ",t.introduction" if owner_type == "prophecy" else ""
+        card = connection.execute(f"SELECT c.card_id,t.title{introduction_field} FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
+        owner = {"card_type": owner_type, "id": owner_id, "card_id": card["card_id"], "title": card["title"], "is_permanent": owner_type == "prophecy" and _is_permanent_prophecy(card["introduction"])}
     translations = {value["language"]: {"name": value["name"], "text": value["text"]} for value in connection.execute("SELECT * FROM effect_translations WHERE effect_id=?", (row["id"],))}
-    return {"id": row["id"], "type": row["effect_type"], "position": row["position"], "energy_cost": row["energy_cost"], "professions": get_effect_professions(connection, row["id"]), "valuation": row["valuation"], "marker": row["marker"], "notes": row["notes"], "version": row["version"], "owner": owner, "translations": translations, "created_at": row["created_at"], "updated_at": row["updated_at"]}
+    return {"id": row["id"], "type": row["effect_type"], "position": row["position"], "energy_cost": row["energy_cost"], "professions": get_effect_professions(connection, row["id"]), "tactical_tags": get_effect_tactical_tags(connection, row["id"]), "valuation": row["valuation"], "marker": row["marker"], "notes": row["notes"], "version": row["version"], "owner": owner, "translations": translations, "created_at": row["created_at"], "updated_at": row["updated_at"]}
 
 
 def get_effect(connection: sqlite3.Connection, effect_id: int) -> dict[str, object]:
@@ -91,7 +97,14 @@ def list_effects(connection: sqlite3.Connection, *, effect_type: str = "", keywo
     requested_id = int(id_match.group(1)) if id_match else None
     selected_professions = {profession} if isinstance(profession, str) and profession else set(profession)
     for effect in all_effects:
-        if effect_type and effect["type"] != effect_type:
+        is_permanent_prophecy_effect = effect["type"] == "prophecy_effect" and bool((effect["owner"] or {}).get("is_permanent"))
+        if effect_type == "normal_prophecy_effect":
+            if effect["type"] != "prophecy_effect" or is_permanent_prophecy_effect:
+                continue
+        elif effect_type == "permanent_prophecy_effect":
+            if not is_permanent_prophecy_effect:
+                continue
+        elif effect_type and effect["type"] != effect_type:
             continue
         if unassigned and effect["owner"] is not None:
             continue
@@ -118,6 +131,10 @@ def list_effects(connection: sqlite3.Connection, *, effect_type: str = "", keywo
         valued = [effect for effect in effects if effect["valuation"] is not None]
         missing = [effect for effect in effects if effect["valuation"] is None]
         effects = sorted(valued, key=lambda effect: (float(effect["valuation"]), effect["id"]), reverse=reverse) + missing
+    elif sort_by == "text_length":
+        text_key = lambda effect: (str(effect["translations"].get("zh", {}).get("text", "")).casefold(), effect["id"])
+        effects.sort(key=text_key)
+        effects.sort(key=lambda effect: len(str(effect["translations"].get("zh", {}).get("text", "")).strip()), reverse=reverse)
     else:
         key_functions = {
             "id": lambda effect: effect["id"],
@@ -125,11 +142,6 @@ def list_effects(connection: sqlite3.Connection, *, effect_type: str = "", keywo
             "type": lambda effect: (str(effect["type"]), effect["id"]),
             "profession": lambda effect: (tuple(value.casefold() for value in effect["professions"]), effect["id"]),
             "text": lambda effect: (str(effect["translations"].get("zh", {}).get("text", "")).casefold(), effect["id"]),
-            "text_length": lambda effect: (
-                len(str(effect["translations"].get("zh", {}).get("text", "")).strip()),
-                str(effect["translations"].get("zh", {}).get("text", "")).casefold(),
-                effect["id"],
-            ),
         }
         effects.sort(key=key_functions[sort_by], reverse=reverse)
     return effects
@@ -151,6 +163,7 @@ def create_effect(connection: sqlite3.Connection, payload: dict[str, object]) ->
                 (effect_type, effect_energy_cost(effect_type, payload.get("energy_cost")), payload.get("valuation"), marker, str(payload.get("notes", ""))),
             ).lastrowid
             sync_effect_professions(connection, effect_id, payload.get("professions", []))
+            sync_effect_tactical_tags(connection, effect_id, payload.get("tactical_tags", []))
         except CardWriteError as error:
             raise EffectWriteError(str(error)) from error
         for language in ("zh", "en"):
@@ -196,6 +209,7 @@ def update_effect(connection: sqlite3.Connection, effect_id: int, payload: dict[
         try:
             marker = effect_marker(payload.get("marker"))
             sync_effect_professions(connection, effect_id, payload.get("professions", []))
+            sync_effect_tactical_tags(connection, effect_id, payload.get("tactical_tags", []))
         except CardWriteError as error:
             raise EffectWriteError(str(error)) from error
         connection.execute("UPDATE effects SET effect_type=?,position=?,energy_cost=?,valuation=?,marker=?,notes=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?", (effect_type, position, effect_energy_cost(effect_type, payload.get("energy_cost")), payload.get("valuation"), marker, str(payload.get("notes", "")), effect_id))
@@ -268,6 +282,7 @@ def copy_effect(connection: sqlite3.Connection, effect_id: int, target_type: str
     try:
         new_id = connection.execute(f"INSERT INTO effects({owner_column},effect_type,position,energy_cost,valuation,marker,notes) VALUES (?,?,?,?,?,?,?)", (target_id, source["type"], position, source["energy_cost"], source["valuation"], source["marker"], source["notes"])).lastrowid
         sync_effect_professions(connection, new_id, source["professions"])
+        sync_effect_tactical_tags(connection, new_id, source["tactical_tags"])
         for language, value in source["translations"].items():
             connection.execute("INSERT INTO effect_translations(effect_id,language,name,text) VALUES (?,?,?,?)", (new_id, language, value["name"], value["text"]))
         if target_type == "monster":
