@@ -11,6 +11,7 @@ from pathlib import Path
 from .cards import reorder_monster_skills
 from .image_paths import card_image_path, legacy_image_path
 from .pipe_csv import read_records, write_records
+from .serials import card_face_signature, refresh_card_serial
 
 
 MONSTER_HEADER = ["card_id", "card_title", "level", "monster_type", "description", "attack", "defence", "magic", "attributes", "skills", "image", "last_update_datetime"]
@@ -344,6 +345,14 @@ def _import_guides(connection: sqlite3.Connection, manual_dir: Path, report: Imp
 
 def import_legacy(connection: sqlite3.Connection, v1_root: Path, manual_dir: Path) -> ImportReport:
     report = ImportReport()
+    before_cards = {}
+    for card_type in ("monster", "prophecy"):
+        for row in connection.execute(f"SELECT id,card_id,serial_number,serial_updated_at FROM {card_type}_cards"):
+            before_cards[(card_type, str(row["card_id"]))] = (
+                card_face_signature(connection, card_type, int(row["id"])),
+                str(row["serial_number"]),
+                str(row["serial_updated_at"]),
+            )
     tables = ["import_issues", "deck_cards", "deck_translations", "decks", "effect_translations", "effects", "monster_card_translations", "prophecy_card_translations", "monster_cards", "prophecy_cards", "design_guides", "monster_stat_benchmarks", "reference_table_rows"]
     with connection:
         for table in tables:
@@ -358,6 +367,17 @@ def import_legacy(connection: sqlite3.Connection, v1_root: Path, manual_dir: Pat
         _import_prophecies(connection, cards / "prophecy_cards.csv", cards / "prophecy_cards_en.csv", report)
         _import_decks(connection, v1_root / "data" / "current" / "clans", report)
         _import_guides(connection, manual_dir, report)
+        for card_type in ("monster", "prophecy"):
+            for row in connection.execute(f"SELECT id,card_id FROM {card_type}_cards"):
+                owner_id = int(row["id"])
+                previous = before_cards.get((card_type, str(row["card_id"])))
+                if previous and previous[0] == card_face_signature(connection, card_type, owner_id):
+                    connection.execute(
+                        f"UPDATE {card_type}_cards SET serial_number=?,serial_updated_at=? WHERE id=?",
+                        (previous[1], previous[2], owner_id),
+                    )
+                else:
+                    refresh_card_serial(connection, card_type, owner_id)
         for issue in [*report.warnings, *report.errors]:
             connection.execute(
                 "INSERT INTO import_issues(severity,source,message,details_json) VALUES (?,?,?,?)",

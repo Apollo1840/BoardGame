@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .cards import ALLOWED_EFFECTS, CardWriteError, effect_energy_cost, effect_marker, effect_translation_name, sync_effect_professions, sync_effect_tactical_tags, validate_monster_effect_counts
 from .effects import EffectWriteError, get_effect
+from .serials import card_face_signature, refresh_card_serial
 
 
 BACKUP_FORMAT = "gemuworld.effect-backup"
@@ -188,6 +189,11 @@ def import_pure_effects(connection: sqlite3.Connection, backup: object) -> dict[
             elif row["prophecy_card_id"] is not None:
                 touched_cards.add(("prophecy", int(row["prophecy_card_id"])))
 
+        before_faces = {
+            card: card_face_signature(connection, card[0], card[1])
+            for card in touched_cards
+        }
+
         for effect_id, text, valuation in zip(ids, texts, valuations, strict=True):
             translated = connection.execute(
                 "UPDATE effect_translations SET text=? WHERE effect_id=? AND language='zh'",
@@ -204,6 +210,8 @@ def import_pure_effects(connection: sqlite3.Connection, backup: object) -> dict[
                 f"UPDATE {card_type}_cards SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
                 (owner_id,),
             )
+            if before_faces[(card_type, owner_id)] != card_face_signature(connection, card_type, owner_id):
+                refresh_card_serial(connection, card_type, owner_id)
         connection.execute(
             "INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES ('pure_effect_backup',0,'import',?)",
             (json.dumps({"updated": len(ids), "effect_ids": ids}, ensure_ascii=False),),
@@ -267,6 +275,17 @@ def import_effect_backup(connection: sqlite3.Connection, backup: object) -> dict
     touched_cards: set[tuple[str, int]] = set()
     connection.execute("BEGIN IMMEDIATE")
     try:
+        for item in items:
+            effect_type = str(item.get("type", ""))
+            if effect_type not in set().union(*ALLOWED_EFFECTS.values()):
+                raise EffectWriteError(f"invalid effect type in backup: {effect_type!r}")
+            _, _, touched = _resolve_owner(connection, item.get("owner"), effect_type)
+            if touched:
+                touched_cards.add(touched)
+        before_faces = {
+            card: card_face_signature(connection, card[0], card[1])
+            for card in touched_cards
+        }
         # Vacate every imported existing effect's current slot before applying
         # final positions. This permits valid swaps such as 0 <-> 1 while still
         # allowing the unique indexes to reject collisions with non-imported
@@ -337,6 +356,8 @@ def import_effect_backup(connection: sqlite3.Connection, backup: object) -> dict
                 except CardWriteError as error:
                     raise EffectWriteError(str(error)) from error
             connection.execute(f"UPDATE {card_type}_cards SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?", (owner_id,))
+            if before_faces[(card_type, owner_id)] != card_face_signature(connection, card_type, owner_id):
+                refresh_card_serial(connection, card_type, owner_id)
         connection.execute(
             "INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES ('effect_backup',0,'import',?)",
             (json.dumps({"created": created, "updated": updated, "effect_ids": ids}, ensure_ascii=False),),

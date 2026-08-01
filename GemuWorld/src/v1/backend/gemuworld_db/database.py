@@ -47,4 +47,8 @@ def migrate(connection: sqlite3.Connection) -> list[str]:
             if foreign_keys_off:
                 connection.execute("PRAGMA foreign_keys = ON")
         installed.append(migration.name)
+    if "020_card_serial_numbers.sql" in applied or "020_card_serial_numbers.sql" in installed:
+        from .serials import backfill_card_serials
+
+        backfill_card_serials(connection)
     return installed

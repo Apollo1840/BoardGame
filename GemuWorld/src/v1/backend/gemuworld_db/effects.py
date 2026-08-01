@@ -5,6 +5,7 @@ import re
 import sqlite3
 
 from .cards import ALLOWED_EFFECTS, CardWriteError, VersionConflict, effect_energy_cost, effect_marker, effect_translation_name, ensure_monster_effect_capacity, get_effect_professions, get_effect_tactical_tags, reorder_monster_skills, sync_effect_professions, sync_effect_tactical_tags
+from .serials import card_face_signature, refresh_card_serial
 
 
 class EffectWriteError(ValueError):
@@ -78,11 +79,13 @@ def profession_counts(connection: sqlite3.Connection) -> dict[str, int]:
     return counts
 
 
-def list_effects(connection: sqlite3.Connection, *, effect_type: str = "", keyword: str = "", card_type: str = "", profession: str | list[str] = "", sort_by: str = "id", direction: str = "asc", unassigned: bool = False, available_for: str = "") -> list[dict[str, object]]:
+def list_effects(connection: sqlite3.Connection, *, effect_type: str = "", keyword: str = "", card_type: str = "", profession: str | list[str] = "", valuation_status: str = "", sort_by: str = "id", direction: str = "asc", unassigned: bool = False, available_for: str = "") -> list[dict[str, object]]:
     if sort_by not in {"id", "owner", "type", "profession", "text", "text_length", "valuation"}:
         raise EffectWriteError("invalid effect sort field")
     if direction not in {"asc", "desc"}:
         raise EffectWriteError("effect sort direction must be asc or desc")
+    if valuation_status not in {"", "valued", "missing"}:
+        raise EffectWriteError("invalid valuation status")
     rows = connection.execute("SELECT * FROM effects ORDER BY effect_type,id")
     all_effects = [_row_to_effect(connection, row) for row in rows]
     groups = {}
@@ -111,6 +114,10 @@ def list_effects(connection: sqlite3.Connection, *, effect_type: str = "", keywo
         if card_type and (effect["owner"] is None or effect["owner"]["card_type"] != card_type):
             continue
         if available_for and (available_for not in ALLOWED_EFFECTS or effect["type"] not in ALLOWED_EFFECTS[available_for]):
+            continue
+        if valuation_status == "valued" and effect["valuation"] is None:
+            continue
+        if valuation_status == "missing" and effect["valuation"] is not None:
             continue
         effect_professions = set(effect["professions"])
         if selected_professions and not (effect_professions & selected_professions or (not effect_professions and "__unset__" in selected_professions)):
@@ -190,6 +197,8 @@ def update_effect(connection: sqlite3.Connection, effect_id: int, payload: dict[
         if int(payload.get("version", 0)) != row["version"]:
             raise VersionConflict("effect changed since it was opened")
         owner_type = "monster" if row["monster_card_id"] is not None else ("prophecy" if row["prophecy_card_id"] is not None else None)
+        owner_id = row[f"{owner_type}_card_id"] if owner_type else None
+        before_face = card_face_signature(connection, owner_type, owner_id) if owner_type else None
         effect_type = str(payload.get("type", row["effect_type"]))
         if effect_type not in set().union(*ALLOWED_EFFECTS.values()):
             raise EffectWriteError("invalid effect type")
@@ -228,6 +237,8 @@ def update_effect(connection: sqlite3.Connection, effect_id: int, payload: dict[
             connection.execute("INSERT INTO effect_translations(effect_id,language,name,text) VALUES (?,?,?,?) ON CONFLICT(effect_id,language) DO UPDATE SET name=excluded.name,text=excluded.text", (effect_id, language, effect_translation_name(effect_type, value.get("name")), str(value.get("text", ""))))
         if owner_type == "monster":
             reorder_monster_skills(connection, row["monster_card_id"])
+        if owner_type and before_face != card_face_signature(connection, owner_type, owner_id):
+            refresh_card_serial(connection, owner_type, owner_id)
         connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES ('effect',?,'update',?)", (effect_id, json.dumps({"owner_type": owner_type, "type": effect_type}, ensure_ascii=False)))
         connection.commit()
     except Exception:
@@ -254,6 +265,7 @@ def delete_effect(connection: sqlite3.Connection, effect_id: int, *, version: in
                 f"UPDATE {owner_type}_cards SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?",
                 (owner_id,),
             )
+            refresh_card_serial(connection, owner_type, owner_id)
         connection.execute(
             "INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES ('effect',?,'delete',?)",
             (effect_id, json.dumps({"owner_type": owner_type, "owner_id": owner_id}, ensure_ascii=False)),
@@ -288,6 +300,7 @@ def copy_effect(connection: sqlite3.Connection, effect_id: int, target_type: str
         if target_type == "monster":
             reorder_monster_skills(connection, target_id)
         connection.execute(f"UPDATE {target_type}_cards SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?", (target_id,))
+        refresh_card_serial(connection, target_type, target_id)
         connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES ('effect',?,'copy',?)", (new_id, json.dumps({"source_effect_id": effect_id, "target_type": target_type, "target_id": target_id})))
         connection.commit()
     except Exception:

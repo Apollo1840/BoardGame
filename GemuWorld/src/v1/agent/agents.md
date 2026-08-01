@@ -615,7 +615,7 @@ IF(
 ```
 
 #### 如何估计卡效强度（总价）
-比较长，参考`card_effect_design_value_estimate.md`.
+参考`skills/card_effect_value_estimate.md`.
 
 抄录在文末尾。
 

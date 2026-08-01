@@ -117,6 +117,16 @@
     .stats .atk::before{ content:'▲'; margin-right:2px; }
     .stats .def::before{ content:'◇'; margin-right:2px; }
 
+    .card-serial{
+      position:absolute; right:4px; bottom:1px; z-index:5;
+      writing-mode:horizontal-tb; text-orientation:mixed;
+      font:700 5px/4px monospace; letter-spacing:0;
+      white-space:nowrap; pointer-events:none; user-select:all;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    .card.monster .card-serial{ color:#d9d9d9; }
+    .card.prophecy .card-serial{ color:#fff; }
+
     .responsive-effect .box-title{ color:red; }
     .reaction-attr .box-title{ color:red; }
     .normal-attr .box-title{ color:blue; }
@@ -144,6 +154,8 @@
     #sidebar-panel input[type="number"]{ width:100%; margin-bottom:4px; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; outline:none; font-size:15px; box-sizing:border-box; }
     #sidebar-panel select{ width:100%; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; font-size:15px; }
     #sidebar-panel .btn{ width:100%; border-radius:6px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; margin:0; box-sizing:border-box; padding:8px 0; background:#3b82f6; color:#fff; border:none; }
+    #sidebar-panel #btn-print{ background:#7c3aed; }
+    #sidebar-panel #btn-print:hover{ background:#6d28d9; }
     #sidebar-panel .section{ display:flex; flex-direction:column; gap:8px; margin-bottom:8px; }
     #sidebar-panel .divider{ border-bottom:1px solid #444; margin:10px 0; }
     #sidebar-panel .section-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
@@ -390,8 +402,8 @@
     <form id="export-form">
       <h2>导出数据版本</h2>
       <div class="export-types">
-        <label><input type="radio" name="format" value="csv" checked> CSV</label>
-        <label><input type="radio" name="format" value="database"> 数据库</label>
+        <label><input type="radio" name="format" value="csv"> CSV</label>
+        <label><input type="radio" name="format" value="database" checked> 数据库</label>
       </div>
       <label id="export-version-field">数据版号
         <input id="export-version" name="version" type="text" required pattern="v[0-9]+(?:\.[0-9]+)*" placeholder="例如 v3 或 v3.1">
@@ -446,7 +458,8 @@
       const card=document.createElement('div'); card.className='card prophecy'; card.dataset.cardId=obj.card_id||''; card.dataset.cardType='prophecy';
       if(obj.image){ card.style.setProperty('--prophecy-bg',`url('${obj.image}')`);} else { card.style.removeProperty('--prophecy-bg');}
       card.innerHTML=`<div class="card-title"><span class="name">${obj.card_title||''}</span></div>
-                      <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
+                      <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>
+                      ${obj.serial_number?`<div class="card-serial">${escapeHtml(obj.serial_number)}</div>`:''}`;
       const area=document.createElement('div'); area.className='card-content';
       const l=(langOverride||lang);
       const labelEffect=l==='en'?'Effect':'效果';
@@ -473,7 +486,8 @@
       const labelDef=l==='en'?'DEF':'防御';
       const card=document.createElement('div'); card.className='card monster'; card.dataset.cardId=obj.card_id||''; card.dataset.cardType='monster';
       card.innerHTML=`<div class="card-title"><span class="level">${lvlIcons}</span><span class="name">${obj.card_title||''}</span><span class="type">${obj.monster_type||''}</span></div>
-                      <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>`;
+                      <div class="card-image-container"><img src="${obj.image||''}" alt=""></div>
+                      ${obj.serial_number?`<div class="card-serial">${escapeHtml(obj.serial_number)}</div>`:''}`;
       const area=document.createElement('div'); area.className='card-content';
       const nl2br=s=>String(escapeHtml(s)).replace(/\n/g,'<br>');
       if(obj.description){ area.innerHTML+=`<div class="content-box attribute-box description"><div class="box-content">${nl2br(obj.description)}</div></div>`; }
@@ -496,8 +510,8 @@
     }
 
     // --- 数据与渲染 ---
-    const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','updated_at'];
-    const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','updated_at'];
+    const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','serial_number','updated_at'];
+    const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','serial_number','updated_at'];
     let allProphecyRows=[], allMonsterRows=[];
     let displayCount=18;
     let selectedClans=new Set(); // 存储选中的卡组
@@ -515,9 +529,9 @@
         if(effects.monster_attribute) attributes.normal_attribute=effects.monster_attribute.text;
         if(effects.monster_reactive_attribute) attributes.responsive_attribute=effects.monster_reactive_attribute.text;
         const skills=card.effects.filter(effect=>effect.type==='monster_skill').sort((a,b)=>a.position-b.position).map(effect=>({name:effect.name,energy_cost:effect.energy_cost||0,effect:effect.text}));
-        return [card.card_id,card.title,card.level,card.monster_type,card.description,card.attack,card.defence,card.magic,JSON.stringify(attributes),JSON.stringify(skills),card.image,card.updated_at];
+        return [card.card_id,card.title,card.level,card.monster_type,card.description,card.attack,card.defence,card.magic,JSON.stringify(attributes),JSON.stringify(skills),card.image,card.serial_number,card.updated_at];
       }
-      return [card.card_id,card.title,card.introduction,effects.prophecy_effect?.text||'',effects.prophecy_reactive_effect?.text||'',card.image,card.updated_at];
+      return [card.card_id,card.title,card.introduction,effects.prophecy_effect?.text||'',effects.prophecy_reactive_effect?.text||'',card.image,card.serial_number,card.updated_at];
     }
 
     async function loadDecksFromApi(){

@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from .image_paths import card_image_path
+from .serials import card_face_signature, refresh_card_serial
 
 
 class CardWriteError(ValueError):
@@ -307,6 +308,7 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
     try:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         old_title = None
+        before_face = None
         if owner_id is not None:
             current = connection.execute(f"SELECT c.version,c.card_id,c.design_notes,t.title FROM {card_table} c JOIN {translation_table} t ON t.{owner_column}=c.id AND t.language='zh' WHERE c.id=?", (owner_id,)).fetchone()
             if not current:
@@ -315,6 +317,7 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
             if expected_version != current["version"]:
                 raise VersionConflict(f"card changed since it was opened (expected version {expected_version}, current {current['version']})")
             old_title = current["title"]
+            before_face = card_face_signature(connection, card_type, owner_id)
         _validate_title(connection, card_type, owner_id, title, old_title)
         if owner_id is None:
             card_id = str(base.get("card_id", "")).strip() or _generated_id(card_type)
@@ -336,6 +339,9 @@ def save_card(connection: sqlite3.Connection, card_type: str, payload: dict[str,
         _sync_translations(connection, card_type, owner_id, translations, timestamp, monster_type_zh)
         detached_effects = _sync_effects(connection, card_type, owner_id, payload.get("effects", []))
         _sync_decks(connection, card_type, owner_id, payload.get("deck_ids", payload.get("deck_codes", [])))
+        after_face = card_face_signature(connection, card_type, owner_id)
+        if before_face != after_face:
+            refresh_card_serial(connection, card_type, owner_id)
         connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES (?,?,?,?)", (f"{card_type}_card", owner_id, action, json.dumps({"title": title}, ensure_ascii=False)))
         connection.commit()
     except Exception:

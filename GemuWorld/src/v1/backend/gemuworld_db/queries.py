@@ -93,7 +93,7 @@ def list_cards(
         )
         for row in rows:
             image_path = normalize_image_path(row["image_path"])
-            cards.append({"type": "monster", "id": row["id"], "card_id": row["card_id"], "title": row["title"], "level": row["level"], "monster_type": row["translated_monster_type"], "description": row["description"], "attack": row["attack"], "defence": row["defence"], "magic": row["magic"], "image_path": image_path, "image": image_url(image_path), "updated_at": row["updated_at"], "effects": effects.get(("monster", row["id"]), []), "decks": decks.get(("monster", row["id"]), [])})
+            cards.append({"type": "monster", "id": row["id"], "card_id": row["card_id"], "serial_number": row["serial_number"], "serial_updated_at": row["serial_updated_at"], "title": row["title"], "level": row["level"], "monster_type": row["translated_monster_type"], "description": row["description"], "attack": row["attack"], "defence": row["defence"], "magic": row["magic"], "image_path": image_path, "image": image_url(image_path), "updated_at": row["updated_at"], "effects": effects.get(("monster", row["id"]), []), "decks": decks.get(("monster", row["id"]), [])})
     if card_type in ("all", "prophecy"):
         rows = connection.execute(
             "SELECT c.*,t.title,t.introduction FROM prophecy_cards c "
@@ -103,7 +103,7 @@ def list_cards(
         )
         for row in rows:
             image_path = normalize_image_path(row["image_path"])
-            cards.append({"type": "prophecy", "id": row["id"], "card_id": row["card_id"], "title": row["title"], "introduction": row["introduction"], "image_path": image_path, "image": image_url(image_path), "updated_at": row["updated_at"], "effects": effects.get(("prophecy", row["id"]), []), "decks": decks.get(("prophecy", row["id"]), [])})
+            cards.append({"type": "prophecy", "id": row["id"], "card_id": row["card_id"], "serial_number": row["serial_number"], "serial_updated_at": row["serial_updated_at"], "title": row["title"], "introduction": row["introduction"], "image_path": image_path, "image": image_url(image_path), "updated_at": row["updated_at"], "effects": effects.get(("prophecy", row["id"]), []), "decks": decks.get(("prophecy", row["id"]), [])})
     selected = set(deck_codes)
     if selected:
         def included(card: dict[str, object]) -> bool:

@@ -59,12 +59,14 @@ class MigrationTests(unittest.TestCase):
     def test_migrations_are_repeatable_and_effect_owner_is_immutable(self):
         with tempfile.TemporaryDirectory() as directory:
             connection = connect(Path(directory) / "test.sqlite3")
-            self.assertEqual(migrate(connection), ["001_initial.sql", "002_deck_versions.sql", "003_effect_guide_versions.sql", "004_effect_role_valuation.sql", "005_app_settings.sql", "006_effect_profession.sql", "007_effect_professions.sql", "008_effect_marker_notes.sql", "009_unassigned_effect_library.sql", "010_canonical_image_paths.sql", "011_lock_card_image_paths.sql", "012_effect_field_capabilities.sql", "013_allow_effect_detach.sql", "014_deck_stable_ids.sql", "015_deck_profession_matrices.sql", "016_expand_deck_types.sql", "017_deck_chinese_names.sql", "018_card_design_notes.sql", "019_effect_tactical_tags.sql"])
+            self.assertEqual(migrate(connection), ["001_initial.sql", "002_deck_versions.sql", "003_effect_guide_versions.sql", "004_effect_role_valuation.sql", "005_app_settings.sql", "006_effect_profession.sql", "007_effect_professions.sql", "008_effect_marker_notes.sql", "009_unassigned_effect_library.sql", "010_canonical_image_paths.sql", "011_lock_card_image_paths.sql", "012_effect_field_capabilities.sql", "013_allow_effect_detach.sql", "014_deck_stable_ids.sql", "015_deck_profession_matrices.sql", "016_expand_deck_types.sql", "017_deck_chinese_names.sql", "018_card_design_notes.sql", "019_effect_tactical_tags.sql", "020_card_serial_numbers.sql"])
             self.assertEqual(migrate(connection), [])
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(decks)")}
             self.assertIn("deck_id", columns)
             self.assertIn("design_notes", {row["name"] for row in connection.execute("PRAGMA table_info(monster_cards)")})
             self.assertIn("design_notes", {row["name"] for row in connection.execute("PRAGMA table_info(prophecy_cards)")})
+            self.assertIn("serial_number", {row["name"] for row in connection.execute("PRAGMA table_info(monster_cards)")})
+            self.assertIn("serial_updated_at", {row["name"] for row in connection.execute("PRAGMA table_info(prophecy_cards)")})
             self.assertIn("effect_tactical_tags", {row["name"] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")})
             monster = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic,image_path) VALUES ('m1',0,1,1,1,'pics/m1.png')").lastrowid
             other = connection.execute("INSERT INTO monster_cards(card_id,level,attack,defence,magic,image_path) VALUES ('m2',0,1,1,1,'pics/m2.png')").lastrowid
@@ -125,9 +127,20 @@ class LegacyRoundTripTests(unittest.TestCase):
                 migrate(connection)
                 report1 = import_legacy(connection, V1_ROOT, REPOSITORY_ROOT / "GemuWorld" / "manual")
                 counts1 = {table: connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in ("monster_cards", "prophecy_cards", "effects", "decks", "deck_cards")}
+                serials1 = {
+                    (card_type, row["card_id"]): row["serial_number"]
+                    for card_type in ("monster", "prophecy")
+                    for row in connection.execute(f"SELECT card_id,serial_number FROM {card_type}_cards")
+                }
                 report2 = import_legacy(connection, V1_ROOT, REPOSITORY_ROOT / "GemuWorld" / "manual")
                 counts2 = {table: connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in counts1}
+                serials2 = {
+                    (card_type, row["card_id"]): row["serial_number"]
+                    for card_type in ("monster", "prophecy")
+                    for row in connection.execute(f"SELECT card_id,serial_number FROM {card_type}_cards")
+                }
                 self.assertEqual(counts1, counts2)
+                self.assertEqual(serials1, serials2)
                 self.assertEqual(report1.counts, report2.counts)
                 self.assertFalse(report1.errors, json.dumps(report1.errors, ensure_ascii=False, indent=2))
                 monster_guide = connection.execute("SELECT title,content,source_path FROM design_guides WHERE code='monster_design_table'").fetchone()
@@ -329,6 +342,8 @@ class ReadOnlyApiTests(unittest.TestCase):
                 html = response.read().decode("utf-8")
                 self.assertIn("--cols: 3", html)
                 self.assertIn("@media print", html)
+                self.assertIn("#sidebar-panel #btn-print{ background:#7c3aed; }", html)
+                self.assertIn("#sidebar-panel #btn-print:hover{ background:#6d28d9; }", html)
                 self.assertIn("grid-template-columns: repeat(var(--cols), var(--card-w))", html)
                 self.assertIn("height:100vh; height:100dvh", html)
                 self.assertIn("height:100vh; height:100dvh; width:280px", html)
@@ -341,10 +356,19 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertNotIn("${obj.attack||''}", html)
                 self.assertNotIn("${obj.defence||''}", html)
                 self.assertIn('<option value="updated_at">', html)
-                self.assertIn("const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','updated_at']", html)
+                self.assertIn("const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','serial_number','updated_at']", html)
+                self.assertIn("const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','serial_number','updated_at']", html)
+                self.assertIn('class="card-serial"', html)
+                self.assertIn("position:absolute; right:4px; bottom:1px", html)
+                self.assertIn("writing-mode:horizontal-tb", html)
+                self.assertIn("font:700 5px/4px monospace", html)
+                self.assertIn(".card.monster .card-serial{ color:#d9d9d9; }", html)
+                self.assertIn(".card.prophecy .card-serial{ color:#fff; }", html)
                 self.assertIn("if(field==='updated_at')", html)
                 self.assertIn("return bDate-aDate", html)
                 self.assertIn("sortField==='updated_at'", html)
+                self.assertIn('<input type="radio" name="format" value="database" checked> 数据库', html)
+                self.assertIn('<input type="radio" name="format" value="csv"> CSV', html)
                 self.assertNotIn('value="update_datetime"', html)
                 self.assertNotIn("loadCSVWithHeader", html)
                 self.assertNotIn("prophecy_cards_en.csv?t=", html)
@@ -478,7 +502,7 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn('class="profession-tags preset-professions"', editor_html)
                 self.assertIn('class="profession-tags selected-tactical-tags"', editor_html)
                 self.assertIn('class="profession-tags preset-tactical-tags"', editor_html)
-                self.assertIn("TACTICAL_TAG_PRESETS=['输入','输出','追击','反制']", editor_html)
+                self.assertIn("TACTICAL_TAG_PRESETS=['输出','输入','转换','追击','反制']", editor_html)
                 self.assertIn("function bindEffectRow(row)", editor_html)
                 self.assertIn('id="undo-card"', editor_html)
                 self.assertIn("function requestCardSave", editor_html)
@@ -576,6 +600,14 @@ class ReadOnlyApiTests(unittest.TestCase):
                 decks_html = response.read().decode("utf-8")
                 self.assertIn("卡组管理", decks_html)
                 self.assertIn("/api/decks/", decks_html)
+                self.assertIn("function monsterLevelCounts()", decks_html)
+                self.assertIn("renderMonsterLevelStats()", decks_html)
+                self.assertIn('class="member-level-stars"', decks_html)
+                self.assertIn("'★'.repeat(Math.max(0,Math.floor(Number(level)||0)))", decks_html)
+                self.assertIn('id="monster-level-chart"', decks_html)
+                self.assertIn("total=counts.reduce((sum,[,count])=>sum+count,0)", decks_html)
+                self.assertIn('class="monster-level-total">/${total}张', decks_html)
+                self.assertIn('.monster-level-total{', decks_html)
                 self.assertIn("卡组职业分析", decks_html)
                 self.assertIn("卡组战术分析", decks_html)
                 self.assertIn('id="deck-type-filter"', decks_html)
@@ -658,7 +690,7 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("Object.prototype.hasOwnProperty.call(effect,'tactical_tags')", decks_html)
                 self.assertIn("同一张卡的多个卡效带有相同标签时只计一次", decks_html)
                 self.assertIn("Math.max(1,Math.floor(Number(member.quantity)||1))", decks_html)
-                self.assertIn("TACTICAL_TAG_ORDER=['输入','输出','追击','反制']", decks_html)
+                self.assertIn("TACTICAL_TAG_ORDER=['输出','输入','转换','追击','反制']", decks_html)
                 self.assertIn("leftIndex=TACTICAL_TAG_ORDER.indexOf(left[0])", decks_html)
                 self.assertIn("if(leftPreset&&rightPreset)return leftIndex-rightIndex", decks_html)
                 self.assertIn("if(leftPreset)return-1", decks_html)
@@ -674,7 +706,7 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn('class="profession-legend-swatch profession-legend-total"', decks_html)
                 self.assertIn('class="profession-legend-swatch profession-legend-primary"', decks_html)
                 self.assertIn("“总计”统计主职业或副职业包含该职业的卡牌数量", decks_html)
-                self.assertIn("syncMemberInputs();renderProfessionMatrix();renderTacticalTagChart()", decks_html)
+                self.assertIn("syncMemberInputs();renderMonsterLevelStats();renderProfessionMatrix();renderTacticalTagChart()", decks_html)
                 self.assertIn("if(!rawPrimary.length)primaryRoles=rawSecondary", decks_html)
                 self.assertIn("else if(!rawSecondary.length)secondaryRoles=rawPrimary", decks_html)
                 self.assertIn("new Set([...primaryRoles,...secondaryRoles])", decks_html)
@@ -723,6 +755,10 @@ class ReadOnlyApiTests(unittest.TestCase):
             with urllib.request.urlopen(base + "/effects") as response:
                 effects_html = response.read().decode("utf-8")
                 self.assertIn('id="sort"', effects_html)
+                self.assertIn("valuationFilter.id='valuation-filter'", effects_html)
+                self.assertIn('<option value="valued">', effects_html)
+                self.assertIn("q.set('valuation_status',$('valuation-filter').value)", effects_html)
+                self.assertIn("valuationFilter.onchange=load", effects_html)
                 self.assertIn('<option value="text:asc">中文效果字典序</option>', effects_html)
                 self.assertIn('<option value="text_length:asc" selected>中文效果字数从少到多</option>', effects_html)
                 self.assertIn('<option value="text_length:desc">中文效果字数从多到少</option>', effects_html)
@@ -770,7 +806,7 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn('<label class="wide">职业标签', effects_html)
                 self.assertIn('<label class="wide">战术标签', effects_html)
                 self.assertIn('id="editing-tactical-tags"', effects_html)
-                self.assertIn("TACTICAL_TAG_PRESETS=['输入','输出','追击','反制']", effects_html)
+                self.assertIn("TACTICAL_TAG_PRESETS=['输出','输入','转换','追击','反制']", effects_html)
                 self.assertIn('name="marker" maxlength="10"', effects_html)
                 self.assertIn('name="notes"', effects_html)
                 self.assertIn("function fieldLabel(label,onCard)", effects_html)
@@ -1087,6 +1123,44 @@ class CardCrudTests(unittest.TestCase):
         self.assertEqual(updated["effects"][0]["translations"]["zh"]["text"], "抽两张牌。")
         with self.assertRaises(VersionConflict):
             save_card(self.connection, "monster", payload, owner_id)
+
+    def test_card_serial_tracks_rendered_content_but_not_valuation_or_design_notes(self):
+        created = save_card(self.connection, "monster", self.payload("Serial Test Monster"))
+        owner_id = created["base"]["id"]
+        original_serial = created["base"]["serial_number"]
+        self.assertRegex(original_serial, r"^V1-CCRUDTESTMONSTER-U\d{8}T\d{9}Z$")
+        self.assertRegex(created["base"]["serial_updated_at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$")
+
+        effect = get_effect(self.connection, created["effects"][0]["id"])
+        valuation_only = {**effect, "valuation": 9.5}
+        update_effect(self.connection, effect["id"], valuation_only)
+        after_valuation = get_card(self.connection, "monster", owner_id)
+        self.assertEqual(after_valuation["base"]["serial_number"], original_serial)
+
+        changed_effect = get_effect(self.connection, effect["id"])
+        changed_effect["translations"]["zh"]["text"] += " Visible change."
+        update_effect(self.connection, effect["id"], changed_effect)
+        after_visible_change = get_card(self.connection, "monster", owner_id)
+        changed_serial = after_visible_change["base"]["serial_number"]
+        self.assertNotEqual(changed_serial, original_serial)
+
+        notes_only = {
+            "version": after_visible_change["base"]["version"],
+            "base": {**after_visible_change["base"], "design_notes": "new internal notes"},
+            "translations": after_visible_change["translations"],
+            "effects": after_visible_change["effects"],
+            "deck_codes": [deck["code"] for deck in after_visible_change["decks"]],
+        }
+        after_notes = save_card(self.connection, "monster", notes_only, owner_id)
+        self.assertEqual(after_notes["base"]["serial_number"], changed_serial)
+
+        self.assertEqual(set_data_version(self.connection, "v3.1"), "v3.1")
+        after_version = get_card(self.connection, "monster", owner_id)
+        self.assertRegex(after_version["base"]["serial_number"], r"^V3P1-CCRUDTESTMONSTER-U\d{8}T\d{9}Z$")
+        self.assertNotEqual(after_version["base"]["serial_number"], changed_serial)
+        version_serial = after_version["base"]["serial_number"]
+        set_data_version(self.connection, "v3.1")
+        self.assertEqual(get_card(self.connection, "monster", owner_id)["base"]["serial_number"], version_serial)
 
     def test_monster_type_translation_and_effect_limits(self):
         payload = self.payload("属性翻译与容量测试")
@@ -1620,6 +1694,24 @@ class EffectGuideTests(unittest.TestCase):
         copied = copy_effect(self.connection, source_id, "monster", target_id)
         filtered = list_effects(self.connection, keyword=str(copied["id"]))
         self.assertIn(source_id, filtered[0]["duplicate_ids"])
+
+    def test_effect_valuation_status_filter_includes_zero(self):
+        effect_ids = [row[0] for row in self.connection.execute("SELECT id FROM effects ORDER BY id LIMIT 2")]
+        self.assertEqual(len(effect_ids), 2)
+        self.connection.execute("UPDATE effects SET valuation=0 WHERE id=?", (effect_ids[0],))
+        self.connection.execute("UPDATE effects SET valuation=NULL WHERE id=?", (effect_ids[1],))
+        self.connection.commit()
+
+        valued = list_effects(self.connection, valuation_status="valued")
+        missing = list_effects(self.connection, valuation_status="missing")
+        self.assertIn(effect_ids[0], [effect["id"] for effect in valued])
+        self.assertNotIn(effect_ids[1], [effect["id"] for effect in valued])
+        self.assertIn(effect_ids[1], [effect["id"] for effect in missing])
+        self.assertNotIn(effect_ids[0], [effect["id"] for effect in missing])
+        self.assertTrue(all(effect["valuation"] is not None for effect in valued))
+        self.assertTrue(all(effect["valuation"] is None for effect in missing))
+        with self.assertRaises(EffectWriteError):
+            list_effects(self.connection, valuation_status="unknown")
 
     def test_guide_and_benchmark_versioned_updates(self):
         guide = list_guides(self.connection)[0]

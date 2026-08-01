@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .image_paths import CANONICAL_PREFIX, card_image_path, normalize_image_path
+from .serials import refresh_card_serial
 
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
@@ -123,6 +124,7 @@ def apply_image_renames(connection: sqlite3.Connection, pics_root: Path, manifes
         for item in plan["items"]:
             table = f"{item['card_type']}_cards"
             connection.execute(f"UPDATE {table} SET image_path=?,version=version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?", (item["new_image_path"], item["database_id"]))
+            refresh_card_serial(connection, str(item["card_type"]), int(item["database_id"]))
             connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES (?,?,?,?)", (f"{item['card_type']}_card", item["database_id"], "rename_image_to_card_id", json.dumps({"old_image_path": item["old_image_path"], "new_image_path": item["new_image_path"]}, ensure_ascii=False)))
         manifest = _write_manifest(plan, manifest_dir)
         connection.commit()

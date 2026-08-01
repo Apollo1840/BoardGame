@@ -31,6 +31,8 @@ class ViewerServer(ThreadingHTTPServer):
         connection = connect(database)
         try:
             migrate(connection)
+            if connection.execute("SELECT 1 FROM app_settings WHERE key='data_version'").fetchone() is None:
+                set_data_version(connection, current_data_version(connection, self.data_root))
         finally:
             connection.close()
         super().__init__(address, ViewerHandler)
@@ -131,7 +133,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
             if path == "/api/effects":
                 connection = connect(self.server.database)
                 try:
-                    effects = list_effects(connection, effect_type=query.get("effect_type", [""])[0], keyword=query.get("keyword", [""])[0], card_type=query.get("card_type", [""])[0], profession=query.get("profession", []), sort_by=query.get("sort_by", ["id"])[0], direction=query.get("direction", ["asc"])[0], unassigned=query.get("unassigned", ["false"])[0].lower() == "true", available_for=query.get("available_for", [""])[0])
+                    effects = list_effects(connection, effect_type=query.get("effect_type", [""])[0], keyword=query.get("keyword", [""])[0], card_type=query.get("card_type", [""])[0], profession=query.get("profession", []), valuation_status=query.get("valuation_status", [""])[0], sort_by=query.get("sort_by", ["id"])[0], direction=query.get("direction", ["asc"])[0], unassigned=query.get("unassigned", ["false"])[0].lower() == "true", available_for=query.get("available_for", [""])[0])
                 finally:
                     connection.close()
                 self._json({"items": effects, "count": len(effects)})

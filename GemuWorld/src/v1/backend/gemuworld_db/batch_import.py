@@ -9,6 +9,7 @@ from datetime import datetime
 from .cards import CardWriteError, validate_monster_effect_counts
 from .legacy import MONSTER_HEADER, PROPHECY_HEADER
 from .image_paths import card_image_path
+from .serials import card_face_signature, refresh_card_serial
 from .pipe_csv import parse_records
 
 
@@ -145,6 +146,7 @@ def import_cards(connection: sqlite3.Connection, card_type: str, csv_text: str, 
             context = f"{card_type} {title!r}"
             incoming_id = row["card_id"].strip()
             owner_id = _find_owner(connection, card_type, title, incoming_id)
+            before_face = card_face_signature(connection, card_type, owner_id) if owner_id is not None else None
             timestamp = row["last_update_datetime"].strip() or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             if owner_id is None:
                 card_id = incoming_id or _generated_card_id(card_type)
@@ -172,6 +174,8 @@ def import_cards(connection: sqlite3.Connection, card_type: str, csv_text: str, 
                 action = "update"
             specs = _monster_specs(row, context) if card_type == "monster" else _prophecy_specs(row)
             _sync_effects(connection, card_type, owner_id, specs)
+            if before_face != card_face_signature(connection, card_type, owner_id):
+                refresh_card_serial(connection, card_type, owner_id)
             connection.execute("INSERT INTO change_log(entity_type,entity_id,action,details_json) VALUES (?,?,?,?)", (f"{card_type}_card", owner_id, f"batch_import_{action}", json.dumps({"title": title}, ensure_ascii=False)))
         if dry_run:
             connection.rollback()

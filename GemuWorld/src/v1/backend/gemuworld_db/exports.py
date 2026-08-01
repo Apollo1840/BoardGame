@@ -12,6 +12,7 @@ from .legacy import MONSTER_HEADER, PROPHECY_HEADER
 from .image_paths import legacy_image_path
 from .pipe_csv import render_records
 from .queries import list_cards
+from .serials import refresh_all_card_serials
 
 
 VERSION_PATTERN = re.compile(r"^v(\d+)(?:\.(\d+))*$")
@@ -45,8 +46,16 @@ def set_data_version(connection: sqlite3.Connection, version: str) -> str:
     version = version.strip()
     if not VERSION_PATTERN.fullmatch(version):
         raise ValueError("version must look like v3 or v3.1")
-    connection.execute("INSERT INTO app_settings(key,value) VALUES ('data_version',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP", (version,))
-    connection.commit()
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        current = connection.execute("SELECT value FROM app_settings WHERE key='data_version'").fetchone()
+        connection.execute("INSERT INTO app_settings(key,value) VALUES ('data_version',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=CURRENT_TIMESTAMP", (version,))
+        if current is None or str(current[0]) != version:
+            refresh_all_card_serials(connection, data_version=version, active_only=True)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
     return version
 
 
@@ -73,8 +82,10 @@ def export_version_snapshot(database: Path, data_root: Path, version: str, expor
             filename = "gemuworld.sqlite3"
             source = sqlite3.connect(database)
             destination = sqlite3.connect(staging / filename)
+            destination.row_factory = sqlite3.Row
             try:
                 source.backup(destination)
+                set_data_version(destination, version)
             finally:
                 destination.close()
                 source.close()
