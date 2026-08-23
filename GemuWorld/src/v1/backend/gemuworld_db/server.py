@@ -73,11 +73,17 @@ class ViewerHandler(BaseHTTPRequestHandler):
 
     def _query_cards(self, query: dict[str, list[str]]) -> tuple[list[dict[str, object]], str]:
         language = query.get("language", ["zh"])[0]
+        deck_ids = [value for item in query.get("deck", []) for value in item.split(",") if value]
+        virtual_unassigned = "virtual-unassigned" in deck_ids
         connection = connect(self.server.database)
         try:
-            cards = list_cards(connection, language=language, card_type=query.get("card_type", ["all"])[0], deck_codes=[value for item in query.get("deck", []) for value in item.split(",") if value], deck_match=query.get("deck_match", ["any"])[0], keyword=query.get("keyword", [""])[0], sort_by=query.get("sort_by", ["updated_at"])[0], direction=query.get("direction", ["desc"])[0], limit=int(query["limit"][0]) if "limit" in query else None)
+            cards = list_cards(connection, language=language, card_type=query.get("card_type", ["all"])[0], deck_codes=[] if virtual_unassigned else deck_ids, deck_match=query.get("deck_match", ["any"])[0], keyword=query.get("keyword", [""])[0], sort_by=query.get("sort_by", ["updated_at"])[0], direction=query.get("direction", ["desc"])[0], limit=None if virtual_unassigned else (int(query["limit"][0]) if "limit" in query else None))
         finally:
             connection.close()
+        if virtual_unassigned:
+            cards = [card for card in cards if not any(deck["type"] != "role" for deck in card.get("decks", []))]
+            if "limit" in query:
+                cards = cards[:int(query["limit"][0])]
         return cards, language
 
     def do_GET(self) -> None:  # noqa: N802

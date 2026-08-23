@@ -338,6 +338,10 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("valuation", listed_effect)
                 listed_membership = next(deck for card in monster_payload["items"] for deck in card["decks"])
                 self.assertIn("quantity", listed_membership)
+            with urllib.request.urlopen(base + "/api/cards?language=zh&card_type=all&deck=virtual-unassigned") as response:
+                unassigned_payload = json.load(response)
+                self.assertGreater(unassigned_payload["count"], 0)
+                self.assertTrue(all(not any(deck["type"] != "role" for deck in card["decks"]) for card in unassigned_payload["items"]))
             with urllib.request.urlopen(base + "/viewer") as response:
                 html = response.read().decode("utf-8")
                 self.assertIn("--cols: 3", html)
@@ -347,7 +351,18 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("grid-template-columns: repeat(var(--cols), var(--card-w))", html)
                 self.assertIn("height:100vh; height:100dvh", html)
                 self.assertIn("height:100vh; height:100dvh; width:280px", html)
-                self.assertIn('id="main-content" style="position:relative; margin-left:280px;"', html)
+                self.assertIn('id="main-content"', html)
+                self.assertIn('id="sidebar-collapse" class="sidebar-toggle"', html)
+                self.assertIn('id="sidebar-expand" class="sidebar-toggle"', html)
+                self.assertIn('id="sidebar-refresh" class="sidebar-toggle"', html)
+                self.assertIn("body.sidebar-collapsed #sidebar-panel{ transform:translateX(-100%); }", html)
+                self.assertIn("body.sidebar-collapsed #sidebar-expand,body.sidebar-collapsed #sidebar-refresh", html)
+                self.assertIn("body.sidebar-collapsed #main-content{ margin-left:0; }", html)
+                self.assertIn("function setSidebarCollapsed(collapsed)", html)
+                self.assertIn("async function refreshFromCollapsedSidebar()", html)
+                self.assertIn("document.getElementById('sidebar-refresh').onclick=refreshFromCollapsedSidebar", html)
+                self.assertIn("localStorage.setItem('viewer-sidebar-collapsed'", html)
+                self.assertIn("#sidebar-panel,#sidebar-expand,#sidebar-refresh{ display:none!important; }", html)
                 self.assertIn("box-sizing:border-box; overflow-y:auto; overflow-x:hidden", html)
                 self.assertIn("/api/cards", html)
                 self.assertIn("/api/decks", html)
@@ -359,11 +374,17 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','serial_number','updated_at']", html)
                 self.assertIn("const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','serial_number','updated_at']", html)
                 self.assertIn('class="card-serial"', html)
-                self.assertIn("position:absolute; right:4px; bottom:1px", html)
+                self.assertIn("position:absolute; left:4px; right:4px; bottom:1px", html)
                 self.assertIn("writing-mode:horizontal-tb", html)
                 self.assertIn("font:700 5px/4px monospace", html)
+                self.assertIn("function stretchCardSerial(serial)", html)
+                self.assertIn("(targetWidth-naturalWidth)/(characters-1)", html)
+                self.assertIn("ctr.querySelectorAll('.card-serial').forEach(stretchCardSerial)", html)
                 self.assertIn(".card.monster .card-serial{ color:#d9d9d9; }", html)
                 self.assertIn(".card.prophecy .card-serial{ color:#fff; }", html)
+                self.assertIn("const UNASSIGNED_DECK_ID='virtual-unassigned'", html)
+                self.assertIn("name:'无归属'", html)
+                self.assertIn("some(deck=>deck.type!=='role')", html)
                 self.assertIn("if(field==='updated_at')", html)
                 self.assertIn("return bDate-aDate", html)
                 self.assertIn("sortField==='updated_at'", html)
@@ -386,6 +407,9 @@ class ReadOnlyApiTests(unittest.TestCase):
                 statistics = json.load(response)["statistics"]
                 self.assertGreater(statistics["total"], 0)
                 self.assertEqual(statistics["deck_distribution"]["灵坛村"], statistics["total"])
+            with urllib.request.urlopen(base + "/api/statistics?language=zh&deck=virtual-unassigned") as response:
+                unassigned_statistics = json.load(response)["statistics"]
+                self.assertEqual(unassigned_statistics["total"], unassigned_payload["count"])
             export_request = urllib.request.Request(base + "/api/export", data=json.dumps({"language": "zh", "card_ids": ["20250914-00052-e348d55e", "20250914-00087-832db507"]}).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
             with urllib.request.urlopen(export_request) as response:
                 self.assertEqual(response.headers.get_content_type(), "application/zip")
@@ -414,6 +438,10 @@ class ReadOnlyApiTests(unittest.TestCase):
                 stats_html = response.read().decode("utf-8")
                 self.assertIn("/api/statistics", stats_html)
                 self.assertIn('href="/viewer"', stats_html)
+                self.assertIn('<option value="virtual-unassigned">无归属 (${unassigned.count})</option>', stats_html)
+                self.assertIn("deck=virtual-unassigned", stats_html)
+                self.assertIn("unassigned=Number(s.cards_without_decks)||0", stats_html)
+                self.assertIn("['无归属',unassigned,'未加入任何非职业卡组']", stats_html)
             with urllib.request.urlopen(base + "/import") as response:
                 import_html = response.read().decode("utf-8")
                 self.assertIn("/api/import", import_html)
@@ -528,13 +556,20 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn("<h2>${monster?'属性与技能':'效果编辑'}</h2>", editor_html)
                 self.assertIn('class="grid monster-detail-grid"', editor_html)
                 self.assertIn('<span class="card-stable-id">${esc(b.card_id||\'保存后自动生成 card_id\')}</span>', editor_html)
+                self.assertIn('id="copy-card-id" class="copy-card-id"', editor_html)
+                self.assertIn(".copy-card-id{align-self:center;padding:3px;border:0;border-radius:0;background:#fff", editor_html)
+                self.assertIn("navigator.clipboard?.writeText", editor_html)
+                self.assertIn("async function copyCardId()", editor_html)
+                self.assertIn("button.textContent='✓'", editor_html)
+                self.assertIn("button.textContent='⧉'", editor_html)
+                self.assertNotIn('name="card_id"', editor_html)
                 self.assertIn('等级<input name="level"', editor_html)
                 self.assertIn('等级<input name="level" type="number" min="0" value="${esc(b.level)}"></label><label>中文卡名', editor_html)
                 self.assertIn('中文卡名<input name="zh_title" required value="${esc(zh.title)}"></label><label>英文卡名', editor_html)
                 self.assertIn('英文卡名<input name="en_title" value="${esc(en.title)}"></label><label>中文属性', editor_html)
                 self.assertIn('魔力 <span id="effective-magic-estimate" class="magic-effective-value" title="实效魔力 = 通常属性估值 + 反应属性估值 + 技力估值">(—)</span>', editor_html)
                 self.assertIn("effectiveMagic.textContent=`(${formatEstimate(values.effectiveMagic)})`", editor_html)
-                self.assertIn("card_id:monster?current.base.card_id:form.card_id.value", editor_html)
+                self.assertIn("card_id:current.base.card_id", editor_html)
                 self.assertIn('技力估值<input id="skill-valuation-estimate" class="computed-field" title="技力估值 = max(每个技能的估值 - 该技能的灵力消耗, 0)" readonly>', editor_html)
                 self.assertIn('怪物卡估值<input id="monster-card-valuation" class="computed-field" title="怪物卡估值 = 实效魔力 - 魔力" readonly>', editor_html)
                 self.assertIn("monsterValuation=$('monster-card-valuation')", editor_html)
@@ -642,7 +677,14 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertNotIn('name="code"', decks_html)
                 self.assertIn('src="/effect-editor-shared.js"', decks_html)
                 self.assertIn("STANDARD_PROFESSIONS=effectEditor.fixedProfessions", decks_html)
-                self.assertIn("DECK_TYPE_LABELS={role:", decks_html)
+                self.assertIn("UNASSIGNED_DECK_ID='virtual-unassigned'", decks_html)
+                self.assertIn("DECK_TYPE_LABELS={virtual:'自动计算卡组',role:", decks_html)
+                self.assertIn("function isUnassignedCard(card)", decks_html)
+                self.assertIn("some(deck=>deck.type!=='role')", decks_html)
+                self.assertIn("function unassignedDeck()", decks_html)
+                self.assertIn("function allDecks()", decks_html)
+                self.assertIn("这是实时计算的只读卡组，不能主动添加、移除或调整成员", decks_html)
+                self.assertIn("if(!current.isVirtual)container.querySelectorAll('.member')", decks_html)
                 self.assertIn("attribute:'属性卡组'", decks_html)
                 self.assertIn("race:'种族卡组'", decks_html)
                 self.assertIn("tribe:'部落卡组'", decks_html)
@@ -1101,6 +1143,18 @@ class CardCrudTests(unittest.TestCase):
 
     def payload(self, title="CRUD测试怪物"):
         return {"base": {"card_id": "crud-test-monster", "level": 1, "monster_type": "光", "attack": 7, "defence": 8, "magic": 1.5, "image": "pictures/grid.png", "design_notes": "内部设计笔记"}, "translations": {"zh": {"title": title, "monster_type": "光", "description": "【测试种】"}, "en": {"title": "CRUD Test Monster", "monster_type": "Light", "description": "[Test]"}}, "effects": [{"type": "monster_skill", "position": 0, "energy_cost": 1, "translations": {"zh": {"name": "测试技能", "text": "抽一张牌。"}, "en": {"name": "Test Skill", "text": "Draw a card."}}}], "deck_codes": ["Intro"]}
+
+    def test_new_prophecy_without_card_id_gets_generated_stable_id(self):
+        created = save_card(self.connection, "prophecy", {
+            "base": {"design_notes": ""},
+            "translations": {
+                "zh": {"title": "自动编号预言", "introduction": "测试"},
+                "en": {"title": "Generated Prophecy ID", "introduction": "Test"},
+            },
+            "effects": [],
+            "deck_codes": [],
+        })
+        self.assertRegex(created["base"]["card_id"], r"^\d{8}-web-p[0-9a-f]{8}$")
 
     def test_create_update_effects_decks_and_version_conflict(self):
         created = save_card(self.connection, "monster", self.payload())

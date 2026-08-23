@@ -118,10 +118,10 @@
     .stats .def::before{ content:'◇'; margin-right:2px; }
 
     .card-serial{
-      position:absolute; right:4px; bottom:1px; z-index:5;
+      position:absolute; left:4px; right:4px; bottom:1px; z-index:5;
       writing-mode:horizontal-tb; text-orientation:mixed;
       font:700 5px/4px monospace; letter-spacing:0;
-      white-space:nowrap; pointer-events:none; user-select:all;
+      white-space:nowrap; text-align:left; pointer-events:none; user-select:all;
       -webkit-print-color-adjust:exact; print-color-adjust:exact;
     }
     .card.monster .card-serial{ color:#d9d9d9; }
@@ -150,7 +150,17 @@
       padding:28px 18px 18px; display:flex; flex-direction:column; gap:18px;
       background:#23272f; color:#fff; z-index:100; position:fixed; left:0; top:0; height:100vh; height:100dvh; width:280px;
       box-sizing:border-box; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable;
+      transform:translateX(0); transition:transform .28s cubic-bezier(.22,1,.36,1);
     }
+    .sidebar-toggle{ display:flex; align-items:center; justify-content:center; width:30px; height:30px; flex:none; padding:0; border:1px solid #4b5563; border-radius:7px; background:#23272f; color:#fff; font-size:24px; line-height:1; cursor:pointer; }
+    .sidebar-toggle:hover{ background:#303640; }
+    #sidebar-expand,#sidebar-refresh{ position:fixed; left:0; z-index:101; width:34px; height:42px; border-radius:0 9px 9px 0; box-shadow:2px 2px 10px rgba(0,0,0,.18); opacity:0; pointer-events:none; transform:translateX(-110%); transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .18s ease; }
+    #sidebar-expand{ top:20px; }
+    #sidebar-refresh{ top:68px; font-size:20px; }
+    #sidebar-refresh.refreshing span{ display:inline-block; animation:sidebar-refresh-spin .7s linear infinite; }
+    @keyframes sidebar-refresh-spin{ to{ transform:rotate(360deg); } }
+    body.sidebar-collapsed #sidebar-panel{ transform:translateX(-100%); }
+    body.sidebar-collapsed #sidebar-expand,body.sidebar-collapsed #sidebar-refresh{ opacity:1; pointer-events:auto; transform:translateX(0); }
     #sidebar-panel input[type="number"]{ width:100%; margin-bottom:4px; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; outline:none; font-size:15px; box-sizing:border-box; }
     #sidebar-panel select{ width:100%; border-radius:4px; border:1px solid #444; padding:4px 8px; background:#181b20; color:#fff; font-size:15px; }
     #sidebar-panel .btn{ width:100%; border-radius:6px; font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; margin:0; box-sizing:border-box; padding:8px 0; background:#3b82f6; color:#fff; border:none; }
@@ -236,6 +246,7 @@
     /* 警告消息框 */
     #alert-banner {
       animation: slideDown 0.3s ease;
+      left:280px!important; transition:left .28s cubic-bezier(.22,1,.36,1);
     }
     #alert-banner.visible {
       margin-bottom: 12px;
@@ -255,7 +266,9 @@
     }
 
     /* 主内容区 */
-    #main-content{ margin-left:240px; position:relative; }
+    #main-content{ margin-left:280px; position:relative; transition:margin-left .28s cubic-bezier(.22,1,.36,1); }
+    body.sidebar-collapsed #main-content{ margin-left:0; }
+    body.sidebar-collapsed #alert-banner{ left:0!important; }
 
     /* 打印时固定列宽网格（与 20mm 背景无耦合） */
     .fixed-print-width {
@@ -292,7 +305,7 @@
         width: 100%;
         overflow: visible;
       }
-      #sidebar-panel{ display:none!important; }
+      #sidebar-panel,#sidebar-expand,#sidebar-refresh{ display:none!important; }
       #main-content{ margin-left:0!important; }
       body {
         background: #ffffff !important; /* Ensure a pure white background for printing */
@@ -312,6 +325,7 @@
       <h4 style="font-size:20px;letter-spacing:1px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0;">
         <span style="font-size:22px;">🃏</span> 控制面板
       </h4>
+      <button id="sidebar-collapse" class="sidebar-toggle" type="button" title="收起控制栏" aria-label="收起控制栏">‹</button>
       <button id="data-version" type="button" title="点击修改当前数据版号">读取中…</button>
     </div>
 
@@ -398,6 +412,9 @@
     <div style="font-size:13px;color:#aaa;text-align:center;letter-spacing:1px;">© BoardGame 工具</div>
   </div>
 
+  <button id="sidebar-expand" class="sidebar-toggle" type="button" title="展开控制栏" aria-label="展开控制栏">›</button>
+  <button id="sidebar-refresh" class="sidebar-toggle" type="button" title="刷新卡牌数据" aria-label="刷新卡牌数据"><span aria-hidden="true">↻</span></button>
+
   <dialog id="export-dialog">
     <form id="export-form">
       <h2>导出数据版本</h2>
@@ -417,7 +434,7 @@
     </form>
   </dialog>
 
-  <div id="main-content" style="position:relative; margin-left:280px;">
+  <div id="main-content">
     <div id="alert-banner" style="display:none;position:fixed;top:0;left:240px;right:0;background:#ff6b6b;color:#fff;padding:12px 16px;border-bottom:2px solid #ff5252;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;max-width:100%;word-break:break-word;">
         <div style="flex:1;padding-right:12px;">
@@ -434,6 +451,19 @@
     // Escape HTML to prevent injection when inserting into innerHTML
     function escapeHtml(s){ return String(s??'').replace(/[&<>\"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m])); }
     let lang = 'zh';
+
+    function setSidebarCollapsed(collapsed){
+      document.body.classList.toggle('sidebar-collapsed',collapsed);
+      document.getElementById('sidebar-collapse').setAttribute('aria-expanded',String(!collapsed));
+      document.getElementById('sidebar-expand').setAttribute('aria-expanded',String(!collapsed));
+      try{ localStorage.setItem('viewer-sidebar-collapsed',collapsed?'1':'0'); }catch{}
+    }
+
+    async function refreshFromCollapsedSidebar(){
+      const button=document.getElementById('sidebar-refresh');
+      button.disabled=true;button.classList.add('refreshing');
+      try{ await reloadViewerData(); }finally{ button.disabled=false;button.classList.remove('refreshing'); }
+    }
 
     /* ---------- API 对象适配 ---------- */
     function mapRowToObj(headerArr,rowArr){
@@ -509,11 +539,28 @@
       while(el.scrollHeight>el.clientHeight && fs>5){ fs-=0.5; el.style.fontSize=fs+'px'; }
     }
 
+    function stretchCardSerial(serial){
+      const characters=Array.from(serial.textContent||'').length;
+      if(characters<2) return;
+      serial.style.letterSpacing='0px';
+      const range=document.createRange();
+      range.selectNodeContents(serial);
+      const targetWidth=serial.parentElement.clientWidth-8;
+      const naturalWidth=range.getBoundingClientRect().width;
+      let spacing=Math.max(0,(targetWidth-naturalWidth)/(characters-1));
+      serial.style.letterSpacing=`${spacing}px`;
+      const stretchedWidth=range.getBoundingClientRect().width;
+      spacing=Math.max(0,spacing+(targetWidth-stretchedWidth)/(characters-1));
+      serial.style.letterSpacing=`${spacing}px`;
+      range.detach();
+    }
+
     // --- 数据与渲染 ---
     const prophecyHeader=['card_id','card_title','introduction','effect','responsive_effect','image','serial_number','updated_at'];
     const monsterHeader=['card_id','card_title','level','monster_type','description','attack','defence','magic','attributes','skills','image','serial_number','updated_at'];
     let allProphecyRows=[], allMonsterRows=[];
     let displayCount=18;
+    const UNASSIGNED_DECK_ID='virtual-unassigned';
     let selectedClans=new Set(); // 存储选中的卡组
     let clanMetadata={};
     let clanCardIds={}; // 数据库关系：隐藏 deck_id -> 有序 card_id
@@ -540,6 +587,7 @@
       const payload=await response.json();
       clanMetadata={};
       for(const deck of payload.items) clanMetadata[deck.deck_id]=deck;
+      clanMetadata[UNASSIGNED_DECK_ID]={deck_id:UNASSIGNED_DECK_ID,name:'无归属',description:'未加入任何非职业卡组；五个职业卡组不计入归属判断。',type:'virtual'};
       createClanButtons();
     }
 
@@ -779,6 +827,7 @@
         for(let i=0;i<sortedMonsterRows.length;i++)  ctr.append(createMonsterCard(mapRowToObj(monsterHeader,  sortedMonsterRows[i])));
         for(let i=0;i<sortedProphecyRows.length;i++) ctr.append(createProphecyCard(mapRowToObj(prophecyHeader, sortedProphecyRows[i])));
       }
+      ctr.querySelectorAll('.card-serial').forEach(stretchCardSerial);
     }
 
     async function reloadCardsFromApi(){
@@ -797,6 +846,7 @@
         clanCardIds[code].sort((a,b)=>a.position-b.position);
         clanCardIds[code]=clanCardIds[code].map(item=>item.cardId);
       }
+      clanCardIds[UNASSIGNED_DECK_ID]=payload.items.filter(card=>!(card.decks||[]).some(deck=>deck.type!=='role')).map(card=>card.card_id);
       validateClanCards();
       updateAlertBanner();
       await renderAllCards();
@@ -819,6 +869,13 @@
     document.addEventListener('DOMContentLoaded', ()=>{
       reloadViewerData();
       setLangClass();
+
+      let sidebarCollapsed=false;
+      try{ sidebarCollapsed=localStorage.getItem('viewer-sidebar-collapsed')==='1'; }catch{}
+      setSidebarCollapsed(sidebarCollapsed);
+      document.getElementById('sidebar-collapse').onclick=()=>setSidebarCollapsed(true);
+      document.getElementById('sidebar-expand').onclick=()=>setSidebarCollapsed(false);
+      document.getElementById('sidebar-refresh').onclick=refreshFromCollapsedSidebar;
 
       // 初始化卡组分区为收缩状态
       const clanContainer=document.getElementById('clan-buttons-container');
@@ -861,7 +918,7 @@
           // 恢复
           setTimeout(()=>{
             document.getElementById('sidebar-panel').style.display='';
-            main.style.marginLeft='240px';
+            main.style.marginLeft='';
             main.classList.remove('fixed-print-width');
             document.getElementById('card-container').classList.remove('grid-for-print');
             document.querySelectorAll('.card').forEach(c=>c.classList.remove('card-print-size'));
