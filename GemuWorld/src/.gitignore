@@ -1,5 +1,6 @@
-# Game data, databases, imports, exports, and version snapshots
-**/data/
+# Keep only the canonical latest database in Git; ignore historical snapshots and exports.
+**/data/*
+!**/data/gemuworld.sqlite3
 
 # Image asset directories
 **/pictures/
