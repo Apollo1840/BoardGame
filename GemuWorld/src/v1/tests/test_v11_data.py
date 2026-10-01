@@ -50,8 +50,16 @@ class StatisticsTests(unittest.TestCase):
             {"type": "prophecy", "introduction": "", "effects": [], "decks": [{"name": "梦汐岛", "type": "story"}]},
             {"type": "prophecy", "introduction": "", "effects": [], "decks": [{"name": "坦克", "type": "role"}, {"name": "风", "type": "attribute"}]},
         ]
-        statistics = compute_statistics(cards)
+        decks = [
+            {"deck_id": "role", "type": "role"},
+            {"deck_id": "tutorial", "type": "tutorial"},
+            {"deck_id": "temporary", "type": "temporary"},
+            {"deck_id": "story", "type": "story"},
+            {"deck_id": "attribute", "type": "attribute"},
+        ]
+        statistics = compute_statistics(cards, decks=decks)
         self.assertEqual(statistics["cards_without_decks"], 1)
+        self.assertEqual(statistics["deck_count"], 2)
         self.assertEqual(statistics["deck_distribution"], {"刺客": 1, "梦汐岛": 1, "坦克": 1, "风": 1})
 
 
@@ -310,6 +318,11 @@ class ReadOnlyApiTests(unittest.TestCase):
         data_root = Path(self.temp.name) / "data"
         (data_root / "v2.1").mkdir(parents=True, exist_ok=True)
         (data_root / "v2.2").mkdir()
+        connection = connect(self.database)
+        try:
+            expected_deck_count = sum(deck["type"] not in {"role", "tutorial", "temporary", "virtual"} for deck in list_decks(connection))
+        finally:
+            connection.close()
         server = ViewerServer(("127.0.0.1", 0), self.database, data_root)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -406,6 +419,7 @@ class ReadOnlyApiTests(unittest.TestCase):
             with urllib.request.urlopen(base + "/api/statistics?language=zh&deck=Intro") as response:
                 statistics = json.load(response)["statistics"]
                 self.assertGreater(statistics["total"], 0)
+                self.assertEqual(statistics["deck_count"], expected_deck_count)
                 self.assertEqual(statistics["deck_distribution"]["灵坛村"], statistics["total"])
             with urllib.request.urlopen(base + "/api/statistics?language=zh&deck=virtual-unassigned") as response:
                 unassigned_statistics = json.load(response)["statistics"]
@@ -441,6 +455,7 @@ class ReadOnlyApiTests(unittest.TestCase):
                 self.assertIn('<option value="virtual-unassigned">无归属 (${unassigned.count})</option>', stats_html)
                 self.assertIn("deck=virtual-unassigned", stats_html)
                 self.assertIn("unassigned=Number(s.cards_without_decks)||0", stats_html)
+                self.assertIn("['卡组数量',Number(s.deck_count)||0,'不含角色、教程及临时卡组']", stats_html)
                 self.assertIn("['无归属',unassigned,'未加入任何非职业卡组']", stats_html)
             with urllib.request.urlopen(base + "/import") as response:
                 import_html = response.read().decode("utf-8")
@@ -1228,7 +1243,6 @@ class CardCrudTests(unittest.TestCase):
         created = save_card(self.connection, "monster", payload)
         self.assertEqual(created["translations"]["en"]["monster_type"], "Light")
         self.assertIn({"zh": "光", "en": "Light"}, list_monster_types(self.connection))
-
         too_many = self.payload("技能超限测试")
         too_many["base"]["card_id"] = "monster-too-many-skills"
         too_many["effects"] = [

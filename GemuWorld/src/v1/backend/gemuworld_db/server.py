@@ -117,7 +117,12 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 return
             if path == "/api/statistics":
                 cards, language = self._query_cards(query)
-                self._json({"language": language, "filters": {key: value for key, value in query.items()}, "statistics": compute_statistics(cards)})
+                connection = connect(self.server.database)
+                try:
+                    decks = list_decks(connection, language)
+                finally:
+                    connection.close()
+                self._json({"language": language, "filters": {key: value for key, value in query.items()}, "statistics": compute_statistics(cards, decks=decks)})
                 return
             if path == "/api/effect-professions":
                 connection = connect(self.server.database)

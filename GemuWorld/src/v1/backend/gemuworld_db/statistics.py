@@ -4,7 +4,21 @@ from collections import Counter, defaultdict
 from typing import Any
 
 
-def compute_statistics(cards: list[dict[str, object]]) -> dict[str, Any]:
+NON_GAMEPLAY_DECK_TYPES = frozenset({"role", "tutorial", "temporary", "virtual"})
+
+
+def _gameplay_deck_count(decks: list[dict[str, object]]) -> int:
+    identifiers = {
+        str(deck.get("deck_id") or deck.get("code") or deck.get("name") or deck.get("id"))
+        for deck in decks
+        if deck.get("type") not in NON_GAMEPLAY_DECK_TYPES
+    }
+    identifiers.discard("")
+    identifiers.discard("None")
+    return len(identifiers)
+
+
+def compute_statistics(cards: list[dict[str, object]], *, decks: list[dict[str, object]] | None = None) -> dict[str, Any]:
     monsters = [card for card in cards if card["type"] == "monster"]
     prophecies = [card for card in cards if card["type"] == "prophecy"]
     levels = Counter(str(card["level"]) for card in monsters)
@@ -83,6 +97,7 @@ def compute_statistics(cards: list[dict[str, object]]) -> dict[str, Any]:
         else:
             prophecy_effect_coverage["无效果记录"] += 1
     permanent = sum(count for name, count in prophecy_types.items() if name.startswith("永续"))
+    available_decks = decks if decks is not None else [deck for card in cards for deck in card["decks"]]
     matrix_sort = lambda item: (-sum(item[1].values()), item[0])
     sorted_stat_distributions = {
         level: {
@@ -95,6 +110,7 @@ def compute_statistics(cards: list[dict[str, object]]) -> dict[str, Any]:
         "total": len(cards),
         "monster_count": len(monsters),
         "prophecy_count": len(prophecies),
+        "deck_count": _gameplay_deck_count(available_decks),
         "cards_without_decks": sum(1 for card in cards if not any(deck.get("type") != "role" for deck in card["decks"])),
         "level_distribution": dict(sorted(levels.items(), key=lambda item: float(item[0]))),
         "attribute_distribution": dict(attributes.most_common()),
