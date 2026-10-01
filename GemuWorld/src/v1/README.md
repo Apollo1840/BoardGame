@@ -401,7 +401,7 @@ V1.2 serves the existing card-rendering and 3×3 print specification from the V1
 python scripts/serve.py
 ```
 
-Then open [http://127.0.0.1:8000/viewer](http://127.0.0.1:8000/viewer). `launch.bat`, `make launch`, and `make serve` start the same application.
+Then open [http://127.0.0.1:8000/viewer](http://127.0.0.1:8000/viewer). On Ubuntu, run `./launch.sh` to start the application in the `web` Conda environment. `launch.bat`, `make launch`, and `make serve` also start the application.
 
 The Viewer HTML and CSS were deliberately reused as the print baseline. V1.2 initially used generated legacy resources as a compatibility bridge; V1.3.1 replaced that bridge with direct JSON API calls while retaining the existing behavior, card dimensions, text fitting, sorting controls, clan filtering, language switch, and print workflow. The print contract remains:
 
@@ -530,7 +530,8 @@ src/
     ├── _stats.html           # card statistics and charts
     ├── _appendix.html        # printable player-board appendix
     ├── Makefile              # starts a static HTTP server on port 8000
-    ├── launch.bat            # Windows equivalent
+    ├── launch.bat            # Windows launcher
+    ├── launch.sh             # Ubuntu launcher (web Conda environment)
     ├── How_to_edit.md        # older launch note; filenames in it are stale
     ├── backend/gemuworld_db/ # V1.1 SQLite data and legacy-codec library
     ├── migrations/           # ordered, atomic database schema upgrades
@@ -626,7 +627,7 @@ cd GemuWorld/src/v1
 py -m http.server 8000
 ```
 
-or run `launch.bat`; on systems with GNU Make and `python3`, run `make launch`.
+or run `launch.bat` on Windows, `./launch.sh` on Ubuntu with the `web` Conda environment, or `make launch` on systems with GNU Make and `python3`.
 
 There is currently no build/deployment script. The underscore-prefixed HTML sources assume a served directory containing non-prefixed page names and the active assets beside them:
 
